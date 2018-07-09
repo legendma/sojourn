@@ -1,0 +1,6 @@
+[submodule "dep"]
+	path = dep
+	url = https://github.com/legendma/sojourn-dep.git
+[submodule "doc"]
+	path = doc
+	url = https://github.com/legendma/sojourn-doc.git

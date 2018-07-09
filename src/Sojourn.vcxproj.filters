@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="assets">
+      <UniqueIdentifier>{c8298f46-1367-488d-bb73-feb99b2e85bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\gui">
+      <UniqueIdentifier>{72251037-3f12-43fe-94cd-47836de1a3cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="assets\shaders">
+      <UniqueIdentifier>{18731398-e0d8-43b5-a7d6-a83d5c9a78f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{cfc29a46-6879-4aa5-9d42-32044c20a192}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\app">
+      <UniqueIdentifier>{4496365f-43d2-425a-b7bc-1731a93aa9bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\engine">
+      <UniqueIdentifier>{9e72c647-65bc-410a-9b9b-817f3527cd2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\game">
+      <UniqueIdentifier>{7bdc95a9-4b9a-484c-aa96-a8355556623d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\game\explorer">
+      <UniqueIdentifier>{6fb85a28-5df0-4305-9b32-4a5f3a52c8c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\game\gui">
+      <UniqueIdentifier>{0f7202f6-a59d-4353-b428-f95956d407d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\game\world">
+      <UniqueIdentifier>{3a24a187-7340-495a-8b98-d4df588e9c5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\engine\headers">
+      <UniqueIdentifier>{35f01b66-2617-40b4-9945-56033eead77f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\engine\selene">
+      <UniqueIdentifier>{824e3f13-d46d-4fd9-b1df-3874fd145b3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\engine\network">
+      <UniqueIdentifier>{e1fbed58-9a99-400e-80f4-e4fe786a0849}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="game\game_main.cpp">
+      <Filter>src\game</Filter>
+    </ClCompile>
+    <ClCompile Include="game\world\world_renderer.cpp">
+      <Filter>src\game\world</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\engine_scripts.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\engine_shader.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\engine_state_manager.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\engine_camera.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\engine_device_resources.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="game\explorer\explorer_main.cpp">
+      <Filter>src\game\explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="game\gui\gui_renderer.cpp">
+      <Filter>src\game\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\engine_resources.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\network_address.cpp">
+      <Filter>src\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="app\app_main.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+    <ClCompile Include="app\app_window.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="game\game_main.h">
+      <Filter>src\game</Filter>
+    </ClInclude>
+    <ClInclude Include="game\world\world_game_object.hpp">
+      <Filter>src\game\world</Filter>
+    </ClInclude>
+    <ClInclude Include="game\world\world_renderer.hpp">
+      <Filter>src\game\world</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_camera.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_device_resources.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_scripts.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_shader.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_state_manager.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_step_timer.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_dx_helper.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\BaseFun.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\Class.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\ClassFun.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\Ctor.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\Dtor.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\ExceptionHandler.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\ExceptionTypes.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\Fun.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\function.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\LuaName.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\LuaRef.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\MetatableRegistry.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\Obj.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\ObjFun.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\primitives.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\references.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\Registry.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\ResourceHandler.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\Selector.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\selene.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\State.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\traits.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\Tuple.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dep\selene\util.h">
+      <Filter>src\engine\selene</Filter>
+    </ClInclude>
+    <ClInclude Include="game\explorer\explorer_main.hpp">
+      <Filter>src\game\explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="game\gui\gui_renderer.hpp">
+      <Filter>src\game\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="game\shaders\shaders_structures.hpp">
+      <Filter>assets\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_resources.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\network_address.hpp">
+      <Filter>src\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="app\app_main.hpp">
+      <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="app\app_window.hpp">
+      <Filter>src\app</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="game\shaders\color_position_ps.hlsl">
+      <Filter>assets\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="game\shaders\color_position_vs.hlsl">
+      <Filter>assets\shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
