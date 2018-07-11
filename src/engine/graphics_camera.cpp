@@ -9,7 +9,7 @@
 // 
 //*********************************************************
 #include "pch.hpp"
-#include "engine_camera.hpp"
+#include "graphics_camera.hpp"
 
 using namespace DirectX;
 

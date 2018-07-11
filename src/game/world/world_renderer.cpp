@@ -1,9 +1,10 @@
 ﻿#include "pch.hpp"
 
 #include "game/shaders/shaders_structures.hpp"
-#include "engine/engine_dx_helper.hpp"
-#include "engine/engine_device_resources.hpp"
-#include "engine/engine_shader.hpp"
+#include "engine/engine_utilities.hpp"
+#include "engine/graphics_adapter.hpp"
+#include "engine/graphics_shaders.hpp"
+
 #include "world_renderer.hpp"
 
 using namespace Game;
@@ -186,7 +187,7 @@ void World3DRenderer::CreateDeviceDependentResources()
 		vertexBufferData.SysMemPitch = 0;
 		vertexBufferData.SysMemSlicePitch = 0;
 		CD3D11_BUFFER_DESC vertexBufferDesc(sizeof(cubeVertices), D3D11_BIND_VERTEX_BUFFER);
-		DX::ThrowIfFailed(
+        Engine::ComThrow(
 			m_graphics->GetD3DDevice()->CreateBuffer(
 				&vertexBufferDesc,
 				&vertexBufferData,
@@ -227,7 +228,7 @@ void World3DRenderer::CreateDeviceDependentResources()
 		indexBufferData.SysMemPitch = 0;
 		indexBufferData.SysMemSlicePitch = 0;
 		CD3D11_BUFFER_DESC indexBufferDesc(sizeof(cubeIndices), D3D11_BIND_INDEX_BUFFER);
-		DX::ThrowIfFailed(
+        Engine::ComThrow(
 			m_graphics->GetD3DDevice()->CreateBuffer(
 				&indexBufferDesc,
 				&indexBufferData,

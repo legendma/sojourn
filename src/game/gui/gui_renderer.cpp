@@ -1,6 +1,6 @@
 ﻿#include "pch.hpp"
 
-#include "engine/engine_dx_helper.hpp"
+#include "engine/engine_utilities.hpp"
 #include "gui_renderer.hpp"
 
 using namespace Game;
@@ -15,7 +15,7 @@ GUIRenderer::GUIRenderer(const std::shared_ptr<Engine::GraphicsAdapter>& graphic
 
 	// Create device independent resources
 	ComPtr<IDWriteTextFormat> textFormat;
-	DX::ThrowIfFailed(
+    Engine::ComThrow(
         m_graphics->GetDWriteFactory()->CreateTextFormat(
 			L"Segoe UI",
 			nullptr,
@@ -28,15 +28,15 @@ GUIRenderer::GUIRenderer(const std::shared_ptr<Engine::GraphicsAdapter>& graphic
 			)
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		textFormat->QueryInterface( &m_textFormat )
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR)
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
         m_graphics->GetD2DFactory()->CreateDrawingStateBlock(&m_stateBlock)
 		);
 
@@ -52,7 +52,7 @@ void GUIRenderer::Update( Engine::StepTimer const& timer)
 	m_text = (fps > 0) ? std::to_wstring(fps) + L" FPS" : L" - FPS";
 
 	ComPtr<IDWriteTextLayout> textLayout;
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
         m_graphics->GetDWriteFactory()->CreateTextLayout(
 			m_text.c_str(),
 			(uint32_t) m_text.length(),
@@ -63,11 +63,11 @@ void GUIRenderer::Update( Engine::StepTimer const& timer)
 			)
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		textLayout->QueryInterface( &m_textLayout.p )
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_textLayout->GetMetrics(&m_textMetrics)
 		);
 }
@@ -89,7 +89,7 @@ void GUIRenderer::Render()
 
 	context->SetTransform(screenTranslation * m_graphics->GetOrientationTransform2D());
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING)
 		);
 
@@ -104,7 +104,7 @@ void GUIRenderer::Render()
 	HRESULT hr = context->EndDraw();
 	if (hr != D2DERR_RECREATE_TARGET)
 	{
-		DX::ThrowIfFailed(hr);
+		Engine::ComThrow(hr);
 	}
 
 	context->RestoreDrawingState(m_stateBlock);
@@ -112,7 +112,7 @@ void GUIRenderer::Render()
 
 void GUIRenderer::CreateDeviceDependentResources()
 {
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
         m_graphics->GetD2DDeviceContext()->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &m_whiteBrush)
 		);
 }

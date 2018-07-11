@@ -91,7 +91,7 @@ Concurrency::task<std::vector<byte>> Engine::ResourceFolder::ReadDataAsync( cons
     using namespace Concurrency;
 
     auto file_and_path = std::make_shared<std::wstring>( m_path )->append( filename );
-    return create_task( this->GetFileAsync( file_and_path ) ).then( []( std::shared_ptr<Engine::ResourceFile> file ) -> std::vector<byte>
+    return this->GetFileAsync( file_and_path ).then( []( std::shared_ptr<Engine::ResourceFile> file ) -> std::vector<byte>
     {
         file->OpenForRead();
         std::vector<byte> returnBuffer;

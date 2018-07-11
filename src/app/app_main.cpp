@@ -1,5 +1,6 @@
 #include "pch.hpp"
 
+#include "engine/engine_utilities.hpp"
 #include "game/explorer/explorer_main.hpp"
 #include "app_main.hpp"
 
@@ -39,6 +40,7 @@ bool Framework::App<T>::Start( HINSTANCE hinstance )
     }
 
     // Create the Graphics Adapter
+    Engine::Log( L"Starting DirectX..." );
     m_graphics = std::make_unique<Engine::GraphicsAdapter>();
     auto window = std::shared_ptr<Framework::Window>( this );
     m_graphics->SetWindow( window );

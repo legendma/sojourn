@@ -21,13 +21,16 @@
   <ItemGroup>
     <ClCompile Include="app\app_main.cpp" />
     <ClCompile Include="app\app_window.cpp" />
-    <ClCompile Include="engine\engine_camera.cpp" />
-    <ClCompile Include="engine\engine_device_resources.cpp" />
+    <ClCompile Include="engine\engine_utilities.cpp" />
+    <ClCompile Include="engine\graphics_camera.cpp" />
+    <ClCompile Include="engine\graphics_adapter.cpp" />
     <ClCompile Include="engine\engine_resources.cpp" />
     <ClCompile Include="engine\engine_scripts.cpp" />
-    <ClCompile Include="engine\engine_shader.cpp" />
+    <ClCompile Include="engine\graphics_shaders.cpp" />
     <ClCompile Include="engine\engine_state_manager.cpp" />
     <ClCompile Include="engine\network_address.cpp" />
+    <ClCompile Include="engine\network_main.cpp" />
+    <ClCompile Include="engine\network_socket_udp.cpp" />
     <ClCompile Include="game\explorer\explorer_main.cpp" />
     <ClCompile Include="game\game_main.cpp" />
     <ClCompile Include="game\gui\gui_renderer.cpp" />
@@ -66,15 +69,18 @@
     <ClInclude Include="..\dep\selene\util.h" />
     <ClInclude Include="app\app_main.hpp" />
     <ClInclude Include="app\app_window.hpp" />
-    <ClInclude Include="engine\engine_camera.hpp" />
-    <ClInclude Include="engine\engine_device_resources.hpp" />
-    <ClInclude Include="engine\engine_dx_helper.hpp" />
+    <ClInclude Include="engine\graphics_camera.hpp" />
+    <ClInclude Include="engine\graphics_adapter.hpp" />
+    <ClInclude Include="engine\graphics_utilities.hpp" />
     <ClInclude Include="engine\engine_resources.hpp" />
     <ClInclude Include="engine\engine_scripts.hpp" />
-    <ClInclude Include="engine\engine_shader.hpp" />
+    <ClInclude Include="engine\graphics_shaders.hpp" />
     <ClInclude Include="engine\engine_state_manager.hpp" />
     <ClInclude Include="engine\engine_step_timer.hpp" />
+    <ClInclude Include="engine\engine_utilities.hpp" />
     <ClInclude Include="engine\network_address.hpp" />
+    <ClInclude Include="engine\network_main.hpp" />
+    <ClInclude Include="engine\network_socket_udp.hpp" />
     <ClInclude Include="game\explorer\explorer_main.hpp" />
     <ClInclude Include="game\game_main.h" />
     <ClInclude Include="game\gui\gui_renderer.hpp" />
@@ -201,7 +207,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)bin\lua\$(Platform)\$(Configuration)\lua.lib;DXGI.lib;D3D11.lib;D2d1.lib;Dwrite.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)bin\lua\$(Platform)\$(Configuration)\lua.lib;DXGI.lib;D3D11.lib;D2d1.lib;Dwrite.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>python $(SolutionDir)src\sojourn_install.py $(SolutionDir)install $(SolutionDir)bin $(SolutionDir)assets</Command>
@@ -243,7 +249,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)bin\lua\$(Platform)\$(Configuration)\lua.lib;DXGI.lib;D3D11.lib;D2d1.lib;Dwrite.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)bin\lua\$(Platform)\$(Configuration)\lua.lib;DXGI.lib;D3D11.lib;D2d1.lib;Dwrite.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>python $(SolutionDir)src\sojourn_install.py $(SolutionDir)install $(SolutionDir)bin $(SolutionDir)assets</Command>

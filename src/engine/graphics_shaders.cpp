@@ -1,8 +1,9 @@
 #include "pch.hpp"
 
-#include "engine_dx_helper.hpp"
 #include "engine_resources.hpp"
-#include "engine_shader.hpp"
+#include "engine_utilities.hpp"
+#include "graphics_shaders.hpp"
+#include "graphics_utilities.hpp"
 
 using namespace Engine;
 
@@ -27,7 +28,7 @@ void VertexShader::CreateDeviceDependentResources()
 
 	// After the vertex shader file is loaded, create the shader and input layout.
     vs_task.then( [this]( const std::vector<byte>& fileData ) {
-		DX::ThrowIfFailed(
+		Engine::ComThrow(
 			m_graphics->GetD3DDevice()->CreateVertexShader(
 				&fileData[0],
 				fileData.size(),
@@ -42,7 +43,7 @@ void VertexShader::CreateDeviceDependentResources()
 		    { "COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		};
 
-		DX::ThrowIfFailed(
+        Engine::ComThrow(
 			m_graphics->GetD3DDevice()->CreateInputLayout(
 				vertexDesc,
 				ARRAYSIZE( vertexDesc ),
@@ -53,7 +54,7 @@ void VertexShader::CreateDeviceDependentResources()
 		);
 	} ).then( [this]() {
 		CD3D11_BUFFER_DESC constantBufferDesc( sizeof( ModelViewProjectionConstantBuffer ), D3D11_BIND_CONSTANT_BUFFER );
-			DX::ThrowIfFailed(
+			Engine::ComThrow(
 				m_graphics->GetD3DDevice()->CreateBuffer(
 					&constantBufferDesc,
 					nullptr,
@@ -129,7 +130,7 @@ void PixelShader::CreateDeviceDependentResources()
 
 	// After the pixel shader file is loaded, create the shader and constant buffer.
 	psTask.then([this](const std::vector<byte>& fileData) {
-		DX::ThrowIfFailed(
+        Engine::ComThrow(
 			m_graphics->GetD3DDevice()->CreatePixelShader(
 				&fileData[0],
 				fileData.size(),

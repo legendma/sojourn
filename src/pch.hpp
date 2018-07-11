@@ -1,8 +1,11 @@
 ﻿#pragma once
 
+#define WIN32_LEAN_AND_MEAN
+
 #include <sal.h> // SAL runtime checking annotations
 #include <atlbase.h>
 #include <atldef.h>
+#include <comdef.h>
 #include <ppltasks.h>	// For create_task
 //#include <wrl.h>
 //#include <wrl/client.h>
@@ -14,17 +17,17 @@
 //#include <wincodec.h>
 #include <DirectXColors.h>
 #include <DirectXMath.h>
+#include <WinSock2.h>
+#include <Ws2tcpip.h>
 #include <windows.h>
-#include <fstream>
-#include <iostream>
 //#include <memory>
 //#include <agile.h>
 //#include <concrt.h>
+#include <codecvt>
+#include <fstream>
+#include <iostream>
 #include <map>
 
 #undef max
 /* registry base path */
 static const wchar_t *BASE_REGISTRY_PATH = L"SOFTWARE\\WOW6432Node\\Umbrellas Required\\Sojourn\\Main\\";
-
-#define cnt_of_array( _arr ) \
-    ( sizeof( _arr ) / sizeof( _arr[0] ) )

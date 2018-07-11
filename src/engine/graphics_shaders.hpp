@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/engine_device_resources.hpp"
+#include "engine/graphics_adapter.hpp"
 #include "game/shaders/shaders_structures.hpp" // TODO: <MPA> REMOVE THIS INCLUDE
 
 namespace Engine

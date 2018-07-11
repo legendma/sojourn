@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include <string>
 
-#include "engine/engine_device_resources.hpp"
 #include "engine/engine_step_timer.hpp"
+#include "engine/graphics_adapter.hpp"
 
 namespace Game
 {

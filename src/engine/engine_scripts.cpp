@@ -2,19 +2,10 @@
 
 #include "engine_resources.hpp"
 #include "engine_scripts.hpp"
+#include "engine_utilities.hpp"
 
 using namespace Engine;
 using namespace Selene;
-
-std::wstring WideCharFromChar( std::string string )
-{
-    using convert_type = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_type, wchar_t> converter;
-
-    //use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
-    return( converter.from_bytes( string ) );
-}
-
 
 Scripts::Scripts() : m_luaState(true)
 {

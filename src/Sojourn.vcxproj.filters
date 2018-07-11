@@ -40,6 +40,9 @@
     <Filter Include="src\engine\network">
       <UniqueIdentifier>{e1fbed58-9a99-400e-80f4-e4fe786a0849}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\engine\graphics">
+      <UniqueIdentifier>{5446ced3-faf7-4405-ab07-8b971bcde0d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -54,16 +57,7 @@
     <ClCompile Include="engine\engine_scripts.cpp">
       <Filter>src\engine</Filter>
     </ClCompile>
-    <ClCompile Include="engine\engine_shader.cpp">
-      <Filter>src\engine</Filter>
-    </ClCompile>
     <ClCompile Include="engine\engine_state_manager.cpp">
-      <Filter>src\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\engine_camera.cpp">
-      <Filter>src\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\engine_device_resources.cpp">
       <Filter>src\engine</Filter>
     </ClCompile>
     <ClCompile Include="game\explorer\explorer_main.cpp">
@@ -84,6 +78,24 @@
     <ClCompile Include="app\app_window.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
+    <ClCompile Include="engine\network_main.cpp">
+      <Filter>src\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\graphics_adapter.cpp">
+      <Filter>src\engine\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\graphics_camera.cpp">
+      <Filter>src\engine\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\graphics_shaders.cpp">
+      <Filter>src\engine\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\network_socket_udp.cpp">
+      <Filter>src\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\engine_utilities.cpp">
+      <Filter>src\engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp">
@@ -98,25 +110,13 @@
     <ClInclude Include="game\world\world_renderer.hpp">
       <Filter>src\game\world</Filter>
     </ClInclude>
-    <ClInclude Include="engine\engine_camera.hpp">
-      <Filter>src\engine\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\engine_device_resources.hpp">
-      <Filter>src\engine\headers</Filter>
-    </ClInclude>
     <ClInclude Include="engine\engine_scripts.hpp">
-      <Filter>src\engine\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\engine_shader.hpp">
       <Filter>src\engine\headers</Filter>
     </ClInclude>
     <ClInclude Include="engine\engine_state_manager.hpp">
       <Filter>src\engine\headers</Filter>
     </ClInclude>
     <ClInclude Include="engine\engine_step_timer.hpp">
-      <Filter>src\engine\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\engine_dx_helper.hpp">
       <Filter>src\engine\headers</Filter>
     </ClInclude>
     <ClInclude Include="..\dep\selene\BaseFun.h">
@@ -211,6 +211,27 @@
     </ClInclude>
     <ClInclude Include="app\app_window.hpp">
       <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\network_main.hpp">
+      <Filter>src\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\engine_utilities.hpp">
+      <Filter>src\engine\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\graphics_adapter.hpp">
+      <Filter>src\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\graphics_camera.hpp">
+      <Filter>src\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\graphics_shaders.hpp">
+      <Filter>src\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\graphics_utilities.hpp">
+      <Filter>src\engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\network_socket_udp.hpp">
+      <Filter>src\engine\network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

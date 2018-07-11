@@ -1,10 +1,11 @@
 #pragma once
 
-#include "game/gui/gui_renderer.hpp"
-#include "game/world/world_renderer.hpp"
-#include "engine/engine_device_resources.hpp"
 #include "engine/engine_scripts.hpp"
 #include "engine/engine_step_timer.hpp"
+#include "engine/graphics_adapter.hpp"
+
+#include "game/gui/gui_renderer.hpp" // TODO <MPA>: Rename/Reorganize these once they are given a purpose besides testing
+#include "game/world/world_renderer.hpp"
 
 namespace Game
 {

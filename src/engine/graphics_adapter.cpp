@@ -2,10 +2,12 @@
 
 #include <algorithm>
 
-#include "engine_dx_helper.hpp"
-#include "engine_shader.hpp"
-#include "engine_device_resources.hpp"
 #include "app/app_window.hpp"
+
+#include "engine_utilities.hpp"
+#include "graphics_adapter.hpp"
+#include "graphics_shaders.hpp"
+#include "graphics_utilities.hpp"
 
 using namespace D2D1;
 using namespace DirectX;
@@ -99,7 +101,7 @@ void GraphicsAdapter::CreateDeviceIndependentResources()
 	options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 #endif
 	// Initialize the Direct2D Factory.
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
 		//	__uuidof(ID2D1Factory3),
@@ -109,7 +111,7 @@ void GraphicsAdapter::CreateDeviceIndependentResources()
 		);
 
 	// Initialize the DirectWrite Factory.
-	DX::ThrowIfFailed(
+    Engine::ComThrow(
 		DWriteCreateFactory(
 			DWRITE_FACTORY_TYPE_SHARED,
 			__uuidof(IDWriteFactory3),
@@ -118,7 +120,7 @@ void GraphicsAdapter::CreateDeviceIndependentResources()
 		);
 
 	//// Initialize the Windows Imaging Component (WIC) Factory.
-	//DX::ThrowIfFailed(
+	//Engine::ComThrow(
 	//	CoCreateInstance(
 	//		CLSID_WICImagingFactory2,
 	//		nullptr,
@@ -182,14 +184,14 @@ void GraphicsAdapter::CreateDeviceResources()
 		// If the initialization fails, fall back to the WARP device.
 		// For more information on WARP, see: 
 		// https://go.microsoft.com/fwlink/?LinkId=286690
-		DX::ThrowIfFailed(
+        Engine::ComThrow(
 			D3D11CreateDevice(
 				nullptr,
 				D3D_DRIVER_TYPE_WARP, // Create a WARP device instead of a hardware device.
 				0,
 				creationFlags,
 				featureLevels,
-                cnt_of_array(featureLevels),
+                ARRAYSIZE(featureLevels),
 				D3D11_SDK_VERSION,
 				&device,
 				&m_d3dFeatureLevel,
@@ -199,25 +201,25 @@ void GraphicsAdapter::CreateDeviceResources()
 	}
 
 	// Store pointers to the Direct3D 11.3 API device and immediate context.
-	DX::ThrowIfFailed(
+    Engine::ComThrow(
 		device->QueryInterface( &m_d3dDevice )
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		context->QueryInterface( &m_d3dContext )
 		);
 
 	// Create the Direct2D device object and a corresponding context.
 	CComPtr<IDXGIDevice3> dxgiDevice;
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_d3dDevice->QueryInterface( &dxgiDevice )
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_d2dFactory->CreateDevice(dxgiDevice, &m_d2dDevice)
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_d2dDevice->CreateDeviceContext(
 			D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
 			&m_d2dContext
@@ -270,7 +272,7 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 		}
 		else
 		{
-			DX::ThrowIfFailed(hr);
+			Engine::ComThrow(hr);
 		}
 	}
 	else
@@ -300,35 +302,35 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 
 		// This sequence obtains the DXGI factory that was used to create the Direct3D device above.
 		CComPtr<IDXGIDevice3> dxgiDevice;
-		DX::ThrowIfFailed(
+		Engine::ComThrow(
 			m_d3dDevice->QueryInterface( &dxgiDevice )
 			);
 
 		CComPtr<IDXGIAdapter> dxgiAdapter;
-		DX::ThrowIfFailed(
+		Engine::ComThrow(
 			dxgiDevice->GetAdapter(&dxgiAdapter)
 			);
 
 		CComPtr<IDXGIFactory4> dxgiFactory;
-		DX::ThrowIfFailed(
+		Engine::ComThrow(
 			dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory))
 			);
 
 		CComPtr<IDXGISwapChain> swapChain;
-		DX::ThrowIfFailed(
+		Engine::ComThrow(
 			dxgiFactory->CreateSwapChain(
 				m_d3dDevice,
                 &swapChainDesc,
 				&swapChain
 				)
 			);
-		DX::ThrowIfFailed(
+		Engine::ComThrow(
 			swapChain->QueryInterface( &m_swapChain )
 			);
 
 		// Ensure that DXGI does not queue more than one frame at a time. This both reduces latency and
 		// ensures that the application will only render after each VSync, minimizing power consumption.
-		DX::ThrowIfFailed(
+		Engine::ComThrow(
 			dxgiDevice->SetMaximumFrameLatency(1)
 			);
 	}
@@ -371,17 +373,17 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 		throw std::runtime_error( "Display rotation is invalid" );
 	}
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_swapChain->SetRotation(displayRotation)
 		);
 
 	// Create a render target view of the swap chain back buffer.
 	CComPtr<ID3D11Texture2D1> backBuffer;
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer))
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_d3dDevice->CreateRenderTargetView1(
 			backBuffer,
 			nullptr,
@@ -400,7 +402,7 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 		);
 
 	CComPtr<ID3D11Texture2D1> depthStencil;
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_d3dDevice->CreateTexture2D1(
 			&depthStencilDesc,
 			nullptr,
@@ -409,7 +411,7 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 		);
 
 	CD3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc(D3D11_DSV_DIMENSION_TEXTURE2D);
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_d3dDevice->CreateDepthStencilView(
 			depthStencil,
 			&depthStencilViewDesc,
@@ -438,11 +440,11 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 			);
 
 	CComPtr<IDXGISurface2> dxgiBackBuffer;
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_swapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer))
 		);
 
-	DX::ThrowIfFailed(
+	Engine::ComThrow(
 		m_d2dContext->CreateBitmapFromDxgiSurface(
 			dxgiBackBuffer,
 			&bitmapProperties,
@@ -547,30 +549,30 @@ void GraphicsAdapter::ValidateDevice()
 	// First, get the information for the default adapter from when the device was created.
 
 	CComPtr<IDXGIDevice3> dxgiDevice;
-	DX::ThrowIfFailed(m_d3dDevice->QueryInterface( &dxgiDevice ) );
+	Engine::ComThrow(m_d3dDevice->QueryInterface( &dxgiDevice ) );
 
 	CComPtr<IDXGIAdapter> deviceAdapter;
-	DX::ThrowIfFailed(dxgiDevice->GetAdapter(&deviceAdapter));
+	Engine::ComThrow(dxgiDevice->GetAdapter(&deviceAdapter));
 
 	CComPtr<IDXGIFactory4> deviceFactory;
-	DX::ThrowIfFailed(deviceAdapter->GetParent(IID_PPV_ARGS(&deviceFactory)));
+	Engine::ComThrow(deviceAdapter->GetParent(IID_PPV_ARGS(&deviceFactory)));
 
 	CComPtr<IDXGIAdapter1> previousDefaultAdapter;
-	DX::ThrowIfFailed(deviceFactory->EnumAdapters1(0, &previousDefaultAdapter));
+	Engine::ComThrow(deviceFactory->EnumAdapters1(0, &previousDefaultAdapter));
 
 	DXGI_ADAPTER_DESC1 previousDesc;
-	DX::ThrowIfFailed(previousDefaultAdapter->GetDesc1(&previousDesc));
+	Engine::ComThrow(previousDefaultAdapter->GetDesc1(&previousDesc));
 
 	// Next, get the information for the current default adapter.
 
 	CComPtr<IDXGIFactory4> currentFactory;
-	DX::ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(&currentFactory)));
+	Engine::ComThrow(CreateDXGIFactory1(IID_PPV_ARGS(&currentFactory)));
 
 	CComPtr<IDXGIAdapter1> currentDefaultAdapter;
-	DX::ThrowIfFailed(currentFactory->EnumAdapters1(0, &currentDefaultAdapter));
+	Engine::ComThrow(currentFactory->EnumAdapters1(0, &currentDefaultAdapter));
 
 	DXGI_ADAPTER_DESC1 currentDesc;
-	DX::ThrowIfFailed(currentDefaultAdapter->GetDesc1(&currentDesc));
+	Engine::ComThrow(currentDefaultAdapter->GetDesc1(&currentDesc));
 
 	// If the adapter LUIDs don't match, or if the device reports that it has been removed,
 	// a new D3D device must be created.
@@ -651,7 +653,7 @@ void GraphicsAdapter::Present()
 	}
 	else
 	{
-		DX::ThrowIfFailed(hr);
+		Engine::ComThrow(hr);
 	}
 }
 

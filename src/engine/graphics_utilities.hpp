@@ -2,15 +2,6 @@
 
 namespace DX
 {
-	inline void ThrowIfFailed(HRESULT hr)
-	{
-		if (FAILED(hr))
-		{
-			// Set a breakpoint on this line to catch Win32 API errors.
-			AtlThrow( hr );//Platform::Exception::CreateException(hr);
-		}
-	}
-
 	// Converts a length in device-independent pixels (DIPs) to a length in physical pixels.
 	inline float ConvertDipsToPixels(float dips, float dpi)
 	{
