@@ -23,8 +23,9 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE prevInstance,
 }
 
 template <typename T>
-Client::App<T>::App() : m_is_active( false ), 
-                           m_is_visible( false )
+Client::App<T>::App() : 
+    m_is_active( false ), 
+    m_is_visible( false )
 {
 }
 

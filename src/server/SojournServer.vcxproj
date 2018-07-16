@@ -153,9 +153,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
     <ClInclude Include="..\common\network\network_address.hpp" />
     <ClInclude Include="..\common\network\network_main.hpp" />
-    <ClInclude Include="..\common\network\network_socket_udp.hpp" />
+    <ClInclude Include="..\common\network\network_sockets.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="server_main.hpp" />
   </ItemGroup>
@@ -172,7 +173,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="..\common\network\network_socket_udp.cpp" />
+    <ClCompile Include="..\common\network\network_sockets.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

@@ -34,7 +34,7 @@ namespace Engine
 		}
 
 		// Get elapsed time since the previous Update call.
-		uint64_t GetElapsedTicks() const						{ return m_elapsedTicks; }
+		uint64_t GetElapsedTicks() const					{ return m_elapsedTicks; }
 		double GetElapsedSeconds() const					{ return TicksToSeconds(m_elapsedTicks); }
 
 		// Get total time since the start of the program.

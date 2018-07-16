@@ -28,7 +28,7 @@
     <ClCompile Include="..\common\network\network_address.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\network\network_socket_udp.cpp">
+    <ClCompile Include="..\common\network\network_sockets.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
   </ItemGroup>
@@ -45,7 +45,10 @@
     <ClInclude Include="server_main.hpp">
       <Filter>Source Files\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\network\network_socket_udp.hpp">
+    <ClInclude Include="..\common\engine\engine_step_timer.hpp">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\network\network_sockets.hpp">
       <Filter>Source Files\common</Filter>
     </ClInclude>
   </ItemGroup>
