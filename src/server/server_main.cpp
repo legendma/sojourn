@@ -19,7 +19,7 @@ int wmain( int argc, wchar_t* argv[] )
         server_address = std::wstring( argv[ 1 ] );
     }
 
-    auto networking = Engine::NetworkingFactory::CreateNetworking();
+    auto networking = Engine::NetworkingFactory::StartNetworking();
     if( networking == nullptr )
     {
         Engine::ReportError( L"Networking system could not be started.  Exiting..." );
@@ -77,6 +77,10 @@ Server::Server::Server( ServerConfig &config, Engine::NetworkingPtr &networking 
     Initialize();
 }
 
+void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet )
+{
+}
+
 Server::Server::~Server()
 {
 }
@@ -96,35 +100,68 @@ void Server::Server::Run()
 void Server::Server::Update()
 {
     ReceivePackets();
+    KeepClientsAlive(); // TODO IMPLEMENT
+    CheckClientTimeouts(); // TODO IMPLEMENT
+    HandleGamePacketsFromClients(); // TODO IMPLEMENT
+    RunGameSimulation(); // TODO IMPLEMENT
+    SendPacketsToClients(); // TODO IMPLEMENT
 }
 
 void Server::Server::ReceivePackets()
 {
-    Engine::PacketTypesAllowed allowed;
-    allowed.SetAllowed( Engine::PACKET_REQUEST );
-    allowed.SetAllowed( Engine::PACKET_RESPONSE );
+    Engine::NetworkPacketTypesAllowed allowed;
+    allowed.SetAllowed( Engine::PACKET_CONNECT_REQUEST );
+    allowed.SetAllowed( Engine::PACKET_CONNECT_CHALLENGE_RESPONSE );
     allowed.SetAllowed( Engine::PACKET_KEEP_ALIVE );
     allowed.SetAllowed( Engine::PACKET_PAYLOAD );
     allowed.SetAllowed( Engine::PACKET_DISCONNECT );
 
     auto now = m_timer.GetTotalTicks();
+    byte data[NETWORK_MAX_PACKET_SIZE];
     while( true )
     {
-        byte data[ MAX_PACKET_SIZE ];
         Engine::NetworkAddressPtr from;
         auto byte_cnt = m_socket->ReceiveFrom( data, sizeof( data ), from );
         if( byte_cnt == 0 )
-        {
             break;
-        }
-
-        ReadAndProcessPacket( allowed, from, data, byte_cnt, now );
+        
+        auto read = Engine::InputBitStreamFactory::CreateInputBitStream( data, byte_cnt );
+        m_networking->ReadAndProcessPacket( m_config.protocol_id, allowed, from, now, read, *this );
     }
 }
 
-void Server::Server::ReadAndProcessPacket( Engine::PacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, byte *packet, int byte_cnt, uint64_t now )
+void Server::Server::KeepClientsAlive()
 {
+}
 
+void Server::Server::CheckClientTimeouts()
+{
+}
+
+void Server::Server::HandleGamePacketsFromClients()
+{
+}
+
+void Server::Server::RunGameSimulation()
+{
+}
+
+void Server::Server::SendPacketsToClients()
+{
+}
+
+Server::ClientRecordPtr Server::Server::FindClientByAddress( Engine::NetworkAddressPtr &search )
+{
+    assert( m_clients.size() <= m_config.max_num_clients );
+    for( auto client : m_clients )
+    {
+        if( client->m_client_address->Matches( *search ) )
+        {
+            return client;
+        }
+    }
+
+    return nullptr;
 }
 
 Server::ServerPtr Server::ServerFactory::CreateServer( ServerConfig &config, Engine::NetworkingPtr &networking )

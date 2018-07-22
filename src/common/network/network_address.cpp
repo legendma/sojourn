@@ -37,6 +37,16 @@ std::wstring Engine::NetworkAddress::Print()
     return out;
 }
 
+boolean Engine::NetworkAddress::Matches( const NetworkAddress &other )
+{
+    NetworkAddress mine = *this;
+    NetworkAddress theirs = other;
+
+    return( mine.GetAddressIn()->sin_addr.S_un.S_addr == theirs.GetAddressIn()->sin_addr.S_un.S_addr
+         && mine.GetAddressIn()->sin_port             == theirs.GetAddressIn()->sin_port
+         && mine.GetAddressIn()->sin_family           == theirs.GetAddressIn()->sin_family );
+}
+
 Concurrency::task<Engine::NetworkAddressPtr> Engine::NetworkAddressFactory::CreateAddressFromStringAsync( const std::wstring address_string )
 {
     using namespace Concurrency;

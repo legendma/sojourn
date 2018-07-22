@@ -51,5 +51,11 @@
     <ClInclude Include="..\common\network\network_sockets.hpp">
       <Filter>Source Files\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\network\network_platform.hpp">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_utilities.hpp">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

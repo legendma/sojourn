@@ -57,4 +57,19 @@ namespace Engine
         );
     }
 
+
+    template <typename fromT, typename toT>
+    class TypeAlias
+    {
+    public:
+        TypeAlias( fromT from ) { m_internal.from = from; }
+        toT As() { return m_internal.to; }
+
+    private:
+        union
+        {
+            fromT from;
+            toT   to;
+        } m_internal;
+    };
 }
