@@ -20,11 +20,13 @@
 
 #define NETWORK_KEY_LENGTH               ( crypto_aead_chacha20poly1305_IETF_KEYBYTES )
 #define NETWORK_AUTHENTICATION_LENGTH    ( crypto_aead_chacha20poly1305_IETF_ABYTES )
+#define NETWORK_NONCE_LENGTH             ( crypto_aead_chacha20poly1305_IETF_NPUBBYTES )
 
 namespace Engine
 {
     typedef std::array<byte, NETWORK_KEY_LENGTH> NetworkKey;
     typedef std::array<byte, NETWORK_AUTHENTICATION_LENGTH> NetworkAuthentication;
+    typedef std::array<byte, NETWORK_NONCE_LENGTH> NetworkNonce;
 
     class BitStreamBase
     {
@@ -32,9 +34,9 @@ namespace Engine
         BitStreamBase( bool is_owned );
         ~BitStreamBase() { std::free( m_buffer ); }
 
-        size_t GetSize() { return m_bit_capacity * 8; }
         byte * GetBuffer() { return m_buffer; }
         static int BitsRequired( uint64_t value );
+        virtual size_t GetSize() = 0;
         
     protected:
         byte     *m_buffer;
@@ -54,6 +56,7 @@ namespace Engine
 
         size_t GetRemainingBitCount()  { return m_bit_capacity - m_bit_head; }
         size_t GetRemainingByteCount() { return ( GetRemainingBitCount() + 7 ) / 8; }
+        size_t GetSize() { return ( 7 + m_bit_capacity ) / 8; }
 
         void Advance( uint32_t bit_cnt ) { m_bit_head += bit_cnt; }
         void ReadBits( void *out, uint32_t bit_cnt );
@@ -104,8 +107,9 @@ namespace Engine
     public:
         ~OutputBitStream() {};
     
-        size_t GetCurrentBitCount()  { return m_bit_capacity - m_bit_head; }
+        size_t GetCurrentBitCount()  { return m_bit_head; }
         size_t GetCurrentByteCount() { return ( GetCurrentBitCount() + 7 ) / 8; }
+        size_t GetSize() { return GetCurrentByteCount(); }
         size_t Collapse();
     
         void WriteBits( void *out, uint32_t bit_cnt );
@@ -123,17 +127,18 @@ namespace Engine
         }
     
         void Write( NetworkKey &out );
+        void Write( NetworkAuthentication &out );
         void Write( sockaddr &out );
 
-        void Write( uint32_t &out, uint32_t bit_cnt = 32 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( int& out, uint32_t bit_cnt = 32 )      { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( float& out )                           { auto temp = ByteSwap( out ); WriteBits( &temp, 32 );      }
+        void Write( uint32_t out, uint32_t bit_cnt = 32 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
+        void Write( int out, uint32_t bit_cnt = 32 )      { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
+        void Write( float out )                           { auto temp = ByteSwap( out ); WriteBits( &temp, 32 );      }
              
-        void Write( uint16_t& out, uint32_t bit_cnt = 16 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( int16_t& out, uint32_t bit_cnt = 16 )  { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
+        void Write( uint16_t out, uint32_t bit_cnt = 16 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
+        void Write( int16_t out, uint32_t bit_cnt = 16 )  { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
              
-        void Write( bool& out )                            { auto temp = ByteSwap( out ); WriteBits( &temp, 1 );       }
-        void Write( uint8_t& out, uint32_t bit_cnt = 8 )   {                              WriteBits( &out, bit_cnt );  }
+        void Write( bool out )                            { auto temp = ByteSwap( out ); WriteBits( &temp, 1 );       }
+        void Write( uint8_t out, uint32_t bit_cnt = 8 )   {                              WriteBits( &out, bit_cnt );  }
 
         void WriteBytes( void* out, size_t byte_cnt ) { WriteBits( out, byte_cnt * 8 ); }
 
@@ -250,7 +255,7 @@ namespace Engine
     public:
         NetworkPacketType packet_type;
 
-        OutputBitStreamPtr Get( uint64_t sequence_num );
+        OutputBitStreamPtr WritePacket( uint64_t sequence_num, uint64_t protocol_id, NetworkKey &key );
     private:
         virtual void Write( OutputBitStreamPtr &out ) = 0;
     };
@@ -259,7 +264,6 @@ namespace Engine
     {
     public:
         NetworkConnectionRequestHeader header;
-        NetworkAddressPtr from_address;
 
         NetworkConnectionTokenPtr ReadToken();
         NetworkConnectionRequestPacket() { packet_type = PACKET_CONNECT_REQUEST; }
@@ -280,13 +284,8 @@ namespace Engine
     class NetworkPacketFactory
     {
     public:
-        static NetworkPacketPtr CreateConnectionRequest( NetworkConnectionRequestHeader &header, NetworkAddressPtr &from );
+        static NetworkPacketPtr CreateConnectionRequest( NetworkConnectionRequestHeader &header );
         static NetworkPacketPtr CreateConnectionDenied();
-    };
-
-    interface IProcessesPackets
-    {
-        virtual void OnReceivedConnectionRequest( NetworkPacketPtr &packet ) = 0;
     };
 
     class Networking
@@ -295,11 +294,11 @@ namespace Engine
     public:
         ~Networking();
 
-        void ReadAndProcessPacket( uint64_t protocol_id, NetworkPacketTypesAllowed &allowed, NetworkAddressPtr &from, uint64_t now_time, InputBitStreamPtr &read, IProcessesPackets &processor );
-        void ProcessPacket( IProcessesPackets &process, NetworkPacketPtr &packet );
-        void SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet );
+        NetworkPacketPtr ReadPacket( uint64_t protocol_id, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read );
+        void SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key );
 
-        static bool Encrypt( byte *data_to_encrypt, size_t data_length, byte* salt, size_t salt_length, byte *nonce, NetworkKey key );
+        static bool Encrypt( byte *data_to_encrypt, size_t data_length, byte* salt, size_t salt_length, NetworkNonce &nonce, NetworkKey &key );
+        static void GenerateEncryptionKey( NetworkKey &key );
 
     private:
         WSADATA m_wsa_data;

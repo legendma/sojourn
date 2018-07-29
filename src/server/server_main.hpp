@@ -12,7 +12,6 @@
 #define DEFAULT_SERVER_MAX_CLIENT_CNT     ( 8 )
 
 #define SERVER_MAX_CONNECT_TOKENS         ( 2000 )
-#define SERVER_MAX_NUM_CLIENTS            ( 8 )
 
 namespace Server
 {
@@ -27,7 +26,7 @@ namespace Server
     struct ServerConfig
     {
         uint64_t protocol_id;
-        uint8_t private_key[NETWORK_PRIVATE_KEY_BYTE_CNT];
+        Engine::NetworkKey private_key;
         size_t send_buff_size;
         size_t receive_buff_size;
         int server_fps;
@@ -40,7 +39,9 @@ namespace Server
             receive_buff_size( DEFAULT_SERVER_SOCKET_RCVBUF_SIZE ),
             server_fps( DEFAULT_SERVER_FRAMES_PER_SEC ),
             max_num_clients( DEFAULT_SERVER_MAX_CLIENT_CNT )
-        {};
+        {
+            Engine::Networking::GenerateEncryptionKey( private_key );
+        };
     };
 
     struct ConnectionTokens
@@ -60,7 +61,7 @@ namespace Server
         
     };
 
-    class Server : public Engine::IProcessesPackets
+    class Server
     {
         friend class ServerFactory;
     public:
@@ -79,6 +80,8 @@ namespace Server
         ConnectionTokens m_connection_tokens;
         
         void Update();
+        void ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, uint64_t now_time, Engine::InputBitStreamPtr &read );
+        void ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from );
         void ReceivePackets();
         void KeepClientsAlive();
         void CheckClientTimeouts();
@@ -90,8 +93,7 @@ namespace Server
         void Initialize();
         Server( ServerConfig &config, Engine::NetworkingPtr &networking );
 
-        // IProcessesPackets interface
-        virtual void OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet );
+        void OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from );
     };
 
     typedef std::shared_ptr<Server> ServerPtr;

@@ -77,7 +77,7 @@ Server::Server::Server( ServerConfig &config, Engine::NetworkingPtr &networking 
     Initialize();
 }
 
-void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet )
+void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from )
 {
     auto request = reinterpret_cast<Engine::NetworkConnectionRequestPacket&>( *packet );
     auto token = request.ReadToken();
@@ -98,7 +98,7 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &pack
         return;
     }
 
-    if( FindClientByAddress( request.from_address ) )
+    if( FindClientByAddress( from ) )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  Client is already connected." ).c_str() );
         return;
@@ -110,16 +110,16 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &pack
         return;
     }
 
-    if( !m_connection_tokens.FindAdd( token->token_uid, request.from_address, m_timer.GetElapsedSeconds() ) )
+    if( !m_connection_tokens.FindAdd( token->token_uid, from, m_timer.GetElapsedSeconds() ) )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  A client from a different address has already used this token." ).c_str() );
         return;
     }
 
-    if( m_clients.size() == SERVER_MAX_NUM_CLIENTS )
+    if( m_clients.size() == m_config.max_num_clients )
     {
         auto refusal = Engine::NetworkPacketFactory::CreateConnectionDenied();
-        m_networking->SendPacket( m_socket, request.from_address, refusal );
+        m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, m_config.private_key );
         return;
     }
 }
@@ -150,6 +150,33 @@ void Server::Server::Update()
     SendPacketsToClients(); // TODO IMPLEMENT
 }
 
+void Server::Server::ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, uint64_t now_time, Engine::InputBitStreamPtr &read )
+{
+    auto client = nullptr;//FindClientByAddress( from );
+    if( client )
+    {
+        // TODO: Get the encryption data
+    }
+    else
+    {
+        // TODO: Create new encryption data
+    }
+
+    auto packet = m_networking->ReadPacket( protocol_id, allowed, now_time, read );
+
+    ProcessPacket( packet, from );
+}
+
+void Server::Server::ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from )
+{
+    switch( packet->packet_type )
+    {
+        case Engine::PACKET_CONNECT_REQUEST:
+            OnReceivedConnectionRequest( packet, from );
+            break;
+    }
+}
+
 void Server::Server::ReceivePackets()
 {
     Engine::NetworkPacketTypesAllowed allowed;
@@ -169,7 +196,7 @@ void Server::Server::ReceivePackets()
             break;
         
         auto read = Engine::InputBitStreamFactory::CreateInputBitStream( data, byte_cnt );
-        m_networking->ReadAndProcessPacket( m_config.protocol_id, allowed, from, now, read, *this );
+        ReadAndProcessPacket( m_config.protocol_id, allowed, from, now, read );
     }
 }
 
