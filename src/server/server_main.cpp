@@ -13,10 +13,11 @@ int wmain( int argc, wchar_t* argv[] )
     wprintf( L"Sojourn Server\n" );
     Engine::SetLogLevel( Engine::LOG_LEVEL_DEBUG );
 
-    auto server_address = std::wstring( L"localhost:48000" );
+    Server::ServerConfig config;
+    config.server_address = std::wstring( L"localhost:48000" );
     if( argc == 2 )
     {
-        server_address = std::wstring( argv[ 1 ] );
+        config.server_address = std::wstring( argv[ 1 ] );
     }
 
     auto networking = Engine::NetworkingFactory::StartNetworking();
@@ -26,7 +27,6 @@ int wmain( int argc, wchar_t* argv[] )
         return -1;
     }
 
-    Server::ServerConfig config;
     auto server = Server::ServerFactory::CreateServer( config, networking );
     if( server == nullptr )
     {
@@ -79,6 +79,49 @@ Server::Server::Server( ServerConfig &config, Engine::NetworkingPtr &networking 
 
 void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet )
 {
+    auto request = reinterpret_cast<Engine::NetworkConnectionRequestPacket&>( *packet );
+    auto token = request.ReadToken();
+
+    bool found_our_address = false;
+    for( auto i = 0; i < token->server_address_cnt; i++ )
+    {
+        auto address = Engine::NetworkAddressFactory::CreateFromAddress( token->server_addresses[ i ] );
+        if( m_server_address->Matches( *address ) )
+        {
+            found_our_address = true;
+        }
+    }
+
+    if( !found_our_address )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  Server Address not found in whitelist." ).c_str() );
+        return;
+    }
+
+    if( FindClientByAddress( request.from_address ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  Client is already connected." ).c_str() );
+        return;
+    }
+
+    if( FindClientByClientID( token->client_id ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  Client with same client ID is already connected." ).c_str() );
+        return;
+    }
+
+    if( !m_connection_tokens.FindAdd( token->token_uid, request.from_address, m_timer.GetElapsedSeconds() ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  A client from a different address has already used this token." ).c_str() );
+        return;
+    }
+
+    if( m_clients.size() == SERVER_MAX_NUM_CLIENTS )
+    {
+        auto refusal = Engine::NetworkPacketFactory::CreateConnectionDenied();
+        m_networking->SendPacket( m_socket, request.from_address, refusal );
+        return;
+    }
 }
 
 Server::Server::~Server()
@@ -155,7 +198,21 @@ Server::ClientRecordPtr Server::Server::FindClientByAddress( Engine::NetworkAddr
     assert( m_clients.size() <= m_config.max_num_clients );
     for( auto client : m_clients )
     {
-        if( client->m_client_address->Matches( *search ) )
+        if( client->client_address->Matches( *search ) )
+        {
+            return client;
+        }
+    }
+
+    return nullptr;
+}
+
+Server::ClientRecordPtr Server::Server::FindClientByClientID( uint64_t search )
+{
+    assert( m_clients.size() <= m_config.max_num_clients );
+    for( auto client : m_clients )
+    {
+        if( client && client->client_id == search )
         {
             return client;
         }
@@ -173,4 +230,50 @@ Server::ServerPtr Server::ServerFactory::CreateServer( ServerConfig &config, Eng
     catch( std::runtime_error() ) {}
 
     return nullptr;
+}
+
+Server::ConnectionTokens::ConnectionTokens()
+{
+    for( size_t i = 0; i < m_tokens.size(); i++ )
+    {
+        m_tokens[ i ].time = 0.0;
+        memset( m_tokens[ i ].token_uid.data(), 0, sizeof( Engine::NetworkKey ) );
+    }
+}
+
+bool Server::ConnectionTokens::FindAdd( Engine::NetworkAuthentication &token_uid, Engine::NetworkAddressPtr address, double time )
+{
+    /* first search for the token id in our entries */
+    EntryType *match = nullptr;
+    EntryType *oldest = nullptr;
+    for( size_t i = 0; i < m_tokens.size(); i++ )
+    {
+        if( 0 == std::memcmp( m_tokens[ i ].token_uid.data(), token_uid.data(), sizeof( Engine::NetworkKey ) ) )
+        {
+            match = &m_tokens[ i ];
+        }
+
+        if( !oldest
+         || m_tokens[ i ].time < oldest->time )
+        {
+            oldest = &m_tokens[ i ];
+        }
+    }
+
+    if( !match )
+    {
+        /* didn't find a match for the given token UID, so overwrite the oldest entry with this token */
+        oldest->address = address;
+        oldest->time = time;
+        std::memcpy( oldest->token_uid.data(), token_uid.data(), sizeof( Engine::NetworkKey ) );
+        return true;
+    }
+
+    /* check to make sure the token entry we found has come from the same address */
+    if( match->address->Matches( *address ) )
+    {
+        return true;
+    }
+
+    return false;
 }

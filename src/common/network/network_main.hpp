@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/network/network_platform.hpp"
+#include "common/network/network_sockets.hpp"
 #include "common/network/network_address.hpp"
 
 #define NETWORK_ENDIANNESS               LITTLE_ENDIAN
@@ -17,11 +18,140 @@
 #define NETWORK_PACKET_TYPE_BITS         ( 4 )
 #define NETWORK_SEQUENCE_NUM_BITS        ( 4 )
 
-#define NETWORK_KEY_LENGTH               ( 32 )
+#define NETWORK_KEY_LENGTH               ( crypto_aead_chacha20poly1305_IETF_KEYBYTES )
+#define NETWORK_AUTHENTICATION_LENGTH    ( crypto_aead_chacha20poly1305_IETF_ABYTES )
 
 namespace Engine
 {
     typedef std::array<byte, NETWORK_KEY_LENGTH> NetworkKey;
+    typedef std::array<byte, NETWORK_AUTHENTICATION_LENGTH> NetworkAuthentication;
+
+    class BitStreamBase
+    {
+    public:
+        BitStreamBase( bool is_owned );
+        ~BitStreamBase() { std::free( m_buffer ); }
+
+        size_t GetSize() { return m_bit_capacity * 8; }
+        byte * GetBuffer() { return m_buffer; }
+        static int BitsRequired( uint64_t value );
+        
+    protected:
+        byte     *m_buffer;
+        uint32_t  m_bit_head;
+        uint32_t  m_bit_capacity;
+        bool      m_owned;
+
+        void ReallocateBuffer( const size_t size );
+        void BindBuffer( byte* buffer, const size_t size );
+    };
+
+    class InputBitStream : public BitStreamBase
+    {
+        friend class InputBitStreamFactory;
+    public:
+        ~InputBitStream() {};
+
+        size_t GetRemainingBitCount()  { return m_bit_capacity - m_bit_head; }
+        size_t GetRemainingByteCount() { return ( GetRemainingBitCount() + 7 ) / 8; }
+
+        void Advance( uint32_t bit_cnt ) { m_bit_head += bit_cnt; }
+        void ReadBits( void *out, uint32_t bit_cnt );
+        void ReadBits( byte &out, uint32_t bit_cnt );
+        template <typename T> void Read( T &data, uint32_t bit_cnt = sizeof(T) * 8 )
+        {
+            static_assert( std::is_arithmetic<T>::value
+                        || std::is_enum<T>::value,
+                           "Generic Read only supports primitive data types" );
+            T read;
+            ReadBits( &read, size * 8 );
+            data = ByteSwap( read );
+        }
+
+        void Read( NetworkKey &out );
+        void Read( sockaddr &out );
+
+        void Read( uint32_t &out, uint32_t bit_cnt = 32 ) { uint32_t temp; ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
+        void Read( int& out, uint32_t bit_cnt = 32 )      { int temp;      ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
+        void Read( float& out )                           { float temp;    ReadBits( &temp, 32 );      out = ByteSwap( temp ); }
+             
+        void Read( uint16_t& out, uint32_t bit_cnt = 16 ) { uint16_t temp; ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
+        void Read( int16_t& out, uint32_t bit_cnt = 16 )  { int16_t temp;  ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
+             
+        void Read( bool& out )                            { bool temp;     ReadBits( &temp, 1 );       out = ByteSwap( temp ); }
+        void Read( uint8_t& out, uint32_t bit_cnt = 8 )   { ReadBits( &out, bit_cnt ); }
+
+        void ReadBytes( void* out, size_t byte_cnt ) { ReadBits( out, byte_cnt * 8 ); }
+
+    private:
+        InputBitStream( byte *input, const size_t size, bool owned );
+    };
+
+    typedef std::shared_ptr<InputBitStream> InputBitStreamPtr;
+
+    class InputBitStreamFactory
+    {
+    public:
+        static InputBitStreamPtr CreateInputBitStream( byte *input, const size_t size, bool owned = true )
+        {
+            return InputBitStreamPtr( new InputBitStream( input, size, owned ) );
+        }
+    };
+
+    class OutputBitStream : public BitStreamBase
+    {
+        friend class OutputBitStreamFactory;
+    public:
+        ~OutputBitStream() {};
+    
+        size_t GetCurrentBitCount()  { return m_bit_capacity - m_bit_head; }
+        size_t GetCurrentByteCount() { return ( GetCurrentBitCount() + 7 ) / 8; }
+        size_t Collapse();
+    
+        void WriteBits( void *out, uint32_t bit_cnt );
+        void WriteBits( byte &out, uint32_t bit_cnt );
+
+        template< typename T >
+        void Write( T &data, uint32_t bit_cnt = sizeof(T) * 8 )
+        {
+            static_assert(std::is_arithmetic<T>::value
+                       || std::is_enum<T>::value,
+                          "Generic Write only supports primitive data types" );
+
+            T write = ByteSwap( data );
+            WriteBits( &write, bit_cnt );
+        }
+    
+        void Write( NetworkKey &out );
+        void Write( sockaddr &out );
+
+        void Write( uint32_t &out, uint32_t bit_cnt = 32 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
+        void Write( int& out, uint32_t bit_cnt = 32 )      { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
+        void Write( float& out )                           { auto temp = ByteSwap( out ); WriteBits( &temp, 32 );      }
+             
+        void Write( uint16_t& out, uint32_t bit_cnt = 16 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
+        void Write( int16_t& out, uint32_t bit_cnt = 16 )  { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
+             
+        void Write( bool& out )                            { auto temp = ByteSwap( out ); WriteBits( &temp, 1 );       }
+        void Write( uint8_t& out, uint32_t bit_cnt = 8 )   {                              WriteBits( &out, bit_cnt );  }
+
+        void WriteBytes( void* out, size_t byte_cnt ) { WriteBits( out, byte_cnt * 8 ); }
+
+    private:
+        OutputBitStream( byte *input, const size_t size, bool owned );
+    };
+
+    typedef std::shared_ptr<OutputBitStream> OutputBitStreamPtr;
+
+    class OutputBitStreamFactory
+    {
+    public:
+        static OutputBitStreamPtr CreateOutputBitStream( byte *input = nullptr, size_t size = 0, bool owned = true )
+        {
+            return OutputBitStreamPtr( new OutputBitStream( input, size, owned ) );
+        }
+    };
+
     typedef enum
     {
         PACKET_CONNECT_REQUEST,
@@ -35,11 +165,17 @@ namespace Engine
         PACKET_INVALID = PACKET_TYPE_CNT
     } NetworkPacketType;
 
-    struct NetworkPacketPrefix
+    union NetworkPacketPrefix
     {
-        byte packet_type  : NETWORK_PACKET_TYPE_BITS;
-        byte sequence_num : NETWORK_SEQUENCE_NUM_BITS;
+        struct
+        {
+            byte packet_type       : NETWORK_PACKET_TYPE_BITS;
+            byte sequence_byte_cnt : NETWORK_SEQUENCE_NUM_BITS;
+        };
+
+        uint8_t b;
     };
+    
 
     struct NetworkConnectionRequestHeader
     {
@@ -59,7 +195,7 @@ namespace Engine
         std::array<sockaddr, NETCODE_MAX_SERVERS_PER_CONNECT> server_addresses;
         NetworkKey client_to_server_key;
         NetworkKey server_to_client_key;
-        NetworkKey token_uid;
+        NetworkAuthentication token_uid;
     };
 
     typedef std::shared_ptr<NetworkConnectionToken> NetworkConnectionTokenPtr;
@@ -113,15 +249,30 @@ namespace Engine
     {
     public:
         NetworkPacketType packet_type;
+
+        OutputBitStreamPtr Get( uint64_t sequence_num );
+    private:
+        virtual void Write( OutputBitStreamPtr &out ) = 0;
     };
 
     class NetworkConnectionRequestPacket : public NetworkPacket
     {
     public:
         NetworkConnectionRequestHeader header;
+        NetworkAddressPtr from_address;
 
         NetworkConnectionTokenPtr ReadToken();
+        NetworkConnectionRequestPacket() { packet_type = PACKET_CONNECT_REQUEST; }
 
+    private:
+        virtual void Write( OutputBitStreamPtr &out );
+
+    };
+
+    class NetworkConnectionDeniedPacket : public NetworkPacket
+    {
+    public:
+        NetworkConnectionDeniedPacket() { packet_type = PACKET_CONNECT_DENIED; }
     };
 
     typedef std::shared_ptr<NetworkPacket> NetworkPacketPtr;
@@ -129,134 +280,13 @@ namespace Engine
     class NetworkPacketFactory
     {
     public:
-        static NetworkPacketPtr CreateConnectionRequest( NetworkConnectionRequestHeader &header );
+        static NetworkPacketPtr CreateConnectionRequest( NetworkConnectionRequestHeader &header, NetworkAddressPtr &from );
+        static NetworkPacketPtr CreateConnectionDenied();
     };
 
     interface IProcessesPackets
     {
         virtual void OnReceivedConnectionRequest( NetworkPacketPtr &packet ) = 0;
-    };
-
-    class BitStreamBase
-    {
-    public:
-        BitStreamBase( bool is_owned );
-        ~BitStreamBase() { std::free( m_buffer ); };
-        
-    protected:
-        byte     *m_buffer;
-        uint32_t  m_bit_head;
-        uint32_t  m_bit_capacity;
-        bool      m_owned;
-
-        void ReallocateBuffer( const size_t size );
-        void BindBuffer( byte* buffer, const size_t size );
-    };
-
-    class InputBitStream : public BitStreamBase
-    {
-        friend class InputBitStreamFactory;
-    public:
-        ~InputBitStream() {};
-
-        size_t GetRemainingBitCount()  { return m_bit_capacity - m_bit_head; }
-        size_t GetRemainingByteCount() { return ( GetRemainingBitCount() + 7 ) / 8; }
-        size_t GetSize()               { return m_bit_capacity * 8; }
-
-        void Advance( uint32_t bit_cnt ) { m_bit_head += bit_cnt; }
-        void ReadBits( void *out, uint32_t bit_cnt );
-        void ReadBits( byte &out, uint32_t bit_cnt );
-        template <typename T> void Read( T &data, uint32_t bit_cnt = sizeof(T) * 8 )
-        {
-            static_assert( std::is_arithmetic<T>::value
-                        || std::is_enum<T>::value,
-                           "Generic Read only supports primitive data types" );
-            T read;
-            ReadBits( &read, size * 8 );
-            data = ByteSwap( read );
-        }
-
-        void Read( NetworkKey &out );
-        void Read( sockaddr &out );
-
-        void Read( uint32_t &out, uint32_t bit_cnt = 32 ) { uint32_t temp; ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-        void Read( int& out, uint32_t bit_cnt = 32 )      { int temp;      ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-        void Read( float& out )                           { float temp;    ReadBits( &temp, 32 );      out = ByteSwap( temp ); }
-             
-        void Read( uint16_t& out, uint32_t bit_cnt = 16 ) { uint16_t temp; ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-        void Read( int16_t& out, uint32_t bit_cnt = 16 )  { int16_t temp;  ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-             
-        void Read( bool& out )                            { bool temp;     ReadBits( &temp, 1 );       out = ByteSwap( temp ); }
-        void Read( uint8_t& out, uint32_t bit_cnt = 8 )   { ReadBits( &out, bit_cnt ); }
-
-        void ReadBytes( void* out, uint32_t byte_cnt ) { ReadBits( out, byte_cnt * 8 ); }
-
-    private:
-        InputBitStream( byte *input, const size_t size, bool owned );
-    };
-
-    typedef std::shared_ptr<InputBitStream> InputBitStreamPtr;
-
-    class InputBitStreamFactory
-    {
-    public:
-        static InputBitStreamPtr CreateInputBitStream( byte *input, const size_t size, bool owned = true )
-        {
-            return InputBitStreamPtr( new InputBitStream( input, size, owned ) );
-        }
-    };
-
-    class OutputBitStream : public BitStreamBase
-    {
-        friend class OutputBitStreamFactory;
-    public:
-        ~OutputBitStream() {};
-    
-        size_t GetCurrentBitCount()  { return m_bit_capacity - m_bit_head; }
-        size_t GetCurrentByteCount() { return ( GetCurrentBitCount() + 7 ) / 8; }
-    
-        void WriteBits( void *out, uint32_t bit_cnt );
-        void WriteBits( byte &out, uint32_t bit_cnt );
-
-        template< typename T >
-        void Write( T &data, uint32_t bit_cnt = sizeof(T) * 8 )
-        {
-            static_assert(std::is_arithmetic<T>::value
-                       || std::is_enum<T>::value,
-                          "Generic Write only supports primitive data types" );
-
-            T write = ByteSwap( data );
-            WriteBits( &write, inBitCount );
-        }
-    
-        void Write( NetworkKey &out );
-        void Write( sockaddr &out );
-
-        void Write( uint32_t &out, uint32_t bit_cnt = 32 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( int& out, uint32_t bit_cnt = 32 )      { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( float& out )                           { auto temp = ByteSwap( out ); WriteBits( &temp, 32 );      }
-             
-        void Write( uint16_t& out, uint32_t bit_cnt = 16 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( int16_t& out, uint32_t bit_cnt = 16 )  { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-             
-        void Write( bool& out )                            { auto temp = ByteSwap( out ); WriteBits( &temp, 1 );       }
-        void Write( uint8_t& out, uint32_t bit_cnt = 8 )   {                              WriteBits( &out, bit_cnt );  }
-
-        void WriteBytes( void* out, uint32_t byte_cnt ) { WriteBits( out, byte_cnt * 8 ); }
-
-    private:
-        OutputBitStream( byte *input, const size_t size, bool owned );
-    };
-
-    typedef std::shared_ptr<OutputBitStream> OutputBitStreamPtr;
-
-    class OutputBitStreamFactory
-    {
-    public:
-        static OutputBitStreamPtr CreateOutputBitStream( byte *input = nullptr, size_t size = 0, bool owned = true )
-        {
-            return OutputBitStreamPtr( new OutputBitStream( input, size, owned ) );
-        }
     };
 
     class Networking
@@ -267,9 +297,13 @@ namespace Engine
 
         void ReadAndProcessPacket( uint64_t protocol_id, NetworkPacketTypesAllowed &allowed, NetworkAddressPtr &from, uint64_t now_time, InputBitStreamPtr &read, IProcessesPackets &processor );
         void ProcessPacket( IProcessesPackets &process, NetworkPacketPtr &packet );
+        void SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet );
+
+        static bool Encrypt( byte *data_to_encrypt, size_t data_length, byte* salt, size_t salt_length, byte *nonce, NetworkKey key );
 
     private:
         WSADATA m_wsa_data;
+        uint64_t m_sequence_num;
 
         Networking();
         void Initialize();

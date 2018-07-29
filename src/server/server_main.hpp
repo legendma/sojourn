@@ -11,11 +11,15 @@
 #define DEFAULT_SERVER_FRAMES_PER_SEC     ( 60 )
 #define DEFAULT_SERVER_MAX_CLIENT_CNT     ( 8 )
 
+#define SERVER_MAX_CONNECT_TOKENS         ( 2000 )
+#define SERVER_MAX_NUM_CLIENTS            ( 8 )
+
 namespace Server
 {
     struct ClientRecord
     {
-        Engine::NetworkAddressPtr m_client_address;
+        Engine::NetworkAddressPtr client_address;
+        uint64_t client_id;
     };
 
     typedef std::shared_ptr<ClientRecord> ClientRecordPtr;
@@ -39,6 +43,23 @@ namespace Server
         {};
     };
 
+    struct ConnectionTokens
+    {
+        typedef struct
+        {
+            Engine::NetworkKey token_uid;
+            Engine::NetworkAddressPtr address;
+            double time;
+        } EntryType;
+
+        ConnectionTokens();
+        bool FindAdd( Engine::NetworkAuthentication &token_uid, Engine::NetworkAddressPtr address, double time );
+
+    private:
+        std::array<EntryType, SERVER_MAX_CONNECT_TOKENS> m_tokens;
+        
+    };
+
     class Server : public Engine::IProcessesPackets
     {
         friend class ServerFactory;
@@ -55,6 +76,7 @@ namespace Server
         boolean m_quit;
         ServerConfig m_config;
         std::vector<ClientRecordPtr> m_clients;
+        ConnectionTokens m_connection_tokens;
         
         void Update();
         void ReceivePackets();
@@ -63,7 +85,8 @@ namespace Server
         void HandleGamePacketsFromClients();
         void RunGameSimulation();
         void SendPacketsToClients();
-        ClientRecordPtr FindClientByAddress( Engine::NetworkAddressPtr & search );
+        ClientRecordPtr FindClientByAddress( Engine::NetworkAddressPtr &search );
+        ClientRecordPtr FindClientByClientID( uint64_t search );
         void Initialize();
         Server( ServerConfig &config, Engine::NetworkingPtr &networking );
 

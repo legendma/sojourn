@@ -21,3 +21,4 @@
 #include <comdef.h>
 #include <ppltasks.h>	// For create_task
 #include <array>
+#include <sodium/include/sodium.h>

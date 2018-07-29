@@ -26,6 +26,7 @@ namespace Engine
     {
     public:
         static Concurrency::task<Engine::NetworkAddressPtr> CreateAddressFromStringAsync( const std::wstring address_string );
+        static NetworkAddressPtr CreateFromAddress( sockaddr &in );
     };
 }
 

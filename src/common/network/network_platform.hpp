@@ -1,5 +1,7 @@
 #pragma once
 
+#include "common/engine/engine_utilities.hpp"
+
 /* define platform endianness */
 #define LITTLE_ENDIAN                    ( 0 )
 #define BIG_ENDIAN                       ( 1 )
@@ -22,8 +24,6 @@ static int get_platform_endian()
 }
 
 #define PLATFORM_ENDIANNESS get_platform_endian()
-
-#include "common/engine/engine_utilities.hpp"
 
 namespace Engine
 {

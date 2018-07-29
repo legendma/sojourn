@@ -95,3 +95,8 @@ Concurrency::task<Engine::NetworkAddressPtr> Engine::NetworkAddressFactory::Crea
         return( net_address );
     } );
 }
+
+Engine::NetworkAddressPtr Engine::NetworkAddressFactory::CreateFromAddress( sockaddr &in )
+{
+    return NetworkAddressPtr( new NetworkAddress( in ) );
+}

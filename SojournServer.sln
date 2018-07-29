@@ -4,6 +4,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SojournServer", "src\server\SojournServer.vcxproj", "{1BE3716F-384F-49E7-9B9B-CEC15FA82CB9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D} = {A1C4CB48-C014-4671-B33F-20B228FA0F0D}
+		{2115DD8D-854B-4992-8129-537DA4814C2C} = {2115DD8D-854B-4992-8129-537DA4814C2C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "dep\lua\lua.vcxproj", "{2115DD8D-854B-4992-8129-537DA4814C2C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium", "dep\sodium\sodium.vcxproj", "{A1C4CB48-C014-4671-B33F-20B228FA0F0D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +29,22 @@ Global
 		{1BE3716F-384F-49E7-9B9B-CEC15FA82CB9}.Release|x64.Build.0 = Release|x64
 		{1BE3716F-384F-49E7-9B9B-CEC15FA82CB9}.Release|x86.ActiveCfg = Release|Win32
 		{1BE3716F-384F-49E7-9B9B-CEC15FA82CB9}.Release|x86.Build.0 = Release|Win32
+		{2115DD8D-854B-4992-8129-537DA4814C2C}.Debug|x64.ActiveCfg = Debug|x64
+		{2115DD8D-854B-4992-8129-537DA4814C2C}.Debug|x64.Build.0 = Debug|x64
+		{2115DD8D-854B-4992-8129-537DA4814C2C}.Debug|x86.ActiveCfg = Debug|Win32
+		{2115DD8D-854B-4992-8129-537DA4814C2C}.Debug|x86.Build.0 = Debug|Win32
+		{2115DD8D-854B-4992-8129-537DA4814C2C}.Release|x64.ActiveCfg = Release|x64
+		{2115DD8D-854B-4992-8129-537DA4814C2C}.Release|x64.Build.0 = Release|x64
+		{2115DD8D-854B-4992-8129-537DA4814C2C}.Release|x86.ActiveCfg = Release|Win32
+		{2115DD8D-854B-4992-8129-537DA4814C2C}.Release|x86.Build.0 = Release|Win32
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Debug|x64.ActiveCfg = Debug|x64
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Debug|x64.Build.0 = Debug|x64
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Debug|x86.ActiveCfg = Debug|Win32
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Debug|x86.Build.0 = Debug|Win32
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x64.ActiveCfg = Release|x64
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x64.Build.0 = Release|x64
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x86.ActiveCfg = Release|Win32
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

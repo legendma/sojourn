@@ -1,5 +1,5 @@
 #include "pch.hpp"
-#include "common/engine/engine_utilities.hpp"
+#include "engine_utilities.hpp"
 
 static Engine::LogLevel s_log_level = Engine::LOG_LEVEL_ERROR;
 

@@ -3,7 +3,8 @@
 
 #include "common/engine/engine_utilities.hpp"
 
-Engine::Networking::Networking()
+Engine::Networking::Networking() :
+    m_sequence_num( 0 )
 {
     Initialize();
 }
@@ -89,7 +90,7 @@ void Engine::Networking::ReadAndProcessPacket( uint64_t protocol_id, Engine::Net
             return;
         }
 
-        packet = Engine::NetworkPacketFactory::CreateConnectionRequest( request );
+        packet = Engine::NetworkPacketFactory::CreateConnectionRequest( request, from );
     }
 
     ProcessPacket( processor, packet );
@@ -103,6 +104,24 @@ void Engine::Networking::ProcessPacket( IProcessesPackets &process, NetworkPacke
         process.OnReceivedConnectionRequest( packet );
         break;
     }
+}
+
+void Engine::Networking::SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet )
+{
+    auto buffer = packet->Get( m_sequence_num++ );
+    socket->SendTo( buffer->GetBuffer(), buffer->GetSize(), to );
+}
+
+bool Engine::Networking::Encrypt( byte *data_to_encrypt, size_t data_length, byte *salt, size_t salt_length, byte *nonce, NetworkKey key )
+{
+    unsigned long long encrypted_length;
+    byte *buffer = static_cast<byte*>( alloca( data_length + NETWORK_AUTHENTICATION_LENGTH ) );
+    crypto_aead_chacha20poly1305_ietf_encrypt( buffer, &encrypted_length,
+                                               data_to_encrypt, static_cast<unsigned long long>(data_length),
+                                               salt, salt_length,
+                                               NULL, nonce, key.data() );
+        
+    return true;
 }
 
 Engine::NetworkingPtr Engine::NetworkingFactory::StartNetworking()
@@ -133,7 +152,7 @@ void Engine::BitStreamBase::ReallocateBuffer( const size_t size )
     }
     else
     {
-        BindBuffer( static_cast<byte*>(std::realloc( m_buffer, size ) ), size );
+        BindBuffer( static_cast<byte*>( std::realloc( m_buffer, size ) ), size );
     }
 }
 
@@ -141,6 +160,18 @@ void Engine::BitStreamBase::BindBuffer( byte* buffer, const size_t size )
 {
     m_buffer = buffer;
     m_bit_capacity = 8 * size;
+}
+
+int Engine::BitStreamBase::BitsRequired( uint64_t value )
+{
+    int required_bits = 0;
+    while( value )
+    {
+        value >>= 1;
+        required_bits++;
+    }
+
+    return required_bits;
 }
 
 Engine::InputBitStream::InputBitStream( byte *input, const size_t size, bool owned ) :
@@ -263,6 +294,13 @@ void Engine::OutputBitStream::Write( sockaddr &out )
     WriteBytes( out.sa_data, sizeof( out.sa_data ) );
 }
 
+size_t Engine::OutputBitStream::Collapse()
+{
+    size_t size = ( 7 + m_bit_head ) / 8;
+    ReallocateBuffer( size );
+    return( size );
+}
+
 void Engine::OutputBitStream::WriteBits( void *out, uint32_t bit_cnt )
 {
     auto source = reinterpret_cast<byte*>(out);
@@ -282,9 +320,23 @@ void Engine::OutputBitStream::WriteBits( void *out, uint32_t bit_cnt )
     }
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionRequest( NetworkConnectionRequestHeader & header )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionRequest( NetworkConnectionRequestHeader &header, NetworkAddressPtr &from )
 {
-    return NetworkPacketPtr();
+    auto packet = std::make_shared<NetworkConnectionRequestPacket>();
+    packet->header = header;
+    packet->from_address = from;
+
+    return packet;
+}
+
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionDenied()
+{
+    auto packet = std::make_shared<NetworkConnectionRequestPacket>();
+    
+    packet->header.prefix.packet_type = PACKET_CONNECT_DENIED;
+    packet->header.prefix.sequence_byte_cnt = 0;
+
+    return packet;
 }
 
 Engine::NetworkConnectionTokenPtr Engine::NetworkConnectionRequestPacket::ReadToken()
@@ -310,7 +362,44 @@ Engine::NetworkConnectionTokenPtr Engine::NetworkConnectionRequestPacket::ReadTo
 
     read->Read( token->client_to_server_key );
     read->Read( token->server_to_client_key );
-    read->Read( token->token_uid );
+    read->ReadBytes( token->token_uid.data(), NETWORK_AUTHENTICATION_LENGTH );
 
     return token;
+}
+
+void Engine::NetworkConnectionRequestPacket::Write( OutputBitStreamPtr &out )
+{
+    out->Write( header.prefix.b );
+    out->WriteBytes( header.version.data(), header.version.size() );
+    out->Write( header.protocol_id );
+    out->Write( header.connection_token_expiration_timestamp );
+    out->Write( header.connection_token_sequence );
+    out->WriteBytes( header.connection_token_data.data(), header.connection_token_data.size() );
+}
+
+Engine::OutputBitStreamPtr Engine::NetworkPacket::Get( uint64_t sequence_num )
+{
+    auto out = OutputBitStreamFactory::CreateOutputBitStream();
+   
+    /* handle connection requests without encryption */
+    if( packet_type == PACKET_CONNECT_REQUEST )
+    {
+        Write( out );
+        out->Collapse();
+        return out;
+    }
+
+    /* encrypted packet */
+    auto sequence_byte_cnt = ( 7 + BitStreamBase::BitsRequired( sequence_num ) ) / 8;
+
+    NetworkPacketPrefix prefix;
+    prefix.packet_type = packet_type;
+    prefix.sequence_byte_cnt = sequence_byte_cnt;
+    out->Write( prefix.b );
+    out->Write( sequence_num, sequence_byte_cnt * 8 );
+
+    auto encrypted = OutputBitStreamFactory::CreateOutputBitStream();
+    Write( encrypted );
+    
+    return out;
 }
