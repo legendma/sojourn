@@ -7,9 +7,10 @@
 using namespace Game;
 using namespace Concurrency;
 
-Main::Main( const std::shared_ptr<Engine::GraphicsAdapter>& graphics )
+Main::Main( const std::shared_ptr<Engine::GraphicsAdapter>& graphics, Engine::StepTimer &timer )
          : m_scripting( nullptr ),
-           m_graphics( graphics )
+           m_graphics( graphics ),
+           m_timer( timer )
 {
     // Register to be notified if the Device is lost or recreated
     m_graphics->RegisterDeviceNotify( this );

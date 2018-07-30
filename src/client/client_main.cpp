@@ -47,6 +47,16 @@ bool Client::App<T>::Start( HINSTANCE hinstance )
     auto window = std::shared_ptr<Client::Window>( this );
     m_graphics->SetWindow( window );
 
+    // Create the Networking Adapter
+    m_network_config.server_address = L"127.0.0.1:48000";
+    m_networking = Engine::NetworkingFactory::StartNetworking();
+    if( m_networking == nullptr
+     || !StartNetworking( std::wstring( L"0.0.0.0" ) ) )
+    {
+        Engine::ReportError( L"Networking system could not be started.  Exiting..." );
+        return false;
+    }
+
     // Create the application
     m_main = std::make_unique<T>( m_graphics );
     
@@ -70,16 +80,21 @@ int Client::App<T>::Run()
         // Otherwise, do animation/game stuff.
         else
         {
-            //mTimer.Tick();
-            if( m_is_active )
+            // Update scene objects.
+            m_timer.Tick( [&]()
             {
+                UpdateNetworking();
                 m_main->Update();
+                if( m_is_active )
+                {
                 m_main->Render();
-            }
-            else
-            {
-                Sleep( 100 );
-            }
+                }
+                else
+                {
+                    Sleep( 100 );
+                }
+            } );
+            
         }
     }
 
@@ -88,6 +103,102 @@ int Client::App<T>::Run()
 
 template<typename T>
 void Client::App<T>::Shutdown()
+{
+}
+
+template<typename T>
+bool Client::App<T>::StartNetworking( std::wstring our_address )
+{
+    // Create the server address
+    m_server_address = Engine::NetworkAddressFactory::CreateAddressFromStringAsync( m_network_config.server_address ).get();
+    if( m_server_address == nullptr )
+    {
+        Engine::ReportError( L"Client::App::StartNetworking Given server address is invalid!" );
+        throw std::runtime_error( "CreateAddressFromStringAsync" );
+    }
+
+    // Create the server socket
+    m_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_server_address, m_network_config.receive_buff_size, m_network_config.send_buff_size );
+    if( m_socket == nullptr )
+    {
+        Engine::ReportError( L"Client::App::StartNetworking Unable to create client socket." );
+        throw std::runtime_error( "CreateUDPSocket" );
+    }
+
+    //Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server listening on %s" ).c_str(), m_server_address->Print() );
+    
+    // create the challenge key
+    //Engine::Networking::GenerateEncryptionKey( m_challenge_key );
+
+    return true;
+}
+
+template<typename T>
+void Client::App<T>::UpdateNetworking()
+{
+    ReceivePackets();
+    UpdateConnection(); // TODO IMPLEMENT
+    HandleGamePacketsFromServer(); // TODO IMPLEMENT
+    SendPacketsToServer(); // TODO IMPLEMENT
+}
+
+template<typename T>
+void Client::App<T>::ReceivePackets()
+{
+    Engine::NetworkPacketTypesAllowed allowed;
+    allowed.SetAllowed( Engine::PACKET_CONNECT_DENIED );
+    allowed.SetAllowed( Engine::PACKET_CONNECT_CHALLENGE );
+    allowed.SetAllowed( Engine::PACKET_KEEP_ALIVE );
+    allowed.SetAllowed( Engine::PACKET_PAYLOAD );
+    allowed.SetAllowed( Engine::PACKET_DISCONNECT );
+
+    auto now = m_timer.GetTotalTicks();
+    byte data[NETWORK_MAX_PACKET_SIZE];
+    while( true )
+    {
+        Engine::NetworkAddressPtr from;
+        auto byte_cnt = m_socket->ReceiveFrom( data, sizeof( data ), from );
+        if( byte_cnt == 0 )
+            break;
+
+        auto read = Engine::InputBitStreamFactory::CreateInputBitStream( data, byte_cnt, false );
+        //ReadAndProcessPacket( m_network_config.protocol_id, allowed, from, now, read );
+        auto packet = m_networking->ReadPacket( m_network_config.protocol_id, m_crypto, m_network_config.private_key, allowed, now, read );
+        if( packet )
+        {
+            ProcessPacket( packet, from, now );
+        }
+    }
+}
+
+template<typename T>
+void Client::App<T>::ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time )
+{
+    switch( packet->packet_type )
+    {
+    case Engine::PACKET_CONNECT_CHALLENGE:
+        OnReceivedConnectionChallenge( packet, from, now_time );
+        break;
+    }
+}
+
+template<typename T>
+void Client::App<T>::UpdateConnection()
+{
+}
+
+template<typename T>
+void Client::App<T>::HandleGamePacketsFromServer()
+{
+}
+
+template<typename T>
+void Client::App<T>::SendPacketsToServer()
+{
+}
+
+template<typename T>
+void Client::App<T>::OnReceivedConnectionChallenge( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time )
 {
 }
 

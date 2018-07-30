@@ -40,6 +40,9 @@
     <Filter Include="src\game\world">
       <UniqueIdentifier>{2470bf83-b5f5-43f9-a438-f6d6ebc472e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\engine\network">
+      <UniqueIdentifier>{3e82d9ec-f1f6-410d-984d-b8d0ab8f5e82}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="client_window.cpp">
@@ -79,6 +82,18 @@
       <Filter>src\game</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="..\common\network\network_main.cpp">
+      <Filter>src\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\network\network_address.cpp">
+      <Filter>src\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\network\network_sockets.cpp">
+      <Filter>src\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\network\network_connection.cpp">
+      <Filter>src\engine\network</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game\shaders\shaders_structures.hpp">
@@ -130,6 +145,9 @@
       <Filter>src\game</Filter>
     </ClInclude>
     <ClInclude Include="pch.hpp" />
+    <ClInclude Include="engine\network\network_connection.hpp">
+      <Filter>src\engine\network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="game\shaders\color_position_ps.hlsl">

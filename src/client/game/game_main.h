@@ -12,7 +12,7 @@ namespace Game
     class Main : public Engine::IDeviceNotify
     {
     public:
-        Main( const std::shared_ptr<Engine::GraphicsAdapter>& graphics );
+        Main( const std::shared_ptr<Engine::GraphicsAdapter> &graphics, Engine::StepTimer &timer );
         ~Main();
 
         // IDeviceNotify
@@ -25,8 +25,9 @@ namespace Game
          // Cached pointer to device resources.
 
      protected:
-        // Rendering loop timer.
-	    Engine::StepTimer m_timer;
+         // Rendering loop timer.
+         Engine::StepTimer &m_timer;
+
         // TODO: Replace with your own content renderers.
         std::unique_ptr<Game::World3DRenderer>     m_sceneRenderer;
         std::unique_ptr<Game::GUIRenderer>         m_guiRenderer;

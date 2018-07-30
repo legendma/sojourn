@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 
 #include <sal.h> // SAL runtime checking annotations
 #include <atlbase.h>
@@ -23,10 +24,12 @@
 //#include <memory>
 //#include <agile.h>
 //#include <concrt.h>
+#include <sodium/include/sodium.h>
 #include <codecvt>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <array>
 
 #undef max
 /* registry base path */

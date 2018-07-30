@@ -19,6 +19,7 @@ namespace Server
     {
         Engine::NetworkAddressPtr client_address;
         uint64_t client_id;
+        uint32_t crypto_id;
     };
 
     typedef std::shared_ptr<ClientRecord> ClientRecordPtr;
@@ -78,10 +79,12 @@ namespace Server
         ServerConfig m_config;
         std::vector<ClientRecordPtr> m_clients;
         ConnectionTokens m_connection_tokens;
+        uint64_t m_next_challenge_sequence;
+        Engine::NetworkKey m_challenge_key;
         
         void Update();
-        void ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, uint64_t now_time, Engine::InputBitStreamPtr &read );
-        void ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from );
+        void ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, uint64_t &now_time, Engine::InputBitStreamPtr &read );
+        void ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time );
         void ReceivePackets();
         void KeepClientsAlive();
         void CheckClientTimeouts();
@@ -93,7 +96,7 @@ namespace Server
         void Initialize();
         Server( ServerConfig &config, Engine::NetworkingPtr &networking );
 
-        void OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from );
+        void OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time );
     };
 
     typedef std::shared_ptr<Server> ServerPtr;

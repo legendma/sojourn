@@ -474,7 +474,7 @@ void GraphicsAdapter::UpdateRenderTargetSize()
 		// When the device is in portrait orientation, height > width. Compare the
 		// larger dimension against the width threshold and the smaller dimension
 		// against the height threshold.
-		if ( std::max( width, height) > DisplayMetrics::WidthThreshold && min(width, height) > DisplayMetrics::HeightThreshold)
+		if ( std::max( width, height) > DisplayMetrics::WidthThreshold && std::min(width, height) > DisplayMetrics::HeightThreshold)
 		{
 			// To scale the app we change the effective DPI. Logical size does not change.
 			m_effectiveDpi /= 2.0f;

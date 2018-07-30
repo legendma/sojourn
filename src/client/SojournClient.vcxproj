@@ -22,12 +22,16 @@
     <ClCompile Include="..\common\engine\engine_resources.cpp" />
     <ClCompile Include="..\common\engine\engine_scripts.cpp" />
     <ClCompile Include="..\common\engine\engine_utilities.cpp" />
+    <ClCompile Include="..\common\network\network_address.cpp" />
+    <ClCompile Include="..\common\network\network_main.cpp" />
+    <ClCompile Include="..\common\network\network_sockets.cpp" />
     <ClCompile Include="client_main.cpp" />
     <ClCompile Include="client_window.cpp" />
     <ClCompile Include="engine\graphics\graphics_adapter.cpp" />
     <ClCompile Include="engine\graphics\graphics_camera.cpp" />
     <ClCompile Include="engine\graphics\graphics_shaders.cpp" />
     <ClCompile Include="engine\gui\gui_renderer.cpp" />
+    <ClCompile Include="engine\network\network_connection.cpp" />
     <ClCompile Include="game\explorer\explorer_main.cpp" />
     <ClCompile Include="game\game_main.cpp" />
     <ClCompile Include="game\world\world_renderer.cpp" />
@@ -51,6 +55,7 @@
     <ClInclude Include="engine\graphics\graphics_shaders.hpp" />
     <ClInclude Include="engine\graphics\graphics_utilities.hpp" />
     <ClInclude Include="engine\gui\gui_renderer.hpp" />
+    <ClInclude Include="engine\network\network_connection.hpp" />
     <ClInclude Include="game\explorer\explorer_main.hpp" />
     <ClInclude Include="game\game_main.h" />
     <ClInclude Include="game\shaders\shaders_structures.hpp" />
@@ -156,14 +161,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;SODIUM_STATIC;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.lib;DXGI.lib;D2d1.lib;Dwrite.lib;sodium.lib;lua.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;D3D11.lib;DXGI.lib;D2d1.lib;Dwrite.lib;sodium.lib;lua.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -193,7 +198,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;SODIUM_STATIC;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
@@ -202,7 +207,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D3D11.lib;DXGI.lib;D2d1.lib;Dwrite.lib;sodium.lib;lua.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;D3D11.lib;DXGI.lib;D2d1.lib;Dwrite.lib;sodium.lib;lua.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

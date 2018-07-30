@@ -127,4 +127,5 @@ namespace Engine
 		std::map<std::wstring, std::shared_ptr<Engine::VertexShader>> m_vertexShaders;
 		std::map<std::wstring, std::shared_ptr<Engine::PixelShader>> m_pixelShaders;
 	};
+    typedef std::shared_ptr<GraphicsAdapter> GraphicsAdapterPtr;
 }

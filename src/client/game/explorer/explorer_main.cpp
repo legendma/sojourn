@@ -10,7 +10,7 @@ using namespace Concurrency;
 
 // Loads and initializes application assets when the application is loaded.
 Game::SojournExplorer::SojournExplorer(const std::shared_ptr<Engine::GraphicsAdapter>& graphics )
-                  : Game::Main( graphics )
+                  : Game::Main( graphics, m_timer )
 {
 
 	// TODO: Replace this with your app's content initialization.
@@ -40,12 +40,12 @@ void Game::SojournExplorer::CreateWindowSizeDependentResources()
 void Game::SojournExplorer::Update()
 {
 	// Update scene objects.
-	m_timer.Tick([&]()
-	{
+	//m_timer.Tick([&]()
+	//{
 		// TODO: Replace this with your app's content update functions.
 		m_sceneRenderer->Update(m_timer);
         m_guiRenderer->Update(m_timer);
-	});
+	//});
 }
 
 // Renders the current frame according to the current application state.
