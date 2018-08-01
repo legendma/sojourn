@@ -24,13 +24,13 @@ std::wstring Engine::NetworkAddress::Print()
     
     std::wstring out;
     int number;
-    number = ( address >> 0 ) & 0xff;
-    out.append( std::to_wstring( number ).append( L"." ) );
-    number = (address >> 8) & 0xff;
+    number = (address >> 24) & 0xff;
     out.append( std::to_wstring( number ).append( L"." ) );
     number = (address >> 16) & 0xff;
     out.append( std::to_wstring( number ).append( L"." ) );
-    number = (address >> 24) & 0xff;
+    number = (address >> 8) & 0xff;
+    out.append( std::to_wstring( number ).append( L"." ) );
+    number = (address >> 0) & 0xff;
     out.append( std::to_wstring( number ).append( L":" ) );
     out.append( std::to_wstring( port ) );
      

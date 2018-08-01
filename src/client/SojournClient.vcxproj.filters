@@ -91,7 +91,7 @@
     <ClCompile Include="..\common\network\network_sockets.cpp">
       <Filter>src\engine\common</Filter>
     </ClCompile>
-    <ClCompile Include="engine\network\network_connection.cpp">
+    <ClCompile Include="engine\network\network_client_connection.cpp">
       <Filter>src\engine\network</Filter>
     </ClCompile>
   </ItemGroup>
@@ -145,8 +145,14 @@
       <Filter>src\game</Filter>
     </ClInclude>
     <ClInclude Include="pch.hpp" />
-    <ClInclude Include="engine\network\network_connection.hpp">
+    <ClInclude Include="engine\network\network_client_config.hpp">
       <Filter>src\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\network\network_client_connection.hpp">
+      <Filter>src\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\network\network_main.hpp">
+      <Filter>src\engine\common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

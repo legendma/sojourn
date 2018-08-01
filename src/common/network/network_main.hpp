@@ -7,12 +7,13 @@
 #define NETWORK_ENDIANNESS                   LITTLE_ENDIAN
                                              
 #define NETWORK_PRIVATE_KEY_BYTE_CNT         ( 32 )
-#define NETWORK_SOJOURN_PROTOCOL_ID          ( 0x1ceb00dacafebabe )
+#define NETWORK_SOJOURN_PROTOCOL_ID          ( 0xda47091958c38397 )
 #define NETWORK_MAX_PACKET_SIZE              ( 1200 )
 #define NETWORK_PROTOCOL_VERSION_LEN         ( 16 )
 #define NETWORK_PROTOCOL_VERSION             ( "Sojourn Ver 1.0\0" )
 #define NETWORK_CONNECT_TOKEN_RAW_LENGTH     ( 1024 )
-#define NETWORK_CHALLENGE_TOKEN_RAW_LENGTH   ( 250 )
+#define NETWORK_CHALLENGE_TOKEN_RAW_LENGTH   ( 400 )
+#define NETWORK_FUZZ_LENGTH                  ( 300 )
 #define NETCODE_MAX_SERVERS_PER_CONNECT      ( 32 )
 #define NETWORK_NUM_CRYPO_MAPS               ( 1024 )
                                              
@@ -28,6 +29,12 @@ namespace Engine
     typedef std::array<byte, NETWORK_KEY_LENGTH> NetworkKey;
     typedef std::array<byte, NETWORK_AUTHENTICATION_LENGTH> NetworkAuthentication;
     typedef std::array<byte, NETWORK_NONCE_LENGTH> NetworkNonce;
+    typedef std::array<byte, NETWORK_FUZZ_LENGTH> NetworkFuzz;
+
+    static const NetworkKey SOJOURN_PRIVILEGED_KEY = { 0x56, 0xd7, 0xd2, 0x1d, 0x50, 0x4c, 0x5b, 0x76, 
+                                                       0x99, 0x09, 0xf7, 0xdf, 0xce, 0x6e, 0x58, 0x4e, 
+                                                       0x6b, 0xa1, 0x58, 0xcd, 0x24, 0x71, 0x4d, 0xae, 
+                                                       0x44, 0x25, 0xfa, 0xe9, 0x6b, 0xc6, 0x59, 0xa4 };
 
     class BitStreamBase
     {
@@ -202,6 +209,7 @@ namespace Engine
         std::array<sockaddr, NETCODE_MAX_SERVERS_PER_CONNECT> server_addresses;
         NetworkKey client_to_server_key;
         NetworkKey server_to_client_key;
+        NetworkFuzz fuzz;
         NetworkAuthentication authentication;
 
         void Write( NetworkConnectionTokenRaw &raw );
@@ -211,6 +219,7 @@ namespace Engine
     };    
     typedef std::shared_ptr<NetworkConnectionToken> NetworkConnectionTokenPtr;
 
+#pragma pack(push, 1)
     struct NetworkConnectionRequestHeader
     {
         NetworkPacketPrefix prefix;
@@ -218,13 +227,15 @@ namespace Engine
         uint64_t protocol_id;
         uint64_t token_expiration_timestamp;
         uint64_t token_sequence;
-        NetworkConnectionToken token;
+        NetworkConnectionTokenRaw raw_token;
     };
-    
+#pragma pack(pop)
     typedef std::array<byte, NETWORK_CHALLENGE_TOKEN_RAW_LENGTH> NetworkChallengeTokenRaw;
+    
     struct NetworkChallengeToken
     {
         uint64_t client_id;
+        NetworkFuzz fuzz;
         NetworkAuthentication authentication;
 
         void Write( NetworkChallengeTokenRaw &raw );
@@ -233,19 +244,23 @@ namespace Engine
         static bool Encrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, NetworkKey &key );
     };
 
+#pragma pack(push, 1)
     struct NetworkPacketConnectionChallengeHeader
     {
         NetworkPacketPrefix prefix;
         uint64_t token_sequence;
-        NetworkChallengeToken token;
+        NetworkChallengeTokenRaw raw_challenge_token;
     };
+#pragma pack(pop)
 
-    struct NetworkPacketConnectionChallengeResponse
+#pragma pack(push, 1)
+    struct NetworkPacketConnectionChallengeResponseHeader
     {
         NetworkPacketPrefix prefix;
         uint64_t token_sequence;
-        std::array<byte, NETWORK_CHALLENGE_TOKEN_RAW_LENGTH> challenge_token_data;
+        NetworkChallengeTokenRaw raw_challenge_token;
     };
+#pragma pack(pop)
 
     struct NetworkPacketKeepAlive
     {
@@ -287,6 +302,7 @@ namespace Engine
     {
     public:
         NetworkConnectionRequestHeader header;
+        NetworkConnectionTokenPtr token;
 
         NetworkConnectionRequestPacket() { packet_type = PACKET_CONNECT_REQUEST; }
 
@@ -305,7 +321,7 @@ namespace Engine
     {
     public:
         NetworkPacketConnectionChallengeHeader header;
-        NetworkChallengeTokenRaw raw_token;
+        NetworkChallengeTokenRaw token;
 
         NetworkConnectionChallengePacket() { packet_type = PACKET_CONNECT_CHALLENGE; }
 
@@ -319,7 +335,7 @@ namespace Engine
     class NetworkPacketFactory
     {
     public:
-        static NetworkPacketPtr CreateIncomingConnectionRequest( NetworkConnectionRequestHeader &header );
+        static NetworkPacketPtr CreateIncomingConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token );
         static NetworkPacketPtr CreateOutgoingConnectionDenied();
         static NetworkPacketPtr CreateOutgoingConnectionChallenge( NetworkPacketConnectionChallengeHeader &header, NetworkChallengeTokenRaw &token );
     };
@@ -358,7 +374,7 @@ namespace Engine
     public:
         ~Networking();
 
-        NetworkPacketPtr ReadPacket( uint64_t protocol_id, NetworkCryptoMapPtr &read_crypto, NetworkKey &private_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read );
+        NetworkPacketPtr ReadPacket( uint64_t protocol_id, NetworkCryptoMapPtr &read_crypto, NetworkKey &privileged_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read );
         void SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key );
 
         uint32_t AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, uint64_t now_time, uint64_t expire_time, int timeout_secs );

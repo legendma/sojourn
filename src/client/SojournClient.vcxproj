@@ -31,7 +31,7 @@
     <ClCompile Include="engine\graphics\graphics_camera.cpp" />
     <ClCompile Include="engine\graphics\graphics_shaders.cpp" />
     <ClCompile Include="engine\gui\gui_renderer.cpp" />
-    <ClCompile Include="engine\network\network_connection.cpp" />
+    <ClCompile Include="engine\network\network_client_connection.cpp" />
     <ClCompile Include="game\explorer\explorer_main.cpp" />
     <ClCompile Include="game\game_main.cpp" />
     <ClCompile Include="game\world\world_renderer.cpp" />
@@ -47,6 +47,7 @@
     <ClInclude Include="..\common\engine\engine_scripts.hpp" />
     <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
     <ClInclude Include="..\common\engine\engine_utilities.hpp" />
+    <ClInclude Include="..\common\network\network_main.hpp" />
     <ClInclude Include="..\common\simulation\world_game_object.hpp" />
     <ClInclude Include="client_main.hpp" />
     <ClInclude Include="client_window.hpp" />
@@ -55,7 +56,8 @@
     <ClInclude Include="engine\graphics\graphics_shaders.hpp" />
     <ClInclude Include="engine\graphics\graphics_utilities.hpp" />
     <ClInclude Include="engine\gui\gui_renderer.hpp" />
-    <ClInclude Include="engine\network\network_connection.hpp" />
+    <ClInclude Include="engine\network\network_client_config.hpp" />
+    <ClInclude Include="engine\network\network_client_connection.hpp" />
     <ClInclude Include="game\explorer\explorer_main.hpp" />
     <ClInclude Include="game\game_main.h" />
     <ClInclude Include="game\shaders\shaders_structures.hpp" />

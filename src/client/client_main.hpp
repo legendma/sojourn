@@ -1,32 +1,12 @@
 
 #include "client_window.hpp"
 #include "common/network/network_main.hpp"
-
-#define DEFAULT_CLIENT_SOCKET_SNDBUF_SIZE ( 256 * 1024 )
-#define DEFAULT_CLIENT_SOCKET_RCVBUF_SIZE ( 256 * 1024 )
+#include "common/engine/engine_step_timer.hpp"
+#include "engine/network/network_client_config.hpp"
+#include "engine/network/network_client_connection.hpp"
 
 namespace Client
 {
-    struct NetworkConfig
-    {
-        uint64_t protocol_id;
-        Engine::NetworkKey private_key;
-        size_t send_buff_size;
-        size_t receive_buff_size;
-        //int server_fps;
-        std::wstring server_address;
-        //unsigned int max_num_clients;
-
-        NetworkConfig() :
-            protocol_id( NETWORK_SOJOURN_PROTOCOL_ID ),
-            send_buff_size( DEFAULT_CLIENT_SOCKET_SNDBUF_SIZE ),
-            receive_buff_size( DEFAULT_CLIENT_SOCKET_RCVBUF_SIZE )
-        {
-            Engine::Networking::GenerateEncryptionKey( private_key );
-        };
-    };
-
-
     interface IClientApp
     {
     virtual bool Start( HINSTANCE ) = 0;
@@ -67,12 +47,11 @@ namespace Client
 
         /* networking */
         Engine::NetworkingPtr m_networking;
-        NetworkConfig m_network_config;
-        Engine::NetworkSocketUDPPtr m_socket;
-        Engine::NetworkAddressPtr m_server_address;
+        Engine::NetworkConnectionPtr m_connection;
+        Engine::NetworkClientConfig m_network_config;
         Engine::NetworkCryptoMapPtr m_crypto;
 
-        bool StartNetworking( std::wstring our_address );
+        bool StartNetworking();
         void UpdateNetworking();
         void ReceivePackets();
 

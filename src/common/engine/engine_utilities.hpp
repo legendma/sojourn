@@ -4,14 +4,14 @@ namespace Engine
 {
     typedef enum
     {
-        LOG_LEVEL_DEBUG,
-        LOG_LEVEL_WARNING,
         LOG_LEVEL_ERROR,
-        LOG_LEVEL_NONE
+        LOG_LEVEL_WARNING,
+        LOG_LEVEL_DEBUG,
+        LOG_LEVEL_INFO
     } LogLevel;
 
     void ReportError( std::wstring message );
-    void Log( const LogLevel level, const wchar_t * format, ... );
+    void Log( const LogLevel level, std::wstring format, ... );
     void SetLogLevel( const LogLevel min_level );
 
     inline std::wstring WideCharFromChar( std::string string )

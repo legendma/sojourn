@@ -27,10 +27,12 @@ void Engine::Networking::Initialize()
 
 }
 
-Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, NetworkCryptoMapPtr &read_crypto, NetworkKey &private_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read )
+Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, NetworkCryptoMapPtr &read_crypto, NetworkKey &privileged_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read )
 {
-    NetworkPacketPrefix prefix;
+    auto marker = read->SaveCurrentLocation();
+    Engine::NetworkPacketPrefix prefix;
     read->Read( prefix.b );
+    read->SeekToLocation( marker );
     if( prefix.packet_type == Engine::PACKET_CONNECT_REQUEST )
     {
         /* handle new connection request */
@@ -47,6 +49,8 @@ Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, N
         {
             Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Bad packet size.  Expected %d, got %d." ).c_str(), sizeof( Engine::NetworkConnectionRequestHeader ), read->GetSize() );
         }
+
+        read->Advance( sizeof( prefix ) );
 
         /* test if protocol version matches */
         read->ReadBytes( &request.version, request.version.size() );
@@ -74,21 +78,21 @@ Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, N
 
         read->Read( request.token_sequence );
 
-        NetworkConnectionTokenRaw token;
-        read->ReadBytes( &request.token, sizeof(request.token) );
-        if( !request.token.Decrypt( token, request.token_sequence, protocol_id, now_time, private_key ) )
+        read->ReadBytes( &request.raw_token, sizeof(request.raw_token ) );
+        if( !NetworkConnectionToken::Decrypt( request.raw_token, request.token_sequence, protocol_id, now_time, privileged_key ) )
         {
             Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Could not decrypt." ).c_str() );
             return nullptr;
         }
 
-        if( !request.token.Read( token ) )
+        NetworkConnectionTokenPtr plain_token( new NetworkConnectionToken() );
+        if( !plain_token->Read( request.raw_token ) )
         {
             Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Could not read connection token." ).c_str() );
             return nullptr;
         }
         
-        auto packet = Engine::NetworkPacketFactory::CreateIncomingConnectionRequest( request );
+        auto packet = Engine::NetworkPacketFactory::CreateIncomingConnectionRequest( request, plain_token );
         return packet;
     }
 
@@ -429,10 +433,11 @@ void Engine::OutputBitStream::WriteBits( void *out, uint32_t bit_cnt )
     }
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateIncomingConnectionRequest( NetworkConnectionRequestHeader &header )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateIncomingConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token )
 {
     auto packet = std::make_shared<NetworkConnectionRequestPacket>();
     packet->header = header;
+    packet->token = token;
 
     return packet;
 }
@@ -451,7 +456,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionC
 {
     auto packet = std::make_shared<NetworkConnectionChallengePacket>();
     packet->header = header;
-    packet->raw_token = token;
+    packet->token = token;
 
     return packet;
 }
@@ -524,9 +529,9 @@ void Engine::NetworkConnectionRequestPacket::Write( OutputBitStreamPtr &out )
     out->Write( header.token_expiration_timestamp );
     out->Write( header.token_sequence );
 
-    NetworkConnectionTokenRaw token;
-    header.token.Write( token );
-    out->WriteBytes( reinterpret_cast<byte*>(&token), sizeof( token ) );
+    NetworkConnectionTokenRaw raw_token;
+    token->Write( raw_token );
+    out->WriteBytes( reinterpret_cast<byte*>(&raw_token), sizeof( NetworkConnectionTokenRaw ) );
 }
 
 bool Engine::NetworkConnectionToken::Read( NetworkConnectionTokenRaw &raw )
@@ -634,7 +639,7 @@ bool Engine::NetworkConnectionToken::Decrypt( NetworkConnectionTokenRaw &raw, ui
 void Engine::NetworkConnectionChallengePacket::Write( OutputBitStreamPtr &out )
 {
     out->Write( header.token_sequence );
-    out->WriteBytes( raw_token.data(), raw_token.size() );
+    out->WriteBytes( token.data(), token.size() );
 }
 
 void Engine::NetworkChallengeToken::Write( NetworkChallengeTokenRaw &raw )

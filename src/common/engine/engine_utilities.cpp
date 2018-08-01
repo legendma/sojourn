@@ -20,46 +20,49 @@ void Engine::ReportError( std::wstring message )
 
     if( errorText )
     {
-        Log( Engine::LOG_LEVEL_ERROR, L"%s: %d- %s", message, errorNum, errorText );
+        Log( Engine::LOG_LEVEL_ERROR, L"%s: %d- %s", message.c_str(), errorNum, errorText );
         LocalFree( errorText );
         errorText = NULL;
     }
 }
 
-void Engine::Log( const LogLevel level, const wchar_t* format, ... )
+void Engine::Log( const LogLevel level, std::wstring format, ... )
 {
     if( level < s_log_level )
     {
         return;
     }
 
-    std::wstring str;
     if( level == LOG_LEVEL_ERROR )
     {
-        str = std::wstring( L"Error " ).append( format );
+        format = std::wstring( L"[Error] " ).append( format );
     }
     else if( level == LOG_LEVEL_WARNING )
     {
-        str = std::wstring( L"Warning " ).append( format );
+        format = std::wstring( L"[Warning] " ).append( format );
     }
     else if( level == LOG_LEVEL_DEBUG )
     {
-        str = std::wstring( L"Debug " ).append( format );
+        format = std::wstring( L"[Debug] " ).append( format );
     }
     else
     {
-        str = std::wstring( L"Info " ).append( format );
+        format = std::wstring( L"[Info] " ).append( format );
     }
 
+    format.append( L"\n" );
+    
     static wchar_t buffer[4096];
-
     va_list args;
     va_start( args, format );
 
-    _vsnwprintf_s( buffer, 4096, 4096, str.c_str(), args );
+    _vsnwprintf_s( buffer, 4096, 4096, format.c_str(), args );
 
     OutputDebugString( buffer );
-    OutputDebugString( L"\n" );
+
+#if defined SERVER
+    wprintf( buffer );
+#endif
 }
 
 void Engine::SetLogLevel( const Engine::LogLevel min_level )

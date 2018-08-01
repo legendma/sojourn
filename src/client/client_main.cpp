@@ -48,12 +48,9 @@ bool Client::App<T>::Start( HINSTANCE hinstance )
     m_graphics->SetWindow( window );
 
     // Create the Networking Adapter
-    m_network_config.server_address = L"127.0.0.1:48000";
-    m_networking = Engine::NetworkingFactory::StartNetworking();
-    if( m_networking == nullptr
-     || !StartNetworking( std::wstring( L"0.0.0.0" ) ) )
+    
+    if( !StartNetworking() )
     {
-        Engine::ReportError( L"Networking system could not be started.  Exiting..." );
         return false;
     }
 
@@ -83,7 +80,7 @@ int Client::App<T>::Run()
             // Update scene objects.
             m_timer.Tick( [&]()
             {
-                UpdateNetworking();
+                m_connection->Update();
                 m_main->Update();
                 if( m_is_active )
                 {
@@ -107,25 +104,26 @@ void Client::App<T>::Shutdown()
 }
 
 template<typename T>
-bool Client::App<T>::StartNetworking( std::wstring our_address )
+bool Client::App<T>::StartNetworking()
 {
-    // Create the server address
-    m_server_address = Engine::NetworkAddressFactory::CreateAddressFromStringAsync( m_network_config.server_address ).get();
-    if( m_server_address == nullptr )
+    //m_network_config.server_address = L"127.0.0.1:48000";
+    m_networking = Engine::NetworkingFactory::StartNetworking();
+    if( m_networking == nullptr )
     {
-        Engine::ReportError( L"Client::App::StartNetworking Given server address is invalid!" );
-        throw std::runtime_error( "CreateAddressFromStringAsync" );
+        Engine::ReportError( L"Networking system could not be started.  Exiting..." );
+        return false;
     }
 
-    // Create the server socket
-    m_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_server_address, m_network_config.receive_buff_size, m_network_config.send_buff_size );
-    if( m_socket == nullptr )
+    m_connection = Engine::NetworkConnectionFactory::CreateConnection( m_network_config );
+    if( m_networking == nullptr )
     {
-        Engine::ReportError( L"Client::App::StartNetworking Unable to create client socket." );
-        throw std::runtime_error( "CreateUDPSocket" );
+        Engine::ReportError( L"Networking connection could not be created.  Exiting..." );
+        return false;
     }
 
-    //Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server listening on %s" ).c_str(), m_server_address->Print() );
+    //m_network_config.server_address
+
+    //Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server listening on %s" ).c_str(), m_server_address->Print().c_str() );
     
     // create the challenge key
     //Engine::Networking::GenerateEncryptionKey( m_challenge_key );

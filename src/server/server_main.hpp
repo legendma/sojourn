@@ -27,38 +27,40 @@ namespace Server
     struct ServerConfig
     {
         uint64_t protocol_id;
-        Engine::NetworkKey private_key;
+        Engine::NetworkKey privileged_key;
         size_t send_buff_size;
         size_t receive_buff_size;
         int server_fps;
         std::wstring server_address;
         unsigned int max_num_clients;
+        Engine::NetworkKey challenge_key;
 
         ServerConfig() : 
             protocol_id( NETWORK_SOJOURN_PROTOCOL_ID ),
             send_buff_size( DEFAULT_SERVER_SOCKET_SNDBUF_SIZE ),
             receive_buff_size( DEFAULT_SERVER_SOCKET_RCVBUF_SIZE ),
             server_fps( DEFAULT_SERVER_FRAMES_PER_SEC ),
-            max_num_clients( DEFAULT_SERVER_MAX_CLIENT_CNT )
+            max_num_clients( DEFAULT_SERVER_MAX_CLIENT_CNT ),
+            privileged_key( Engine::SOJOURN_PRIVILEGED_KEY )
         {
-            Engine::Networking::GenerateEncryptionKey( private_key );
+            Engine::Networking::GenerateEncryptionKey( challenge_key );
         };
     };
 
-    struct ConnectionTokens
+    struct SeenTokens
     {
         typedef struct
         {
-            Engine::NetworkKey token_uid;
+            Engine::NetworkAuthentication token_uid;
             Engine::NetworkAddressPtr address;
             double time;
         } EntryType;
 
-        ConnectionTokens();
+        SeenTokens();
         bool FindAdd( Engine::NetworkAuthentication &token_uid, Engine::NetworkAddressPtr address, double time );
 
     private:
-        std::array<EntryType, SERVER_MAX_CONNECT_TOKENS> m_tokens;
+        std::array<EntryType, SERVER_MAX_CONNECT_TOKENS> m_seen;
         
     };
 
@@ -78,9 +80,8 @@ namespace Server
         boolean m_quit;
         ServerConfig m_config;
         std::vector<ClientRecordPtr> m_clients;
-        ConnectionTokens m_connection_tokens;
+        SeenTokens m_seen_tokens;
         uint64_t m_next_challenge_sequence;
-        Engine::NetworkKey m_challenge_key;
         
         void Update();
         void ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, uint64_t &now_time, Engine::InputBitStreamPtr &read );
