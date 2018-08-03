@@ -69,7 +69,6 @@ namespace Server
         void Run();
 
     private:
-        //std::vector<byte> m_packet_data;
         Engine::NetworkingPtr m_networking;
         Engine::NetworkAddressPtr m_server_address;
         Engine::NetworkSocketUDPPtr m_socket;

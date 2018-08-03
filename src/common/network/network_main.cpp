@@ -17,7 +17,7 @@ Engine::Networking::~Networking()
 
 void Engine::Networking::Initialize()
 {
-    // Start WinSock
+    /* start WinSock */
     auto result = WSAStartup( MAKEWORD( 2, 2 ), &m_wsa_data );
     if( result != NO_ERROR )
     {

@@ -16,7 +16,9 @@ public:
     virtual void EnterState()
     {
         m_fsm.m_server_address.reset();
-        m_fsm.m_token.reset();
+        m_fsm.m_allowed.Reset();
+        m_fsm.m_socket.reset();
+        m_fsm.m_passport.reset();
     }
 
     virtual void ExitState()
@@ -26,6 +28,51 @@ public:
 
     virtual void Update()
     {
+    }
+};
+
+class TryNextServerState : public Engine::NetworkConnection::State
+{
+public:
+    TryNextServerState( Engine::NetworkConnection &fsm ) :
+        Engine::NetworkConnection::State( fsm )
+    {
+    }
+
+    virtual Engine::NetworkConnection::StateID Id() { return Engine::NetworkConnection::TRY_NEXT_SERVER; }
+
+    virtual void EnterState()
+    {
+    }
+
+    virtual void ExitState()
+    {
+    }
+
+    virtual void Update()
+    {
+        /* check if we have a server we haven't tried */
+        if( m_fsm.NeedsMoreServers() )
+        {
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::TryNextServerState ran out of servers while trying to connect." );
+            m_fsm.ChangeState( Engine::NetworkConnection::DISCONNECTED );
+            return;
+        }
+
+        /* Create the server socket */
+        m_fsm.m_server_address = Engine::NetworkAddressFactory::CreateFromAddress( m_fsm.m_passport->server_addresses[++m_fsm.m_passport->current_server] );
+        m_fsm.m_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_fsm.m_server_address, m_fsm.m_config.send_buff_size, m_fsm.m_config.receive_buff_size );
+        if( m_fsm.m_socket == nullptr )
+        {
+            m_fsm.m_server_address.reset();
+            Engine::Log( Engine::LOG_LEVEL_WARNING, L"NetworkConnection::TryNextServerState socket creation failed." );
+            m_fsm.m_connect_error = Engine::NetworkConnection::SERVER_SOCKET_ERROR;
+            return;
+        }
+
+        /* switch to request connection */
+        Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::TryNextServer trying %s...", m_fsm.m_server_address->Print().c_str() );
+        m_fsm.ChangeState( Engine::NetworkConnection::SENDING_CONNECT_REQUESTS );
     }
 };
 
@@ -41,12 +88,14 @@ public:
 
     virtual void EnterState()
     {
-        m_fsm.m_token = Engine::NetworkConnectionTokenPtr( new NetworkConnectionToken() );
+        m_fsm.m_allowed.SetAllowed( PACKET_CONNECT_DENIED );
+        m_fsm.m_allowed.SetAllowed( PACKET_CONNECT_CHALLENGE );
+        m_fsm.m_connect_error = Engine::NetworkConnection::NO_CONNECTION_ERROR;
     }
 
     virtual void ExitState()
     {
-
+        m_fsm.m_allowed.Reset();
     }
 
     virtual void Update()
@@ -71,11 +120,13 @@ public:
 
     virtual void EnterState()
     {
+        m_fsm.m_allowed.SetAllowed( PACKET_CONNECT_DENIED );
+        m_fsm.m_allowed.SetAllowed( PACKET_KEEP_ALIVE );
     }
 
     virtual void ExitState()
     {
-
+        m_fsm.m_allowed.Reset();
     }
 
     virtual void Update()
@@ -95,6 +146,9 @@ public:
 
     virtual void EnterState()
     {
+        m_fsm.m_allowed.SetAllowed( PACKET_KEEP_ALIVE );
+        m_fsm.m_allowed.SetAllowed( PACKET_PAYLOAD );
+        m_fsm.m_allowed.SetAllowed( PACKET_DISCONNECT );
     }
 
     virtual void ExitState()
@@ -111,7 +165,7 @@ public:
 }
 
 Engine::NetworkConnection::NetworkConnection( const NetworkClientConfig &config ) :
-    m_connect_error( NO_SERVER_GIVEN ),
+    m_connect_error( NO_CONNECTION_ERROR ),
     m_config( config )
 {
     /* create the discrete states */
@@ -143,52 +197,42 @@ void Engine::NetworkConnection::Connect( Engine::NetworkConnectionPassportPtr &o
     /* if we are connecting already, then ignore the offer */
     if( m_current_state->Id() != DISCONNECTED )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::Connect ignored passport offer.  Either connecting or connected." );
+        Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::Connect ignored passport offer.  Either connecting or connected." );
         return;
     }
 
     assert( offer );
     m_passport = offer;
     m_passport->current_server = -1;
-    TryNextServer();
+    ChangeState( TRY_NEXT_SERVER );
 }
 
-void Engine::NetworkConnection::TryNextServer()
+bool Engine::NetworkConnection::NeedsMoreServers()
 {
-    if( m_passport->current_server >= m_passport->server_address_cnt - 1 )
+    if( !m_passport )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::TryNextServer ran out of servers to try.  Disconnecting..." );
-        ChangeState( DISCONNECTED );
-        return;
+        return true;
     }
 
-    /* Create the server socket */
-    m_server_address.reset();
-    auto address = Engine::NetworkAddressFactory::CreateFromAddress( m_passport->server_addresses[ ++m_passport->current_server ] );
-    m_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_server_address, m_config.send_buff_size, m_config.receive_buff_size );
-    if( m_socket == nullptr )
+    if( m_current_state->Id() != DISCONNECTED )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::TryNextServer unable to create server socket." );
-        TryNextServer();
-        return;
+        return false;
     }
 
-    m_server_address = address;
-    
-    /* switch to request connection */
-    Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::TryNextServer trying %s...", m_server_address->Print().c_str() );
-    ChangeState( SENDING_CONNECT_REQUESTS );
+    auto has_more_servers = m_passport->current_server < m_passport->server_address_cnt - 1;
+    return !has_more_servers;
 }
 
-Engine::NetworkConnection::ConnectionError Engine::NetworkConnection::GetConnectionError()
-{
-    return Engine::NetworkConnection::ConnectionError();
-}
-
-void Engine::NetworkConnection::ChangeState( StateID new_state )
+void Engine::NetworkConnection::ChangeState( StateID to_state )
 {
     auto old_state = m_current_state;
-    m_current_state = m_states[ new_state ];
+    auto new_state = m_states[ to_state ];
+    if( old_state == new_state )
+    {
+        return;
+    }
+
+    m_current_state = new_state;
     old_state->ExitState();
     m_current_state->EnterState();
 }

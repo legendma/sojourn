@@ -274,8 +274,9 @@ namespace Engine
 
         inline void SetAllowed( const NetworkPacketType packet_type )   { allowed[ packet_type ] = true;  }
         inline boolean IsAllowed( const NetworkPacketType packet_type ) { return( allowed[packet_type] ); }
+        inline void Reset() { ::ZeroMemory( allowed, sizeof( allowed ) ); }
 
-        NetworkPacketTypesAllowed() { ::ZeroMemory( allowed, sizeof(allowed) ); }
+        NetworkPacketTypesAllowed() { Reset(); }
     };
     
     class NetworkPacket

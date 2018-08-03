@@ -11,11 +11,15 @@ namespace Engine
 	{
         friend class NetworkConnectionFactory;
         friend class DisconnectedState;
+        friend class TryNextServerState;
         friend class SendingConnectRequestsState;
+        friend class SendingConnectRepliesState;
+        friend class ConnectedState;
 	public:
         typedef enum
         {
             DISCONNECTED,
+            TRY_NEXT_SERVER,
             SENDING_CONNECT_REQUESTS,
             SENDING_CONNECT_REPLIES,
             CONNECTED
@@ -24,8 +28,8 @@ namespace Engine
         typedef enum
         {
             NO_CONNECTION_ERROR,
-            NO_SERVER_GIVEN,
-            SERVER_DNS_ERROR,
+            SERVER_CANT_REACH,
+            SERVER_SOCKET_ERROR,
             SERVER_NOT_RESPONDING,
             SERVER_IS_FULL,
             SERVER_DISCONNECTED
@@ -44,9 +48,10 @@ namespace Engine
 
         void Update();
         void Connect( NetworkConnectionPassportPtr &offer );
-        void TryNextServer();
+
         bool IsConnected() { return m_current_state->Id() == CONNECTED; }
-        ConnectionError GetConnectionError();
+        ConnectionError GetConnectionError() { return m_connect_error; }
+        bool NeedsMoreServers();
 
     protected:
         std::map<StateID, StatePtr> m_states;
@@ -56,12 +61,13 @@ namespace Engine
         NetworkAddressPtr m_server_address;
         NetworkAddressPtr m_our_address;
         NetworkConnectionPassportPtr m_passport;
+        NetworkPacketTypesAllowed m_allowed;
         const NetworkClientConfig &m_config;
         StepTimer m_send_timer;
-        NetworkConnectionTokenPtr m_token;
         
         NetworkConnection( const NetworkClientConfig &config );
-        void ChangeState( StateID new_state );
+        void ChangeState( StateID to_state );
+
 	}; typedef std::shared_ptr<NetworkConnection> NetworkConnectionPtr;
 
     class NetworkConnectionFactory
