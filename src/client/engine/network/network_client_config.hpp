@@ -11,7 +11,6 @@ namespace Engine
     struct NetworkClientConfig
     {
         uint64_t protocol_id;
-        Engine::NetworkKey private_key;
         size_t send_buff_size;
         size_t receive_buff_size;
         uint32_t connect_send_period;
@@ -20,8 +19,7 @@ namespace Engine
             protocol_id( NETWORK_SOJOURN_PROTOCOL_ID ),
             send_buff_size( DEFAULT_CLIENT_SOCKET_SNDBUF_SIZE ),
             receive_buff_size( DEFAULT_CLIENT_SOCKET_RCVBUF_SIZE ),
-            connect_send_period( DEFAULT_CONNECT_SEND_PERIOD_MS ),
-            private_key( Engine::SOJOURN_PRIVATE_KEY )
+            connect_send_period( DEFAULT_CONNECT_SEND_PERIOD_MS )
         {
         };
     };

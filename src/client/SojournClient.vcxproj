@@ -24,6 +24,7 @@
     <ClCompile Include="..\common\engine\engine_utilities.cpp" />
     <ClCompile Include="..\common\network\network_address.cpp" />
     <ClCompile Include="..\common\network\network_main.cpp" />
+    <ClCompile Include="..\common\network\network_matchmaking.cpp" />
     <ClCompile Include="..\common\network\network_sockets.cpp" />
     <ClCompile Include="client_main.cpp" />
     <ClCompile Include="client_window.cpp" />

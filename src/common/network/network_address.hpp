@@ -11,6 +11,7 @@ namespace Engine
         NetworkAddress( const sockaddr &other );
 
         size_t GetSize() const { return sizeof( sockaddr ); }
+        sockaddr Address() { return m_address; }
         std::wstring Print();
         boolean Matches( const NetworkAddress &other );
 
@@ -18,9 +19,7 @@ namespace Engine
         sockaddr m_address;
 
         sockaddr_in * GetAddressIn() { return reinterpret_cast<sockaddr_in*>( &m_address ); }
-    };
-
-    typedef std::shared_ptr<NetworkAddress> NetworkAddressPtr;
+    }; typedef std::shared_ptr<NetworkAddress> NetworkAddressPtr;
 
     class NetworkAddressFactory
     {

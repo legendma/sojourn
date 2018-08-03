@@ -2,6 +2,7 @@
 
 #include "common/engine/engine_step_timer.hpp"
 #include "common/network/network_main.hpp"
+#include "common/network/network_matchmaking.hpp"
 #include "engine/network/network_client_config.hpp"
 
 namespace Engine
@@ -39,11 +40,11 @@ namespace Engine
             virtual StateID Id() = 0;
 
             NetworkConnection &m_fsm;
-        };
-        typedef std::shared_ptr<State> StatePtr;
+        }; typedef std::shared_ptr<State> StatePtr;
 
         void Update();
-        bool ConnectTo( std::wstring &server_address );
+        void Connect( NetworkConnectionPassportPtr &offer );
+        void TryNextServer();
         bool IsConnected() { return m_current_state->Id() == CONNECTED; }
         ConnectionError GetConnectionError();
 
@@ -54,14 +55,14 @@ namespace Engine
         NetworkSocketUDPPtr m_socket;
         NetworkAddressPtr m_server_address;
         NetworkAddressPtr m_our_address;
+        NetworkConnectionPassportPtr m_passport;
         const NetworkClientConfig &m_config;
         StepTimer m_send_timer;
         NetworkConnectionTokenPtr m_token;
         
         NetworkConnection( const NetworkClientConfig &config );
         void ChangeState( StateID new_state );
-	};
-    typedef std::shared_ptr<NetworkConnection> NetworkConnectionPtr;
+	}; typedef std::shared_ptr<NetworkConnection> NetworkConnectionPtr;
 
     class NetworkConnectionFactory
     {

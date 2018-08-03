@@ -70,6 +70,7 @@ Server::Server::Server( ServerConfig &config, Engine::NetworkingPtr &networking 
     m_networking( networking ),
     m_quit( false ),
     m_config( config ),
+    m_next_sequence( 1 ),
     m_next_challenge_sequence( 1 )
 {
     Initialize();
@@ -144,7 +145,7 @@ void Server::Server::ReceivePackets()
         if( byte_cnt == 0 )
             break;
 
-        auto read = Engine::InputBitStreamFactory::CreateInputBitStream( data, byte_cnt, false );
+        auto read = Engine::BitStreamFactory::CreateInputBitStream( data, byte_cnt, false );
         ReadAndProcessPacket( m_config.protocol_id, allowed, from, now, read );
     }
 }
@@ -174,7 +175,7 @@ void Server::Server::ReadAndProcessPacket( uint64_t protocol_id, Engine::Network
         return;
     }
 
-    auto packet = m_networking->ReadPacket( protocol_id, crypto, m_config.privileged_key, allowed, now_time, read );
+    auto packet = m_networking->ReadPacket( protocol_id, crypto->receive_key, allowed, now_time, read );
     if( packet )
     {
         ProcessPacket( packet, from, now_time );
@@ -232,7 +233,7 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &pack
     if( m_clients.size() == m_config.max_num_clients )
     {
         auto refusal = Engine::NetworkPacketFactory::CreateOutgoingConnectionDenied();
-        m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, connect_token->server_to_client_key );
+        m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, connect_token->server_to_client_key, m_next_sequence++ );
         return;
     }
 
@@ -245,21 +246,18 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &pack
 
     m_networking->AddCryptoMap( from, connect_token->server_to_client_key, connect_token->client_to_server_key, now_time, expire_time, connect_token->timeout_seconds );
 
-    Engine::NetworkPacketConnectionChallengeHeader challenge;
-    challenge.prefix.packet_type = Engine::PACKET_CONNECT_CHALLENGE;
-    auto challenge_sequence = m_next_challenge_sequence++;
-    challenge.prefix.sequence_byte_cnt = Engine::BitStreamBase::BytesRequired( challenge_sequence );
-    challenge.token_sequence = challenge_sequence;
+    Engine::NetworkConnectionChallengeHeader challenge;
+    challenge.token_sequence = m_next_challenge_sequence++;
 
     Engine::NetworkChallengeToken challenge_token;
     challenge_token.client_id = connect_token->client_id;
     challenge_token.authentication = connect_token->authentication;
     Engine::NetworkChallengeTokenRaw raw_challenge_token;
     challenge_token.Write( raw_challenge_token );
-    Engine::NetworkChallengeToken::Encrypt( raw_challenge_token, challenge_sequence, m_config.challenge_key );
+    Engine::NetworkChallengeToken::Encrypt( raw_challenge_token, challenge.token_sequence, m_config.challenge_key );
 
     auto challenge_packet = Engine::NetworkPacketFactory::CreateOutgoingConnectionChallenge( challenge, raw_challenge_token );
-    m_networking->SendPacket( m_socket, from, challenge_packet, m_config.protocol_id, connect_token->server_to_client_key );
+    m_networking->SendPacket( m_socket, from, challenge_packet, m_config.protocol_id, connect_token->server_to_client_key, challenge.token_sequence );
     Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Sent a connection challenge to %s." ).c_str(), from->Print().c_str() );
 }
 

@@ -131,14 +131,6 @@ Engine::NetworkConnection::NetworkConnection( const NetworkClientConfig &config 
     /* create the send timer */
     m_send_timer.SetFixedTimeStep( true );
     m_send_timer.SetTargetElapsedSeconds( m_config.connect_send_period / 1000.0f );
-
-    // Create the connection socket
-    m_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_server_address, m_config.send_buff_size, m_config.receive_buff_size );
-    if( m_socket == nullptr )
-    {
-        Engine::ReportError( L"NetworkConnection::NetworkConnection Unable to create client socket." );
-        throw std::runtime_error( "CreateUDPSocket" );
-    }
 }
 
 void Engine::NetworkConnection::Update()
@@ -146,22 +138,46 @@ void Engine::NetworkConnection::Update()
     m_current_state->Update();
 }
 
-bool Engine::NetworkConnection::ConnectTo( std::wstring &server_address )
+void Engine::NetworkConnection::Connect( Engine::NetworkConnectionPassportPtr &offer )
 {
-    // Create the server address
-    m_server_address = Engine::NetworkAddressFactory::CreateAddressFromStringAsync( server_address ).get();
-    if( m_server_address == nullptr )
+    /* if we are connecting already, then ignore the offer */
+    if( m_current_state->Id() != DISCONNECTED )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Connection request failed.  Could not lookup server address." );
-        m_connect_error = SERVER_DNS_ERROR;
-        return false;
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::Connect ignored passport offer.  Either connecting or connected." );
+        return;
     }
 
-    /* switch to request connection */
-    Engine::Log( Engine::LOG_LEVEL_INFO, L"Connecting to %s...", m_server_address->Print().c_str() );
-    ChangeState( SENDING_CONNECT_REQUESTS );
+    assert( offer );
+    m_passport = offer;
+    m_passport->current_server = -1;
+    TryNextServer();
+}
 
-    return true;
+void Engine::NetworkConnection::TryNextServer()
+{
+    if( m_passport->current_server >= m_passport->server_address_cnt - 1 )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::TryNextServer ran out of servers to try.  Disconnecting..." );
+        ChangeState( DISCONNECTED );
+        return;
+    }
+
+    /* Create the server socket */
+    m_server_address.reset();
+    auto address = Engine::NetworkAddressFactory::CreateFromAddress( m_passport->server_addresses[ ++m_passport->current_server ] );
+    m_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_server_address, m_config.send_buff_size, m_config.receive_buff_size );
+    if( m_socket == nullptr )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::TryNextServer unable to create server socket." );
+        TryNextServer();
+        return;
+    }
+
+    m_server_address = address;
+    
+    /* switch to request connection */
+    Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::TryNextServer trying %s...", m_server_address->Print().c_str() );
+    ChangeState( SENDING_CONNECT_REQUESTS );
 }
 
 Engine::NetworkConnection::ConnectionError Engine::NetworkConnection::GetConnectionError()

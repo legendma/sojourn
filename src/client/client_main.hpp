@@ -12,6 +12,9 @@ namespace Client
     virtual bool Start( HINSTANCE ) = 0;
     virtual int Run() = 0;
     virtual void Shutdown() = 0;
+    /* START - delete these lines */
+    virtual void OnReceivedMatchmaking( Engine::NetworkConnectionPassportRaw &raw ) = 0;
+    /* END - delete these lines */
     };
 
     std::shared_ptr<Client::IClientApp> CreateApp();
@@ -61,6 +64,7 @@ namespace Client
         void SendPacketsToServer();
 
         void OnReceivedConnectionChallenge( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time );
+        void OnReceivedMatchmaking( Engine::NetworkConnectionPassportRaw &raw );
 
     private:
         App();

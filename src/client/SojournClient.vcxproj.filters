@@ -94,6 +94,9 @@
     <ClCompile Include="engine\network\network_client_connection.cpp">
       <Filter>src\engine\network</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\network\network_matchmaking.cpp">
+      <Filter>src\engine\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game\shaders\shaders_structures.hpp">

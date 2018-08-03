@@ -17,8 +17,7 @@ namespace Engine
         NetworkSocketUDP( SOCKET &other ) : m_socket( other ) {};
 
         SOCKET m_socket;
-    };
-    typedef std::shared_ptr<NetworkSocketUDP> NetworkSocketUDPPtr;
+    }; typedef std::shared_ptr<NetworkSocketUDP> NetworkSocketUDPPtr;
 
     class NetworkSocketUDPFactory
     {
@@ -43,14 +42,12 @@ namespace Engine
         NetworkSocketTCP( SOCKET &other ) : m_socket( other ) {};
 
         SOCKET m_socket;
-    };
-    typedef std::shared_ptr<NetworkSocketTCP> NetworkSocketTCPPtr;
+    }; typedef std::shared_ptr<NetworkSocketTCP> NetworkSocketTCPPtr;
 
     class NetworkSocketTCPFactory
     {
     public:
         static NetworkSocketTCPPtr CreateListenSocket( const NetworkAddress &our_address );
-
     };
 }
 

@@ -31,11 +31,6 @@ namespace Engine
     typedef std::array<byte, NETWORK_NONCE_LENGTH> NetworkNonce;
     typedef std::array<byte, NETWORK_FUZZ_LENGTH> NetworkFuzz;
 
-    static const NetworkKey SOJOURN_PRIVILEGED_KEY = { 0x56, 0xd7, 0xd2, 0x1d, 0x50, 0x4c, 0x5b, 0x76, 
-                                                       0x99, 0x09, 0xf7, 0xdf, 0xce, 0x6e, 0x58, 0x4e, 
-                                                       0x6b, 0xa1, 0x58, 0xcd, 0x24, 0x71, 0x4d, 0xae, 
-                                                       0x44, 0x25, 0xfa, 0xe9, 0x6b, 0xc6, 0x59, 0xa4 };
-
     class BitStreamBase
     {
     public:
@@ -59,7 +54,7 @@ namespace Engine
 
     class InputBitStream : public BitStreamBase
     {
-        friend class InputBitStreamFactory;
+        friend class BitStreamFactory;
     public:
         ~InputBitStream() {};
 
@@ -103,22 +98,11 @@ namespace Engine
 
     private:
         InputBitStream( byte *input, const size_t size, bool owned );
-    };
-
-    typedef std::shared_ptr<InputBitStream> InputBitStreamPtr;
-
-    class InputBitStreamFactory
-    {
-    public:
-        static InputBitStreamPtr CreateInputBitStream( byte *input, const size_t size, bool owned = true )
-        {
-            return InputBitStreamPtr( new InputBitStream( input, size, owned ) );
-        }
-    };
+    }; typedef std::shared_ptr<InputBitStream> InputBitStreamPtr;
 
     class OutputBitStream : public BitStreamBase
     {
-        friend class OutputBitStreamFactory;
+        friend class BitStreamFactory;
     public:
         ~OutputBitStream() {};
     
@@ -163,41 +147,20 @@ namespace Engine
 
     private:
         OutputBitStream( byte *input, const size_t size, bool owned );
-    };
+    }; typedef std::shared_ptr<OutputBitStream> OutputBitStreamPtr;
 
-    typedef std::shared_ptr<OutputBitStream> OutputBitStreamPtr;
-
-    class OutputBitStreamFactory
+    class BitStreamFactory
     {
     public:
         static OutputBitStreamPtr CreateOutputBitStream( byte *input = nullptr, size_t size = 0, bool owned = true )
         {
             return OutputBitStreamPtr( new OutputBitStream( input, size, owned ) );
         }
-    };
 
-    typedef enum
-    {
-        PACKET_CONNECT_REQUEST,
-        PACKET_CONNECT_DENIED,
-        PACKET_CONNECT_CHALLENGE,
-        PACKET_CONNECT_CHALLENGE_RESPONSE,
-        PACKET_KEEP_ALIVE,
-        PACKET_PAYLOAD,
-        PACKET_DISCONNECT,
-        PACKET_TYPE_CNT,
-        PACKET_INVALID = PACKET_TYPE_CNT
-    } NetworkPacketType;
-
-    union NetworkPacketPrefix
-    {
-        struct
+        static InputBitStreamPtr CreateInputBitStream( byte *input, const size_t size, bool owned = true )
         {
-            byte packet_type       : NETWORK_PACKET_TYPE_BITS;
-            byte sequence_byte_cnt : NETWORK_SEQUENCE_NUM_BITS;
-        };
-
-        uint8_t b;
+            return InputBitStreamPtr( new InputBitStream( input, size, owned ) );
+        }
     };
 
     typedef std::array<byte, NETWORK_CONNECT_TOKEN_RAW_LENGTH> NetworkConnectionTokenRaw;
@@ -214,24 +177,11 @@ namespace Engine
 
         void Write( NetworkConnectionTokenRaw &raw );
         bool Read( NetworkConnectionTokenRaw &raw );
-        static bool Decrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, uint64_t &expire_time, NetworkKey &key );
-        static bool Encrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, uint64_t &expire_time, NetworkKey &key );
-    };    
-    typedef std::shared_ptr<NetworkConnectionToken> NetworkConnectionTokenPtr;
+        static bool Decrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, uint64_t &expire_time, const NetworkKey &key );
+        static bool Encrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, uint64_t &expire_time, const NetworkKey &key );
+    }; typedef std::shared_ptr<NetworkConnectionToken> NetworkConnectionTokenPtr;
 
-#pragma pack(push, 1)
-    struct NetworkConnectionRequestHeader
-    {
-        NetworkPacketPrefix prefix;
-        std::array<char, NETWORK_PROTOCOL_VERSION_LEN> version;
-        uint64_t protocol_id;
-        uint64_t token_expiration_timestamp;
-        uint64_t token_sequence;
-        NetworkConnectionTokenRaw raw_token;
-    };
-#pragma pack(pop)
     typedef std::array<byte, NETWORK_CHALLENGE_TOKEN_RAW_LENGTH> NetworkChallengeTokenRaw;
-    
     struct NetworkChallengeToken
     {
         uint64_t client_id;
@@ -244,39 +194,79 @@ namespace Engine
         static bool Encrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, NetworkKey &key );
     };
 
-#pragma pack(push, 1)
-    struct NetworkPacketConnectionChallengeHeader
+    typedef enum
     {
-        NetworkPacketPrefix prefix;
+        PACKET_CONNECT_REQUEST,
+        PACKET_CONNECT_DENIED,
+        PACKET_CONNECT_CHALLENGE,
+        PACKET_CONNECT_CHALLENGE_RESPONSE,
+        PACKET_KEEP_ALIVE,
+        PACKET_PAYLOAD,
+        PACKET_DISCONNECT,
+        PACKET_TYPE_CNT,
+        PACKET_INVALID = PACKET_TYPE_CNT
+    } NetworkPacketType;
+
+#pragma pack(push, 1)
+    union NetworkPacketPrefix
+    {
+        struct
+        {
+            byte packet_type : NETWORK_PACKET_TYPE_BITS; /* NetworkPacketType */
+            byte sequence_byte_cnt : NETWORK_SEQUENCE_NUM_BITS;
+        };
+
+        uint8_t b;
+    };
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+    struct NetworkConnectionRequestHeader
+    {
+        std::array<char, NETWORK_PROTOCOL_VERSION_LEN> version;
+        uint64_t protocol_id;
+        uint64_t token_expire_time;
+        uint64_t token_sequence;
+        NetworkConnectionTokenRaw raw_token;
+    };
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+    struct NetworkConnectionChallengeHeader
+    {
         uint64_t token_sequence;
         NetworkChallengeTokenRaw raw_challenge_token;
     };
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-    struct NetworkPacketConnectionChallengeResponseHeader
+    struct NetworkConnectionChallengeResponseHeader
     {
-        NetworkPacketPrefix prefix;
         uint64_t token_sequence;
         NetworkChallengeTokenRaw raw_challenge_token;
     };
 #pragma pack(pop)
 
-    struct NetworkPacketKeepAlive
+#pragma pack(push, 1)
+    struct NetworkKeepAliveHeader
     {
         NetworkPacketPrefix prefix;
-        //RtlGenRandom
     };
+#pragma pack(pop)
 
-    struct NetworkPacketPayload
+#pragma pack(push, 1)
+    struct NetworkPayloadHeader
     {
         NetworkPacketPrefix prefix;
     };
+#pragma pack(pop)
 
-    struct NetworkPacketDisconnect
+#pragma pack(push, 1)
+    struct NetworkDisconnectHeader
     {
         NetworkPacketPrefix prefix;
     };
+#pragma pack(pop)
 
     struct NetworkPacketTypesAllowed
     {
@@ -294,40 +284,40 @@ namespace Engine
         NetworkPacketType packet_type;
 
         OutputBitStreamPtr WritePacket( uint64_t sequence_num, uint64_t protocol_id, NetworkKey &key );
+
     private:
         virtual void Write( OutputBitStreamPtr &out ) = 0;
     };
 
     class NetworkConnectionRequestPacket : public NetworkPacket
     {
+        friend class NetworkPacketFactory;
     public:
         NetworkConnectionRequestHeader header;
         NetworkConnectionTokenPtr token;
 
-        NetworkConnectionRequestPacket() { packet_type = PACKET_CONNECT_REQUEST; }
-
     private:
         virtual void Write( OutputBitStreamPtr &out );
-
+        NetworkConnectionRequestPacket() { packet_type = PACKET_CONNECT_REQUEST; }
     };
 
     class NetworkConnectionDeniedPacket : public NetworkPacket
     {
-    public:
+        friend class NetworkPacketFactory;
+        virtual void Write( OutputBitStreamPtr &out );
         NetworkConnectionDeniedPacket() { packet_type = PACKET_CONNECT_DENIED; }
     };
 
     class NetworkConnectionChallengePacket : public NetworkPacket
     {
+        friend class NetworkPacketFactory;
     public:
-        NetworkPacketConnectionChallengeHeader header;
+        NetworkConnectionChallengeHeader header;
         NetworkChallengeTokenRaw token;
-
-        NetworkConnectionChallengePacket() { packet_type = PACKET_CONNECT_CHALLENGE; }
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
-
+        NetworkConnectionChallengePacket() { packet_type = PACKET_CONNECT_CHALLENGE; }
     };
 
     typedef std::shared_ptr<NetworkPacket> NetworkPacketPtr;
@@ -337,7 +327,7 @@ namespace Engine
     public:
         static NetworkPacketPtr CreateIncomingConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token );
         static NetworkPacketPtr CreateOutgoingConnectionDenied();
-        static NetworkPacketPtr CreateOutgoingConnectionChallenge( NetworkPacketConnectionChallengeHeader &header, NetworkChallengeTokenRaw &token );
+        static NetworkPacketPtr CreateOutgoingConnectionChallenge( NetworkConnectionChallengeHeader &header, NetworkChallengeTokenRaw &token );
     };
 
     class NetworkCryptoMap
@@ -365,8 +355,7 @@ namespace Engine
             return ( expire_time > 0.0 && expire_time < current_time );
         }
 
-    };
-    typedef std::shared_ptr<NetworkCryptoMap> NetworkCryptoMapPtr;
+    }; typedef std::shared_ptr<NetworkCryptoMap> NetworkCryptoMapPtr;
 
     class Networking
     {
@@ -374,29 +363,26 @@ namespace Engine
     public:
         ~Networking();
 
-        NetworkPacketPtr ReadPacket( uint64_t protocol_id, NetworkCryptoMapPtr &read_crypto, NetworkKey &privileged_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read );
-        void SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key );
+        NetworkPacketPtr ReadPacket( uint64_t protocol_id, NetworkKey &read_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read );
+        void SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num );
 
         uint32_t AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, uint64_t now_time, uint64_t expire_time, int timeout_secs );
         NetworkCryptoMapPtr FindCryptoMapByAddress( NetworkAddressPtr &search_address, uint64_t time );
         NetworkCryptoMapPtr FindCryptoMapByID( uint32_t search_id, NetworkAddressPtr &expected_address, uint64_t time );
 
-
-        static bool Encrypt( void *data_to_encrypt, size_t data_length, byte* salt, size_t salt_length, NetworkNonce &nonce, NetworkKey &key );
-        static bool Decrypt( void *data_to_decrypt, size_t data_length, byte *salt, size_t salt_length, NetworkNonce &nonce, NetworkKey &key );
+        static bool Encrypt( void *data_to_encrypt, size_t data_length, byte* salt, size_t salt_length, NetworkNonce &nonce, const NetworkKey &key );
+        static bool Decrypt( void *data_to_decrypt, size_t data_length, byte *salt, size_t salt_length, NetworkNonce &nonce, const NetworkKey &key );
         static void GenerateEncryptionKey( NetworkKey &key );
+        static void GenerateRandom( byte *out, size_t size );
 
     private:
         WSADATA m_wsa_data;
-        uint64_t m_sequence_num;
         std::map<uint32_t, NetworkCryptoMapPtr> m_crypto_map;
         uint32_t m_crypto_map_next_id;
 
         Networking();
         void Initialize();
-    };
-
-    typedef std::shared_ptr<Networking> NetworkingPtr;
+    }; typedef std::shared_ptr<Networking> NetworkingPtr;
 
     class NetworkingFactory
     {

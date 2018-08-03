@@ -1,5 +1,6 @@
 #include "pch.hpp"
 
+#include "common/network/network_matchmaking.hpp"
 #include "common/engine/engine_utilities.hpp"
 
 #include "game/explorer/explorer_main.hpp"
@@ -16,6 +17,14 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE prevInstance,
     auto app = Client::CreateApp();
     if ( !app->Start( hInstance) )
         return 0;
+
+    /* START - delete these lines */
+    Engine::NetworkConnectionPassportRaw passport;
+    if( !Engine::FAKE_NetworkGetPassport( passport ) )
+        return 0;
+
+    app->OnReceivedMatchmaking( passport );
+    /* END - delete these lines */
 
     auto ret = app->Run();
     app->Shutdown();
@@ -121,13 +130,6 @@ bool Client::App<T>::StartNetworking()
         return false;
     }
 
-    //m_network_config.server_address
-
-    //Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server listening on %s" ).c_str(), m_server_address->Print().c_str() );
-    
-    // create the challenge key
-    //Engine::Networking::GenerateEncryptionKey( m_challenge_key );
-
     return true;
 }
 
@@ -198,6 +200,19 @@ void Client::App<T>::SendPacketsToServer()
 template<typename T>
 void Client::App<T>::OnReceivedConnectionChallenge( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time )
 {
+}
+
+template<typename T>
+void Client::App<T>::OnReceivedMatchmaking( Engine::NetworkConnectionPassportRaw &raw )
+{
+    auto passport = Engine::NetworkConnectionPassportPtr( new Engine::NetworkConnectionPassport );
+    if( !passport->Read( raw ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Client::App::OnReceivedMatchmaking Unable to read matchmaking packet." ).c_str() );
+        return;
+    }
+
+    m_connection->Connect( passport );
 }
 
 template<typename T>
