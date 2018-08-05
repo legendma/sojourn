@@ -89,7 +89,7 @@ int Client::App<T>::Run()
             // Update scene objects.
             m_timer.Tick( [&]()
             {
-                m_connection->Update();
+                UpdateNetworking();
                 m_main->Update();
                 if( m_is_active )
                 {
@@ -99,6 +99,8 @@ int Client::App<T>::Run()
                 {
                     Sleep( 100 );
                 }
+
+                SendPacketsToServer(); // TODO IMPLEMENT
             } );
             
         }
@@ -123,7 +125,7 @@ bool Client::App<T>::StartNetworking()
         return false;
     }
 
-    m_connection = Engine::NetworkConnectionFactory::CreateConnection( m_network_config );
+    m_connection = Engine::NetworkConnectionFactory::CreateConnection( m_network_config, m_networking );
     if( m_networking == nullptr )
     {
         Engine::ReportError( L"Networking connection could not be created.  Exiting..." );
@@ -136,10 +138,8 @@ bool Client::App<T>::StartNetworking()
 template<typename T>
 void Client::App<T>::UpdateNetworking()
 {
-    ReceivePackets();
-    UpdateConnection(); // TODO IMPLEMENT
+    m_connection->SendAndReceivePackets();
     HandleGamePacketsFromServer(); // TODO IMPLEMENT
-    SendPacketsToServer(); // TODO IMPLEMENT
 }
 
 template<typename T>

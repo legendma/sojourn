@@ -41,12 +41,12 @@ Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, N
 
         if( !allowed.IsAllowed( Engine::PACKET_CONNECT_REQUEST ) )
         {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Not allowed." ).c_str() );
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Not allowed." );
             return nullptr;
         }
         else if( read->GetSize() != sizeof( Engine::NetworkConnectionRequestHeader ) )
         {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Bad packet size.  Expected %d, got %d." ).c_str(), sizeof( Engine::NetworkConnectionRequestHeader ), read->GetSize() );
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Bad packet size.  Expected %d, got %d.", sizeof( Engine::NetworkConnectionRequestHeader ), read->GetSize() );
         }
 
         read->Advance( sizeof( prefix ) );
@@ -55,7 +55,7 @@ Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, N
         read->ReadBytes( &request.version, request.version.size() );
         if( std::string( request.version.data() ) != std::string( NETWORK_PROTOCOL_VERSION ) )
         {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Protocol version was incorrect." ).c_str() );
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Protocol version was incorrect." );
             return nullptr;
         }
 
@@ -63,7 +63,7 @@ Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, N
         read->Read( request.protocol_id );
         if( request.protocol_id != protocol_id )
         {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Invalid Protocol ID." ).c_str() );
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Invalid Protocol ID." );
             return nullptr;
         }
 
@@ -71,7 +71,7 @@ Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, N
         read->Read( request.token_expire_time );
         if( now_time > request.token_expire_time )
         {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Connection token expired." ).c_str() );
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Connection token expired." );
             return nullptr;
         }
 
@@ -80,14 +80,14 @@ Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, N
         read->ReadBytes( &request.raw_token, sizeof(request.raw_token ) );
         if( !NetworkConnectionToken::Decrypt( request.raw_token, request.token_sequence, protocol_id, now_time, Engine::SOJOURN_PRIVILEGED_KEY ) )
         {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Could not decrypt." ).c_str() );
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Could not decrypt." );
             return nullptr;
         }
 
         NetworkConnectionTokenPtr plain_token( new NetworkConnectionToken() );
         if( !plain_token->Read( request.raw_token ) )
         {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Ignored Connection Request.  Could not read connection token." ).c_str() );
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Could not read connection token." );
             return nullptr;
         }
         
@@ -98,10 +98,22 @@ Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, N
     return nullptr;
 }
 
-void Engine::Networking::SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num )
+bool Engine::Networking::SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num )
 {
     auto buffer = packet->WritePacket( sequence_num, protocol_id, key );
-    socket->SendTo( buffer->GetBuffer(), buffer->GetSize(), to );
+    if( !buffer )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Networking::SendPacket unable to write packet." );
+        return false;
+    }
+
+    if( socket->SendTo( buffer->GetBuffer(), buffer->GetSize(), to ) < 0 )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Networking::SendPacket unable to send packet to destination." );
+        return false;
+    }
+
+    return true;
 }
 
 uint32_t Engine::Networking::AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, uint64_t now_time, uint64_t expire_time, int timeout_secs )
@@ -446,10 +458,17 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateIncomingConnectionR
     return packet;
 }
 
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionRequest( NetworkConnectionRequestHeader &header )
+{
+    auto packet = std::shared_ptr<NetworkConnectionRequestPacket>( new NetworkConnectionRequestPacket() );
+    packet->header = header;
+
+    return packet;
+}
+
 Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionDenied()
 {
-    auto packet = std::shared_ptr<NetworkConnectionDeniedPacket>( new NetworkConnectionDeniedPacket() );
-    return packet;
+    return std::shared_ptr<NetworkConnectionDeniedPacket>( new NetworkConnectionDeniedPacket() );
 }
 
 Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionChallenge( NetworkConnectionChallengeHeader &header, NetworkChallengeTokenRaw &token )
@@ -459,6 +478,19 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionC
     packet->token = token;
 
     return packet;
+}
+
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header )
+{
+    auto packet = std::shared_ptr<NetworkConnectionChallengeResponsePacket>( new NetworkConnectionChallengeResponsePacket() );
+    packet->header = header;
+
+    return packet;
+}
+
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingDisconnect()
+{
+    return std::shared_ptr<NetworkDisconnectPacket>( new NetworkDisconnectPacket() );
 }
 
 Engine::OutputBitStreamPtr Engine::NetworkPacket::WritePacket( uint64_t sequence_num, uint64_t protocol_id, NetworkKey &key )
@@ -679,6 +711,18 @@ bool Engine::NetworkChallengeToken::Encrypt( NetworkChallengeTokenRaw &raw, uint
     return Networking::Encrypt( &raw, raw.size(), nullptr, 0, nonce, key );
 }
 
-void Engine::NetworkConnectionDeniedPacket::Write( OutputBitStreamPtr & out )
+void Engine::NetworkConnectionDeniedPacket::Write( OutputBitStreamPtr &out )
+{
+}
+
+void Engine::NetworkKeepAlivePacket::Write( OutputBitStreamPtr &out )
+{
+}
+
+void Engine::NetworkConnectionChallengeResponsePacket::Write( OutputBitStreamPtr &out )
+{
+}
+
+void Engine::NetworkDisconnectPacket::Write( OutputBitStreamPtr & out )
 {
 }

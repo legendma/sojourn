@@ -250,7 +250,8 @@ namespace Engine
 #pragma pack(push, 1)
     struct NetworkKeepAliveHeader
     {
-        NetworkPacketPrefix prefix;
+        uint64_t client_id;
+        int32_t max_clients;
     };
 #pragma pack(pop)
 
@@ -288,7 +289,7 @@ namespace Engine
 
     private:
         virtual void Write( OutputBitStreamPtr &out ) = 0;
-    };
+    }; typedef std::shared_ptr<NetworkPacket> NetworkPacketPtr;
 
     class NetworkConnectionRequestPacket : public NetworkPacket
     {
@@ -321,14 +322,45 @@ namespace Engine
         NetworkConnectionChallengePacket() { packet_type = PACKET_CONNECT_CHALLENGE; }
     };
 
-    typedef std::shared_ptr<NetworkPacket> NetworkPacketPtr;
+    class NetworkConnectionChallengeResponsePacket : public NetworkPacket
+    {
+        friend class NetworkPacketFactory;
+    public:
+        NetworkConnectionChallengeResponseHeader header;
+        NetworkChallengeTokenRaw token;
+
+    private:
+        virtual void Write( OutputBitStreamPtr &out );
+        NetworkConnectionChallengeResponsePacket() { packet_type = PACKET_CONNECT_CHALLENGE_RESPONSE; }
+    };
+
+    class NetworkKeepAlivePacket : public NetworkPacket
+    {
+        friend class NetworkPacketFactory;
+    public:
+        NetworkKeepAliveHeader header;
+
+    private:
+        virtual void Write( OutputBitStreamPtr &out );
+        NetworkKeepAlivePacket() { packet_type = PACKET_KEEP_ALIVE; }
+    };
+
+    class NetworkDisconnectPacket : public NetworkPacket
+    {
+        friend class NetworkPacketFactory;
+        virtual void Write( OutputBitStreamPtr &out );
+        NetworkDisconnectPacket() { packet_type = PACKET_DISCONNECT; }
+    };
 
     class NetworkPacketFactory
     {
     public:
         static NetworkPacketPtr CreateIncomingConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token );
+        static NetworkPacketPtr CreateOutgoingConnectionRequest( NetworkConnectionRequestHeader &header );
         static NetworkPacketPtr CreateOutgoingConnectionDenied();
         static NetworkPacketPtr CreateOutgoingConnectionChallenge( NetworkConnectionChallengeHeader &header, NetworkChallengeTokenRaw &token );
+        static NetworkPacketPtr CreateOutgoingConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header );
+        static NetworkPacketPtr CreateOutgoingDisconnect();
     };
 
     class NetworkCryptoMap
@@ -365,7 +397,7 @@ namespace Engine
         ~Networking();
 
         NetworkPacketPtr ReadPacket( uint64_t protocol_id, NetworkKey &read_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read );
-        void SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num );
+        bool SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num );
 
         uint32_t AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, uint64_t now_time, uint64_t expire_time, int timeout_secs );
         NetworkCryptoMapPtr FindCryptoMapByAddress( NetworkAddressPtr &search_address, uint64_t time );

@@ -233,7 +233,7 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &pack
     if( m_clients.size() == m_config.max_num_clients )
     {
         auto refusal = Engine::NetworkPacketFactory::CreateOutgoingConnectionDenied();
-        m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, connect_token->server_to_client_key, m_next_sequence++ );
+        (void)m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, connect_token->server_to_client_key, m_next_sequence++ );
         return;
     }
 
@@ -257,7 +257,12 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &pack
     Engine::NetworkChallengeToken::Encrypt( raw_challenge_token, challenge.token_sequence, m_config.challenge_key );
 
     auto challenge_packet = Engine::NetworkPacketFactory::CreateOutgoingConnectionChallenge( challenge, raw_challenge_token );
-    m_networking->SendPacket( m_socket, from, challenge_packet, m_config.protocol_id, connect_token->server_to_client_key, challenge.token_sequence );
+    if( m_networking->SendPacket( m_socket, from, challenge_packet, m_config.protocol_id, connect_token->server_to_client_key, challenge.token_sequence ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server unable to send a connection challenge to %s." ).c_str(), from->Print().c_str() );
+        return;
+    }
+
     Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Sent a connection challenge to %s." ).c_str(), from->Print().c_str() );
 }
 

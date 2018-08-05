@@ -49,6 +49,8 @@
     <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
     <ClInclude Include="..\common\engine\engine_utilities.hpp" />
     <ClInclude Include="..\common\network\network_main.hpp" />
+    <ClInclude Include="..\common\network\network_matchmaking.hpp" />
+    <ClInclude Include="..\common\network\network_sockets.hpp" />
     <ClInclude Include="..\common\simulation\world_game_object.hpp" />
     <ClInclude Include="client_main.hpp" />
     <ClInclude Include="client_window.hpp" />

@@ -157,6 +157,12 @@
     <ClInclude Include="..\common\network\network_main.hpp">
       <Filter>src\engine\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\network\network_matchmaking.hpp">
+      <Filter>src\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\network\network_sockets.hpp">
+      <Filter>src\engine\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="game\shaders\color_position_ps.hlsl">

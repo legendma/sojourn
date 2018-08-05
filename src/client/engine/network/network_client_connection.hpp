@@ -15,6 +15,7 @@ namespace Engine
         friend class SendingConnectRequestsState;
         friend class SendingConnectRepliesState;
         friend class ConnectedState;
+        friend class DisconnectingState;
 	public:
         typedef enum
         {
@@ -22,7 +23,8 @@ namespace Engine
             TRY_NEXT_SERVER,
             SENDING_CONNECT_REQUESTS,
             SENDING_CONNECT_REPLIES,
-            CONNECTED
+            CONNECTED,
+            DISCONNECTING
         } StateID;
 
         typedef enum
@@ -31,6 +33,7 @@ namespace Engine
             SERVER_CANT_REACH,
             SERVER_SOCKET_ERROR,
             SERVER_NOT_RESPONDING,
+            CANT_REACH_SERVER,
             SERVER_IS_FULL,
             SERVER_DISCONNECTED
         } ConnectionError;
@@ -42,11 +45,12 @@ namespace Engine
             virtual void ExitState() = 0;
             virtual void Update() = 0;
             virtual StateID Id() = 0;
+            virtual void ProcessPacket( Engine::NetworkPacketPtr &packet ) = 0;
 
             NetworkConnection &m_fsm;
         }; typedef std::shared_ptr<State> StatePtr;
 
-        void Update();
+        void SendAndReceivePackets();
         void Connect( NetworkConnectionPassportPtr &offer );
 
         bool IsConnected() { return m_current_state->Id() == CONNECTED; }
@@ -58,21 +62,32 @@ namespace Engine
         StatePtr m_current_state;
         ConnectionError m_connect_error;
         NetworkSocketUDPPtr m_socket;
+        NetworkingPtr m_networking;
         NetworkAddressPtr m_server_address;
         NetworkAddressPtr m_our_address;
         NetworkConnectionPassportPtr m_passport;
         NetworkPacketTypesAllowed m_allowed;
         const NetworkClientConfig &m_config;
         StepTimer m_send_timer;
+        time_t m_connect_start_time;
+        time_t m_current_time;
+        time_t m_last_recieved_packet_time;
+        time_t m_last_sent_packet_time;
+        NetworkConnectionChallengeHeader m_challenge;
+        NetworkPacketPtr m_keep_alive_packet;
         
-        NetworkConnection( const NetworkClientConfig &config );
+        NetworkConnection( const NetworkClientConfig &config, NetworkingPtr &networking );
         void ChangeState( StateID to_state );
+        bool IsPassportExpired();
+        void ReceiveAndProcessPackets();
+
+        inline void ResetSendTimer() { m_send_timer = Engine::StepTimer(); }
 
 	}; typedef std::shared_ptr<NetworkConnection> NetworkConnectionPtr;
 
     class NetworkConnectionFactory
     {
     public:
-        static NetworkConnectionPtr CreateConnection( const NetworkClientConfig &config );
+        static NetworkConnectionPtr CreateConnection( const NetworkClientConfig &config, NetworkingPtr &networking );
     };
 }
