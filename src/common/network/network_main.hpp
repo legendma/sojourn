@@ -177,8 +177,8 @@ namespace Engine
 
         void Write( NetworkConnectionTokenRaw &raw );
         bool Read( NetworkConnectionTokenRaw &raw );
-        static bool Decrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, uint64_t &expire_time, const NetworkKey &key );
-        static bool Encrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, uint64_t &expire_time, const NetworkKey &key );
+        static bool Decrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, double expire_time, const NetworkKey &key );
+        static bool Encrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, double expire_time, const NetworkKey &key );
     }; typedef std::shared_ptr<NetworkConnectionToken> NetworkConnectionTokenPtr;
 
     typedef std::array<byte, NETWORK_CHALLENGE_TOKEN_RAW_LENGTH> NetworkChallengeTokenRaw;
@@ -190,9 +190,9 @@ namespace Engine
 
         void Write( NetworkChallengeTokenRaw &raw );
         bool Read( NetworkChallengeTokenRaw &raw );
-        static bool Decrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, NetworkKey &key );
+        static bool Decrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, const NetworkKey &key );
         static bool Encrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, NetworkKey &key );
-    };
+    }; typedef std::shared_ptr<NetworkChallengeToken> NetworkChallengeTokenPtr;
 
     typedef enum
     {
@@ -280,16 +280,19 @@ namespace Engine
         NetworkPacketTypesAllowed() { Reset(); }
     };
     
+    class NetworkPacket;
+    typedef std::shared_ptr<NetworkPacket> NetworkPacketPtr;
     class NetworkPacket
     {
     public:
         NetworkPacketType packet_type;
 
-        OutputBitStreamPtr WritePacket( uint64_t sequence_num, uint64_t protocol_id, NetworkKey &key );
+        static NetworkPacketPtr ReadPacket( InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time );
+        OutputBitStreamPtr WritePacket( uint64_t sequence_number, uint64_t protocol_id, NetworkKey &key );
 
     private:
         virtual void Write( OutputBitStreamPtr &out ) = 0;
-    }; typedef std::shared_ptr<NetworkPacket> NetworkPacketPtr;
+    };
 
     class NetworkConnectionRequestPacket : public NetworkPacket
     {
@@ -297,6 +300,8 @@ namespace Engine
     public:
         NetworkConnectionRequestHeader header;
         NetworkConnectionTokenPtr token;
+
+        static NetworkPacketPtr Read( InputBitStreamPtr &in, uint64_t &protocol_id, double now_time );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -306,7 +311,14 @@ namespace Engine
     class NetworkConnectionDeniedPacket : public NetworkPacket
     {
         friend class NetworkPacketFactory;
-        virtual void Write( OutputBitStreamPtr &out );
+    public:
+        NetworkConnectionRequestHeader header;
+        NetworkConnectionTokenPtr token;
+
+        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+
+    private:
+        virtual void Write( OutputBitStreamPtr &out ) {};
         NetworkConnectionDeniedPacket() { packet_type = PACKET_CONNECT_DENIED; }
     };
 
@@ -315,7 +327,9 @@ namespace Engine
         friend class NetworkPacketFactory;
     public:
         NetworkConnectionChallengeHeader header;
-        NetworkChallengeTokenRaw token;
+        NetworkChallengeTokenPtr token;
+
+        static NetworkPacketPtr Read( InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -327,7 +341,9 @@ namespace Engine
         friend class NetworkPacketFactory;
     public:
         NetworkConnectionChallengeResponseHeader header;
-        NetworkChallengeTokenRaw token;
+        NetworkChallengeTokenPtr token;
+
+        static NetworkPacketPtr Read( InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -340,6 +356,8 @@ namespace Engine
     public:
         NetworkKeepAliveHeader header;
 
+        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+
     private:
         virtual void Write( OutputBitStreamPtr &out );
         NetworkKeepAlivePacket() { packet_type = PACKET_KEEP_ALIVE; }
@@ -348,19 +366,23 @@ namespace Engine
     class NetworkDisconnectPacket : public NetworkPacket
     {
         friend class NetworkPacketFactory;
-        virtual void Write( OutputBitStreamPtr &out );
+    public:
+        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+
+    private:
+        virtual void Write( OutputBitStreamPtr &out ) {};
         NetworkDisconnectPacket() { packet_type = PACKET_DISCONNECT; }
     };
 
     class NetworkPacketFactory
     {
     public:
-        static NetworkPacketPtr CreateIncomingConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token );
-        static NetworkPacketPtr CreateOutgoingConnectionRequest( NetworkConnectionRequestHeader &header );
-        static NetworkPacketPtr CreateOutgoingConnectionDenied();
-        static NetworkPacketPtr CreateOutgoingConnectionChallenge( NetworkConnectionChallengeHeader &header, NetworkChallengeTokenRaw &token );
-        static NetworkPacketPtr CreateOutgoingConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header );
-        static NetworkPacketPtr CreateOutgoingDisconnect();
+        static NetworkPacketPtr CreateConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token = nullptr );
+        static NetworkPacketPtr CreateConnectionDenied();
+        static NetworkPacketPtr CreateConnectionChallenge( NetworkConnectionChallengeHeader &header );
+        static NetworkPacketPtr CreateConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header );
+        static NetworkPacketPtr CreateDisconnect();
+        static NetworkPacketPtr CreateKeepAlive( NetworkKeepAliveHeader &header );
     };
 
     class NetworkCryptoMap
@@ -369,13 +391,13 @@ namespace Engine
         NetworkCryptoMap() {};
         
         NetworkAddressPtr address;
-        uint64_t last_seen;
-        uint64_t expire_time;
+        double last_seen;
+        double expire_time;
         int timeout_seconds;
         NetworkKey send_key;
         NetworkKey receive_key;
 
-        bool IsExpired( uint64_t current_time )
+        bool IsExpired( double current_time )
         {
             if( timeout_seconds > 0
              && last_seen + timeout_seconds < current_time )
@@ -396,12 +418,10 @@ namespace Engine
     public:
         ~Networking();
 
-        NetworkPacketPtr ReadPacket( uint64_t protocol_id, NetworkKey &read_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read );
         bool SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num );
-
-        uint32_t AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, uint64_t now_time, uint64_t expire_time, int timeout_secs );
-        NetworkCryptoMapPtr FindCryptoMapByAddress( NetworkAddressPtr &search_address, uint64_t time );
-        NetworkCryptoMapPtr FindCryptoMapByID( uint32_t search_id, NetworkAddressPtr &expected_address, uint64_t time );
+        uint64_t AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, double now_time, double expire_time, int timeout_secs );
+        NetworkCryptoMapPtr FindCryptoMapByAddress( NetworkAddressPtr &search_address, double time );
+        NetworkCryptoMapPtr FindCryptoMapByClientID( uint64_t search_id, NetworkAddressPtr &expected_address, double time );
 
         static bool Encrypt( void *data_to_encrypt, size_t data_length, byte* salt, size_t salt_length, NetworkNonce &nonce, const NetworkKey &key );
         static bool Decrypt( void *data_to_decrypt, size_t data_length, byte *salt, size_t salt_length, NetworkNonce &nonce, const NetworkKey &key );
@@ -410,8 +430,8 @@ namespace Engine
 
     private:
         WSADATA m_wsa_data;
-        std::map<uint32_t, NetworkCryptoMapPtr> m_crypto_map;
-        uint32_t m_crypto_map_next_id;
+        std::map<uint64_t, NetworkCryptoMapPtr> m_crypto_map;
+        uint64_t m_crypto_map_next_id;
 
         Networking();
         void Initialize();

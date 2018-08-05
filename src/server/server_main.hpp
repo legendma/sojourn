@@ -20,7 +20,17 @@ namespace Server
     {
         Engine::NetworkAddressPtr client_address;
         uint64_t client_id;
-        uint32_t crypto_id;
+        bool is_confirmed;
+        double last_time_received_packet;
+        double last_time_sent_packet;
+        int timeout_seconds;
+
+        ClientRecord() :
+            client_id( 0 ),
+            last_time_received_packet( 0.0 ),
+            last_time_sent_packet( 0.0 ),
+            timeout_seconds( 0 ),
+            is_confirmed( false ) {};
     }; typedef std::shared_ptr<ClientRecord> ClientRecordPtr;
 
     struct ServerConfig
@@ -46,15 +56,15 @@ namespace Server
 
     struct SeenTokens
     {
-        typedef struct
+        struct EntryType
         {
             Engine::NetworkAuthentication token_uid;
             Engine::NetworkAddressPtr address;
             double time;
-        } EntryType;
+        }; typedef std::shared_ptr<EntryType> EntryTypePtr;
 
         SeenTokens();
-        bool FindAdd( Engine::NetworkAuthentication &token_uid, Engine::NetworkAddressPtr address, double time );
+        EntryTypePtr FindAdd( Engine::NetworkAuthentication &token_uid, Engine::NetworkAddressPtr address, double time );
 
     private:
         std::array<EntryType, SERVER_MAX_CONNECT_TOKENS> m_seen;
@@ -79,10 +89,11 @@ namespace Server
         SeenTokens m_seen_tokens;
         uint64_t m_next_challenge_sequence;
         uint64_t m_next_sequence;
+        double m_now_time;
         
         void Update();
-        void ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, uint64_t &now_time, Engine::InputBitStreamPtr &read );
-        void ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time );
+        void ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, Engine::InputBitStreamPtr &read );
+        void ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from );
         void ReceivePackets();
         void KeepClientsAlive();
         void CheckClientTimeouts();
@@ -94,7 +105,9 @@ namespace Server
         void Initialize();
         Server( ServerConfig &config, Engine::NetworkingPtr &networking );
 
-        void OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time );
+        void OnReceivedConnectionRequest( Engine::NetworkConnectionRequestPacket &request, Engine::NetworkAddressPtr &from );
+        void OnReceivedConnectionChallengeResponse( Engine::NetworkConnectionChallengeResponsePacket &response, Engine::NetworkAddressPtr &from );
+        void OnReceivedKeepAlive( Engine::NetworkKeepAlivePacket &keep_alive, Engine::NetworkAddressPtr &from );
     }; typedef std::shared_ptr<Server> ServerPtr;
 
     class ServerFactory

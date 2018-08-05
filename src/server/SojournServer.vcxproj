@@ -99,6 +99,7 @@
       <PreprocessorDefinitions>WIN32;SODIUM_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);SODIUM_STATIC;SODIUM_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,6 +132,7 @@
       <PreprocessorDefinitions>WIN32;SODIUM_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);SODIUM_STATIC;SODIUM_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

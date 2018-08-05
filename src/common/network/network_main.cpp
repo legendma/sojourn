@@ -24,78 +24,6 @@ void Engine::Networking::Initialize()
         Engine::ReportError( L"Networking::Initialize could not initialize Winsock DLL." );
         throw std::runtime_error( "WSAStartup" );
     }
-
-}
-
-Engine::NetworkPacketPtr Engine::Networking::ReadPacket( uint64_t protocol_id, NetworkKey &read_key, NetworkPacketTypesAllowed &allowed, uint64_t now_time, InputBitStreamPtr &read )
-{
-    auto marker = read->SaveCurrentLocation();
-    Engine::NetworkPacketPrefix prefix;
-    read->Read( prefix.b );
-    read->SeekToLocation( marker );
-    if( prefix.packet_type == Engine::PACKET_CONNECT_REQUEST )
-    {
-        /* handle new connection request */
-        Engine::NetworkConnectionRequestHeader request;
-        ::ZeroMemory( &request, sizeof(request) );
-
-        if( !allowed.IsAllowed( Engine::PACKET_CONNECT_REQUEST ) )
-        {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Not allowed." );
-            return nullptr;
-        }
-        else if( read->GetSize() != sizeof( Engine::NetworkConnectionRequestHeader ) )
-        {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Bad packet size.  Expected %d, got %d.", sizeof( Engine::NetworkConnectionRequestHeader ), read->GetSize() );
-        }
-
-        read->Advance( sizeof( prefix ) );
-
-        /* test if protocol version matches */
-        read->ReadBytes( &request.version, request.version.size() );
-        if( std::string( request.version.data() ) != std::string( NETWORK_PROTOCOL_VERSION ) )
-        {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Protocol version was incorrect." );
-            return nullptr;
-        }
-
-        /* test if protocol ID matches */
-        read->Read( request.protocol_id );
-        if( request.protocol_id != protocol_id )
-        {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Invalid Protocol ID." );
-            return nullptr;
-        }
-
-        /* test if the connection token has expired */
-        read->Read( request.token_expire_time );
-        if( now_time > request.token_expire_time )
-        {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Connection token expired." );
-            return nullptr;
-        }
-
-        read->Read( request.token_sequence );
-
-        read->ReadBytes( &request.raw_token, sizeof(request.raw_token ) );
-        if( !NetworkConnectionToken::Decrypt( request.raw_token, request.token_sequence, protocol_id, now_time, Engine::SOJOURN_PRIVILEGED_KEY ) )
-        {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Could not decrypt." );
-            return nullptr;
-        }
-
-        NetworkConnectionTokenPtr plain_token( new NetworkConnectionToken() );
-        if( !plain_token->Read( request.raw_token ) )
-        {
-            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Could not read connection token." );
-            return nullptr;
-        }
-        
-        auto packet = Engine::NetworkPacketFactory::CreateIncomingConnectionRequest( request, plain_token );
-        return packet;
-    }
-
-    return nullptr;
 }
 
 bool Engine::Networking::SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num )
@@ -116,10 +44,10 @@ bool Engine::Networking::SendPacket( Engine::NetworkSocketUDPPtr &socket, Networ
     return true;
 }
 
-uint32_t Engine::Networking::AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, uint64_t now_time, uint64_t expire_time, int timeout_secs )
+uint64_t Engine::Networking::AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, double now_time, double expire_time, int timeout_secs )
 {
     NetworkCryptoMapPtr free_record;
-    uint32_t out_id;
+    uint64_t out_id;
     for( auto mapping : m_crypto_map )
     {
         auto crypto = mapping.second;
@@ -164,7 +92,7 @@ uint32_t Engine::Networking::AddCryptoMap( NetworkAddressPtr &client_address, Ne
     return out_id;
 }
 
-Engine::NetworkCryptoMapPtr Engine::Networking::FindCryptoMapByAddress( NetworkAddressPtr &search_address, uint64_t time )
+Engine::NetworkCryptoMapPtr Engine::Networking::FindCryptoMapByAddress( NetworkAddressPtr &search_address, double time )
 {
     for( auto mapping : m_crypto_map )
     {
@@ -180,7 +108,7 @@ Engine::NetworkCryptoMapPtr Engine::Networking::FindCryptoMapByAddress( NetworkA
     return nullptr;
 }
 
-Engine::NetworkCryptoMapPtr Engine::Networking::FindCryptoMapByID( uint32_t search_id, NetworkAddressPtr &expected_address, uint64_t time )
+Engine::NetworkCryptoMapPtr Engine::Networking::FindCryptoMapByClientID( uint64_t search_id, NetworkAddressPtr &expected_address, double time )
 {
     assert( expected_address != nullptr );
     auto found = m_crypto_map.find( search_id );
@@ -449,7 +377,7 @@ void Engine::OutputBitStream::WriteBits( void *out, uint32_t bit_cnt )
     }
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateIncomingConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token )
 {
     auto packet = std::shared_ptr<NetworkConnectionRequestPacket>( new NetworkConnectionRequestPacket() );
     packet->header = header;
@@ -458,29 +386,20 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateIncomingConnectionR
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionRequest( NetworkConnectionRequestHeader &header )
-{
-    auto packet = std::shared_ptr<NetworkConnectionRequestPacket>( new NetworkConnectionRequestPacket() );
-    packet->header = header;
-
-    return packet;
-}
-
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionDenied()
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionDenied()
 {
     return std::shared_ptr<NetworkConnectionDeniedPacket>( new NetworkConnectionDeniedPacket() );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionChallenge( NetworkConnectionChallengeHeader &header, NetworkChallengeTokenRaw &token )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallenge( NetworkConnectionChallengeHeader &header )
 {
     auto packet = std::shared_ptr<NetworkConnectionChallengePacket>( new NetworkConnectionChallengePacket() );
     packet->header = header;
-    packet->token = token;
 
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header )
 {
     auto packet = std::shared_ptr<NetworkConnectionChallengeResponsePacket>( new NetworkConnectionChallengeResponsePacket() );
     packet->header = header;
@@ -488,12 +407,106 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingConnectionC
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateOutgoingDisconnect()
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateDisconnect()
 {
     return std::shared_ptr<NetworkDisconnectPacket>( new NetworkDisconnectPacket() );
 }
 
-Engine::OutputBitStreamPtr Engine::NetworkPacket::WritePacket( uint64_t sequence_num, uint64_t protocol_id, NetworkKey &key )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( NetworkKeepAliveHeader & header )
+{
+    auto packet = std::shared_ptr<NetworkKeepAlivePacket>( new NetworkKeepAlivePacket() );
+    packet->header = header;
+
+    return packet;
+}
+
+Engine::NetworkPacketPtr Engine::NetworkPacket::ReadPacket( InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time )
+{
+    Engine::NetworkPacketPrefix prefix;
+    read->Read( prefix.b );
+    if( !allowed.IsAllowed( static_cast<NetworkPacketType>(prefix.packet_type) ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored packet.  Type not allowed." );
+        return nullptr;
+    }
+
+    /* non-encrypted connect request */
+    if( prefix.packet_type == Engine::PACKET_CONNECT_REQUEST )
+    {
+        return Engine::NetworkConnectionRequestPacket::Read( read, protocol_id, now_time );
+    }
+
+    /* encrypted packet type */
+    if( prefix.sequence_byte_cnt < 1
+     || prefix.sequence_byte_cnt > 8 )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Packet.  Sequence bytes of %d is not within bounds.", prefix.sequence_byte_cnt );
+        return nullptr;
+    }
+
+    if( read->GetSize() < sizeof( NetworkPacketPrefix ) + prefix.sequence_byte_cnt + sizeof( NetworkAuthentication ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Packet.  Packet smaller than size for empty packet.", prefix.sequence_byte_cnt );
+        return nullptr;
+    }
+
+    /* read the sequence number */
+    uint64_t sequence_number = 0;
+    read->Read( sequence_number, prefix.sequence_byte_cnt );
+
+    /* create the nonce */
+    NetworkNonce nonce;
+    auto nonce_alias = BitStreamFactory::CreateOutputBitStream( nonce.data(), nonce.size(), false );
+    nonce_alias->Write( 0, 32 );
+    nonce_alias->Write( sequence_number );
+
+    /* create the salt */
+    struct
+    {
+        byte version[NETWORK_PROTOCOL_VERSION_LEN];
+        uint64_t protocol_id;
+        NetworkPacketPrefix prefix;
+    } salt;
+
+    auto salt_alias = BitStreamFactory::CreateOutputBitStream( reinterpret_cast<byte*>(&salt), sizeof( salt ), false );
+    salt_alias->WriteBytes( (void*)NETWORK_PROTOCOL_VERSION, NETWORK_PROTOCOL_VERSION_LEN );
+    salt_alias->Write( protocol_id );
+    salt_alias->Write( prefix.b );
+
+    if( !Networking::Decrypt( read->GetBuffer(), read->GetRemainingByteCount(), salt_alias->GetBuffer(), salt_alias->GetCurrentByteCount(), nonce, read_key ) )
+    {
+        return nullptr;
+    }
+
+    /* read the packet by packet type */
+    switch( prefix.packet_type )
+    {
+    case PACKET_CONNECT_DENIED:
+        return NetworkConnectionDeniedPacket::Read( read );
+
+    case PACKET_CONNECT_CHALLENGE:
+        return NetworkConnectionChallengePacket::Read( read );
+
+    case PACKET_CONNECT_CHALLENGE_RESPONSE:
+        return NetworkConnectionChallengeResponsePacket::Read( read );
+
+    case PACKET_KEEP_ALIVE:
+        return NetworkKeepAlivePacket::Read( read );
+
+    case PACKET_PAYLOAD:
+        break;
+
+    case PACKET_DISCONNECT:
+        return NetworkDisconnectPacket::Read( read );
+
+    default:
+        break;
+    }
+
+    return nullptr;
+}
+
+Engine::OutputBitStreamPtr Engine::NetworkPacket::WritePacket( uint64_t sequence_number, uint64_t protocol_id, NetworkKey &key )
 {
     auto out = BitStreamFactory::CreateOutputBitStream();
    
@@ -505,14 +518,14 @@ Engine::OutputBitStreamPtr Engine::NetworkPacket::WritePacket( uint64_t sequence
     }
 
     /* encrypted packet */
-    auto sequence_byte_cnt = BitStreamBase::BytesRequired( sequence_num );
+    auto sequence_byte_cnt = BitStreamBase::BytesRequired( sequence_number );
 
     /* write the unencrypted section */
     NetworkPacketPrefix prefix;
     prefix.packet_type = packet_type;
     prefix.sequence_byte_cnt = sequence_byte_cnt;
     out->Write( prefix.b );
-    out->Write( sequence_num, sequence_byte_cnt * 8 );
+    out->Write( sequence_number, sequence_byte_cnt * 8 );
 
     /* write the data to be encrypted */
     auto encrypted = BitStreamFactory::CreateOutputBitStream();
@@ -522,7 +535,7 @@ Engine::OutputBitStreamPtr Engine::NetworkPacket::WritePacket( uint64_t sequence
     NetworkNonce nonce;
     auto nonce_alias = BitStreamFactory::CreateOutputBitStream( nonce.data(), nonce.size(), false );
     nonce_alias->Write( 0, 32 );
-    nonce_alias->Write( sequence_num );
+    nonce_alias->Write( sequence_number );
 
     /* create the salt */
     struct
@@ -563,6 +576,61 @@ void Engine::NetworkConnectionRequestPacket::Write( OutputBitStreamPtr &out )
     NetworkConnectionTokenRaw raw_token;
     token->Write( raw_token );
     out->WriteBytes( reinterpret_cast<byte*>(&raw_token), sizeof( NetworkConnectionTokenRaw ) );
+}
+
+Engine::NetworkPacketPtr Engine::NetworkConnectionRequestPacket::Read( InputBitStreamPtr &in, uint64_t &protocol_id, double now_time )
+{
+    if( in->GetSize() != sizeof( Engine::NetworkConnectionRequestHeader ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Bad packet size.  Expected %d, got %d.", sizeof( Engine::NetworkConnectionRequestHeader ), in->GetSize() );
+        return nullptr;
+    }
+
+    Engine::NetworkConnectionRequestHeader request;
+    ::ZeroMemory( &request, sizeof( request ) );
+
+    /* test if protocol version matches */
+    in->ReadBytes( &request.version, request.version.size() );
+    if( std::string( request.version.data() ) != std::string( NETWORK_PROTOCOL_VERSION ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Protocol version was incorrect." );
+        return nullptr;
+    }
+
+    /* test if protocol ID matches */
+    in->Read( request.protocol_id );
+    if( request.protocol_id != protocol_id )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Invalid Protocol ID." );
+        return nullptr;
+    }
+
+    /* test if the connection token has expired */
+    in->Read( request.token_expire_time );
+    if( now_time > request.token_expire_time )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Connection token expired." );
+        return nullptr;
+    }
+
+    /* decrypt and read the connection token */
+    in->Read( request.token_sequence );
+
+    in->ReadBytes( &request.raw_token, sizeof( request.raw_token ) );
+    if( !NetworkConnectionToken::Decrypt( request.raw_token, request.token_sequence, protocol_id, now_time, Engine::SOJOURN_PRIVILEGED_KEY ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Could not decrypt." );
+        return nullptr;
+    }
+
+    NetworkConnectionTokenPtr plain_token( new NetworkConnectionToken() );
+    if( !plain_token->Read( request.raw_token ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Could not read connection token." );
+        return nullptr;
+    }
+
+    return Engine::NetworkPacketFactory::CreateConnectionRequest( request, plain_token );
 }
 
 bool Engine::NetworkConnectionToken::Read( NetworkConnectionTokenRaw &raw )
@@ -615,7 +683,7 @@ void Engine::NetworkConnectionToken::Write( NetworkConnectionTokenRaw &raw )
     out->Write( server_to_client_key );
 }
 
-bool Engine::NetworkConnectionToken::Encrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, uint64_t &expire_time, const NetworkKey &key )
+bool Engine::NetworkConnectionToken::Encrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, double expire_time, const NetworkKey &key )
 {
     /* create the nonce */
     NetworkNonce nonce;
@@ -639,7 +707,7 @@ bool Engine::NetworkConnectionToken::Encrypt( NetworkConnectionTokenRaw &raw, ui
     return Networking::Encrypt( &raw, raw.size(), salt_alias->GetBuffer(), salt_alias->GetCurrentByteCount(), nonce, key );
 }
 
-bool Engine::NetworkConnectionToken::Decrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, uint64_t &expire_time, const NetworkKey &key )
+bool Engine::NetworkConnectionToken::Decrypt( NetworkConnectionTokenRaw &raw, uint64_t sequence_num, uint64_t &protocol_id, double expire_time, const NetworkKey &key )
 {
     /* create the nonce */
     NetworkNonce nonce;
@@ -652,7 +720,7 @@ bool Engine::NetworkConnectionToken::Decrypt( NetworkConnectionTokenRaw &raw, ui
     {
         byte version[NETWORK_PROTOCOL_VERSION_LEN];
         uint64_t protocol_id;
-        uint64_t expire_time;
+        double expire_time;
     } salt;
 
     auto salt_alias = BitStreamFactory::CreateOutputBitStream( reinterpret_cast<byte*>(&salt), sizeof( salt ), false );
@@ -663,10 +731,28 @@ bool Engine::NetworkConnectionToken::Decrypt( NetworkConnectionTokenRaw &raw, ui
     return Networking::Decrypt( &raw, raw.size(), salt_alias->GetBuffer(), salt_alias->GetCurrentByteCount(), nonce, key );
 }
 
+Engine::NetworkPacketPtr Engine::NetworkConnectionChallengePacket::Read( InputBitStreamPtr &in )
+{
+    if( in->GetRemainingByteCount() != sizeof( NetworkConnectionChallengeHeader ) + sizeof( NetworkAuthentication ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Challenge.  Bad packet size.  Expected %d, got %d.", sizeof( NetworkAuthentication ), in->GetSize() );
+        return nullptr;
+    }
+
+    Engine::NetworkConnectionChallengeHeader challenge;
+    ::ZeroMemory( &challenge, sizeof( challenge ) );
+
+    /* read the encrypted challenge token for later decryption */
+    in->Read( challenge.token_sequence );
+    in->ReadBytes( &challenge.raw_challenge_token, sizeof( challenge.raw_challenge_token ) );
+
+    return Engine::NetworkPacketFactory::CreateConnectionChallenge( challenge );
+}
+
 void Engine::NetworkConnectionChallengePacket::Write( OutputBitStreamPtr &out )
 {
     out->Write( header.token_sequence );
-    out->WriteBytes( token.data(), token.size() );
+    out->WriteBytes( header.raw_challenge_token.data(), header.raw_challenge_token.size() );
 }
 
 void Engine::NetworkChallengeToken::Write( NetworkChallengeTokenRaw &raw )
@@ -689,7 +775,7 @@ bool Engine::NetworkChallengeToken::Read( NetworkChallengeTokenRaw &raw )
     return true;
 }
 
-bool Engine::NetworkChallengeToken::Decrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, NetworkKey &key )
+bool Engine::NetworkChallengeToken::Decrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, const NetworkKey &key )
 {
     /* create the nonce */
     NetworkNonce nonce;
@@ -711,18 +797,70 @@ bool Engine::NetworkChallengeToken::Encrypt( NetworkChallengeTokenRaw &raw, uint
     return Networking::Encrypt( &raw, raw.size(), nullptr, 0, nonce, key );
 }
 
-void Engine::NetworkConnectionDeniedPacket::Write( OutputBitStreamPtr &out )
+Engine::NetworkPacketPtr Engine::NetworkConnectionChallengeResponsePacket::Read( InputBitStreamPtr &in )
 {
-}
+    if( in->GetRemainingByteCount() != sizeof( NetworkConnectionChallengeResponseHeader ) + sizeof( NetworkAuthentication ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Response.  Bad packet size.  Expected %d, got %d.", sizeof( NetworkConnectionChallengeResponseHeader ) + sizeof( NetworkAuthentication ), in->GetSize() );
+        return nullptr;
+    }
 
-void Engine::NetworkKeepAlivePacket::Write( OutputBitStreamPtr &out )
-{
+    Engine::NetworkConnectionChallengeResponseHeader response;
+    ::ZeroMemory( &response, sizeof( response ) );
+
+    in->Read( response.token_sequence );
+    in->ReadBytes( response.raw_challenge_token.data(), response.raw_challenge_token.size() );
+
+    return NetworkPacketFactory::CreateConnectionChallengeResponse( response );
 }
 
 void Engine::NetworkConnectionChallengeResponsePacket::Write( OutputBitStreamPtr &out )
 {
+    out->Write( header.token_sequence );
+    out->WriteBytes( header.raw_challenge_token.data(), header.raw_challenge_token.size() );
 }
 
-void Engine::NetworkDisconnectPacket::Write( OutputBitStreamPtr & out )
+Engine::NetworkPacketPtr Engine::NetworkConnectionDeniedPacket::Read( InputBitStreamPtr &in )
 {
+    if( in->GetRemainingByteCount() != sizeof( NetworkAuthentication ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Denied.  Bad packet size.  Expected %d, got %d.", sizeof( NetworkAuthentication ), in->GetSize() );
+        return nullptr;
+    }
+
+    return NetworkPacketFactory::CreateConnectionDenied();
+}
+
+Engine::NetworkPacketPtr Engine::NetworkKeepAlivePacket::Read( InputBitStreamPtr & in )
+{
+    if( in->GetRemainingByteCount() != sizeof( NetworkAuthentication ) + sizeof( NetworkAuthentication ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Denied.  Bad packet size.  Expected 0, got %d.", sizeof( NetworkAuthentication ) + sizeof( NetworkAuthentication ), in->GetSize() );
+        return nullptr;
+    }
+
+    NetworkKeepAliveHeader keep_alive;
+    ::ZeroMemory( &keep_alive, sizeof( keep_alive ) );
+
+    in->Read( keep_alive.client_id );
+    in->Read( keep_alive.max_clients );
+
+    return NetworkPacketFactory::CreateKeepAlive( keep_alive );
+}
+
+void Engine::NetworkKeepAlivePacket::Write( OutputBitStreamPtr &out )
+{
+    out->Write( header.client_id );
+    out->Write( header.max_clients );
+}
+
+Engine::NetworkPacketPtr Engine::NetworkDisconnectPacket::Read( InputBitStreamPtr & in )
+{
+    if( in->GetRemainingByteCount() != sizeof( NetworkAuthentication ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Disconnect.  Bad packet size.  Expected %d, got %d.", sizeof( NetworkAuthentication ), in->GetSize() );
+        return nullptr;
+    }
+
+    return NetworkPacketFactory::CreateDisconnect();
 }

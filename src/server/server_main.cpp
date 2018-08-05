@@ -73,6 +73,7 @@ Server::Server::Server( ServerConfig &config, Engine::NetworkingPtr &networking 
     m_next_sequence( 1 ),
     m_next_challenge_sequence( 1 )
 {
+    m_now_time = m_timer.GetTotalSeconds();
     Initialize();
 }
 
@@ -98,7 +99,7 @@ void Server::Server::Initialize()
         throw std::runtime_error( "CreateUDPSocket" );
     }
 
-    Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server listening on %s" ).c_str(), m_server_address->Print().c_str() );
+    Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server listening on %s", m_server_address->Print().c_str() );
 
     // setup the server timer
     m_timer.SetFixedTimeStep( true );
@@ -119,6 +120,8 @@ void Server::Server::Run()
 
 void Server::Server::Update()
 {
+    m_now_time = m_timer.GetTotalSeconds();
+
     ReceivePackets();
     KeepClientsAlive(); // TODO IMPLEMENT
     CheckClientTimeouts(); // TODO IMPLEMENT
@@ -136,7 +139,6 @@ void Server::Server::ReceivePackets()
     allowed.SetAllowed( Engine::PACKET_PAYLOAD );
     allowed.SetAllowed( Engine::PACKET_DISCONNECT );
 
-    auto now = m_timer.GetTotalTicks();
     byte data[NETWORK_MAX_PACKET_SIZE];
     while( true )
     {
@@ -146,21 +148,21 @@ void Server::Server::ReceivePackets()
             break;
 
         auto read = Engine::BitStreamFactory::CreateInputBitStream( data, byte_cnt, false );
-        ReadAndProcessPacket( m_config.protocol_id, allowed, from, now, read );
+        ReadAndProcessPacket( m_config.protocol_id, allowed, from, read );
     }
 }
 
-void Server::Server::ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, uint64_t &now_time, Engine::InputBitStreamPtr &read )
+void Server::Server::ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, Engine::InputBitStreamPtr &read )
 {
     Engine::NetworkCryptoMapPtr crypto;
     auto client = FindClientByAddress( from );
     if( client )
     {
-        crypto = m_networking->FindCryptoMapByID( client->crypto_id, from, now_time );
+        crypto = m_networking->FindCryptoMapByClientID( client->client_id, from, m_now_time );
     }
     else
     {
-        crypto = m_networking->FindCryptoMapByAddress( from, now_time );
+        crypto = m_networking->FindCryptoMapByAddress( from, m_now_time );
     }
 
     auto marker = read->SaveCurrentLocation();
@@ -171,30 +173,43 @@ void Server::Server::ReadAndProcessPacket( uint64_t protocol_id, Engine::Network
     if( prefix.packet_type != Engine::PACKET_CONNECT_REQUEST
      && !crypto )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server packet ignored.  No encryption mapping exists for %s." ).c_str(), from->Print().c_str() );
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server packet ignored.  No encryption mapping exists for %s.", from->Print().c_str() );
         return;
     }
 
-    auto packet = m_networking->ReadPacket( protocol_id, crypto->receive_key, allowed, now_time, read );
+    auto packet = Engine::NetworkPacket::ReadPacket( read, allowed, protocol_id, crypto->receive_key, m_now_time );
     if( packet )
     {
-        ProcessPacket( packet, from, now_time );
+        ProcessPacket( packet, from );
     }
 }
 
-void Server::Server::ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time )
+void Server::Server::ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from )
 {
     switch( packet->packet_type )
     {
         case Engine::PACKET_CONNECT_REQUEST:
-            OnReceivedConnectionRequest( packet, from, now_time );
+            OnReceivedConnectionRequest( reinterpret_cast<Engine::NetworkConnectionRequestPacket&>(*packet), from );
+            break;
+
+        case Engine::PACKET_CONNECT_CHALLENGE_RESPONSE:
+            OnReceivedConnectionChallengeResponse( reinterpret_cast<Engine::NetworkConnectionChallengeResponsePacket&>(*packet), from );
+            break;
+
+        case Engine::PACKET_KEEP_ALIVE:
+            OnReceivedKeepAlive( reinterpret_cast<Engine::NetworkKeepAlivePacket&>(*packet), from );
+            break;
+                
+        case Engine::PACKET_PAYLOAD:
+            break;
+
+        case Engine::PACKET_DISCONNECT:
             break;
     }
 }
 
-void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, uint64_t &now_time )
+void Server::Server::OnReceivedConnectionRequest( Engine::NetworkConnectionRequestPacket &request, Engine::NetworkAddressPtr &from )
 {
-    auto request = reinterpret_cast<Engine::NetworkConnectionRequestPacket&>(*packet);
     auto &connect_token = request.token;
     bool found_our_address = false;
     for( auto i = 0; i < connect_token->server_address_cnt; i++ )
@@ -208,43 +223,44 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &pack
 
     if( !found_our_address )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  Server Address not found in whitelist." ).c_str() );
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Request ignored.  Server Address not found in whitelist." );
         return;
     }
 
     if( FindClientByAddress( from ) )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  Client is already connected." ).c_str() );
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Request ignored.  Client is already connected." );
         return;
     }
 
     if( FindClientByClientID( connect_token->client_id ) )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  Client with same client ID is already connected." ).c_str() );
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Request ignored.  Client with same client ID is already connected." );
         return;
     }
 
     if( !m_seen_tokens.FindAdd( connect_token->authentication, from, m_timer.GetElapsedSeconds() ) )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Connection Request ignored.  This token has already been seen from a client with a different address." ).c_str() );
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Request ignored.  This token has already been seen from a client with a different address." );
         return;
     }
 
     if( m_clients.size() == m_config.max_num_clients )
     {
-        auto refusal = Engine::NetworkPacketFactory::CreateOutgoingConnectionDenied();
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Request denied.  Server is full. Sending denied response..." );
+        auto refusal = Engine::NetworkPacketFactory::CreateConnectionDenied();
         (void)m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, connect_token->server_to_client_key, m_next_sequence++ );
         return;
     }
 
     /* send client a connection challenge */
-    uint64_t expire_time = 0;
+    double expire_time = 0;
     if( connect_token->timeout_seconds > 0 )
     {
-        expire_time = now_time + connect_token->timeout_seconds;
+        expire_time = m_now_time + connect_token->timeout_seconds;
     }
 
-    m_networking->AddCryptoMap( from, connect_token->server_to_client_key, connect_token->client_to_server_key, now_time, expire_time, connect_token->timeout_seconds );
+    m_networking->AddCryptoMap( from, connect_token->server_to_client_key, connect_token->client_to_server_key, m_now_time, expire_time, connect_token->timeout_seconds );
 
     Engine::NetworkConnectionChallengeHeader challenge;
     challenge.token_sequence = m_next_challenge_sequence++;
@@ -252,18 +268,103 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkPacketPtr &pack
     Engine::NetworkChallengeToken challenge_token;
     challenge_token.client_id = connect_token->client_id;
     challenge_token.authentication = connect_token->authentication;
-    Engine::NetworkChallengeTokenRaw raw_challenge_token;
-    challenge_token.Write( raw_challenge_token );
-    Engine::NetworkChallengeToken::Encrypt( raw_challenge_token, challenge.token_sequence, m_config.challenge_key );
+    challenge_token.Write( challenge.raw_challenge_token );
+    Engine::NetworkChallengeToken::Encrypt( challenge.raw_challenge_token, challenge.token_sequence, m_config.challenge_key );
 
-    auto challenge_packet = Engine::NetworkPacketFactory::CreateOutgoingConnectionChallenge( challenge, raw_challenge_token );
+    auto challenge_packet = Engine::NetworkPacketFactory::CreateConnectionChallenge( challenge );
     if( m_networking->SendPacket( m_socket, from, challenge_packet, m_config.protocol_id, connect_token->server_to_client_key, challenge.token_sequence ) )
     {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server unable to send a connection challenge to %s." ).c_str(), from->Print().c_str() );
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server unable to send a connection challenge to %s.", from->Print().c_str() );
         return;
     }
 
-    Engine::Log( Engine::LOG_LEVEL_DEBUG, std::wstring( L"Server Sent a connection challenge to %s." ).c_str(), from->Print().c_str() );
+    Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Sent a connection challenge to %s.", from->Print().c_str() );
+}
+
+void Server::Server::OnReceivedConnectionChallengeResponse( Engine::NetworkConnectionChallengeResponsePacket &response, Engine::NetworkAddressPtr &from )
+{
+    if( FindClientByAddress( from ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response ignored.  Client is already connected." );
+        return;
+    }
+
+    if( !Engine::NetworkChallengeToken::Decrypt( response.header.raw_challenge_token, response.header.token_sequence, m_config.challenge_key ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response ignored.  Could not decrypt challenge token." );
+        return;
+    }
+
+    if( !response.token->Read( response.header.raw_challenge_token ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response ignored.  Could not read challenge token." );
+        return;
+    }
+
+    if( FindClientByClientID( response.token->client_id ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response ignored.  Client with same client ID is already connected." );
+        return;
+    }
+
+    auto seen = m_seen_tokens.FindAdd( response.token->authentication, from, m_timer.GetElapsedSeconds() );
+    if( !seen )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response ignored.  This token has not been seen from this client before." );
+        return;
+    }
+
+    auto crypto = m_networking->FindCryptoMapByClientID( response.token->client_id, from, m_now_time );
+    if( !crypto )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response ignored.  Could not find client cryptographic credentials." );
+        return;
+    }
+
+    if( m_clients.size() == m_config.max_num_clients )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response denied.  Server is full. Sending denied response..." );
+        auto refusal = Engine::NetworkPacketFactory::CreateConnectionDenied();
+        (void)m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, crypto->send_key, m_next_sequence++ );
+        return;
+    }
+
+    /* add a new connected client */
+    auto new_client = ClientRecordPtr( new ClientRecord() );
+    new_client->client_address = from;
+    new_client->client_id = response.token->client_id;
+    new_client->last_time_sent_packet = m_now_time;
+    new_client->last_time_received_packet = new_client->last_time_sent_packet;
+    new_client->timeout_seconds = crypto->timeout_seconds;
+
+    /* let the client know the connection was accepted by sending a keep alive packet */
+    Engine::NetworkKeepAliveHeader keep_alive;
+    keep_alive.client_id = response.token->client_id;
+    keep_alive.max_clients = m_config.max_num_clients;
+    auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( keep_alive );
+    (void)m_networking->SendPacket( m_socket, from, packet, m_config.protocol_id, crypto->send_key, m_next_sequence++ );
+
+}
+
+void Server::Server::OnReceivedKeepAlive( Engine::NetworkKeepAlivePacket &keep_alive, Engine::NetworkAddressPtr &from )
+{
+    auto crypto = m_networking->FindCryptoMapByClientID( keep_alive.header.client_id, from, m_now_time );
+    if( !crypto )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Keep Alive ignored.  Could not find client cryptographic credentials." );
+        return;
+    }
+    
+    auto client = FindClientByClientID( keep_alive.header.client_id );
+    if( !client )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Keep Alive ignored.  Could not find a matching client." );
+        return;
+    }
+
+    client->is_confirmed = true;
+    client->last_time_received_packet = m_now_time;
+
 }
 
 void Server::Server::KeepClientsAlive()
@@ -334,22 +435,24 @@ Server::SeenTokens::SeenTokens()
     }
 }
 
-bool Server::SeenTokens::FindAdd( Engine::NetworkAuthentication &token_uid, Engine::NetworkAddressPtr address, double time )
+Server::SeenTokens::EntryTypePtr Server::SeenTokens::FindAdd( Engine::NetworkAuthentication &token_uid, Engine::NetworkAddressPtr address, double time )
 {
     /* first search for the token id in our entries */
-    EntryType *match = nullptr;
-    EntryType *oldest = nullptr;
+    EntryTypePtr match;
+    EntryTypePtr oldest;
     for( size_t i = 0; i < m_seen.size(); i++ )
     {
         if( 0 == std::memcmp( m_seen[ i ].token_uid.data(), token_uid.data(), sizeof( Engine::NetworkAuthentication ) ) )
         {
-            match = &m_seen[ i ];
+            match = EntryTypePtr( new EntryType );
+            *match = m_seen[ i ];
         }
 
         if( !oldest
          || m_seen[ i ].time < oldest->time )
         {
-            oldest = &m_seen[ i ];
+            oldest = EntryTypePtr( new EntryType );
+            *oldest = m_seen[i];
         }
     }
 
@@ -359,14 +462,14 @@ bool Server::SeenTokens::FindAdd( Engine::NetworkAuthentication &token_uid, Engi
         oldest->address = address;
         oldest->time = time;
         std::memcpy( oldest->token_uid.data(), token_uid.data(), sizeof( Engine::NetworkAuthentication ) );
-        return true;
+        return oldest;
     }
 
     /* check to make sure the token entry we found has come from the same address */
     if( match->address->Matches( *address ) )
     {
-        return true;
+        return match;
     }
 
-    return false;
+    return nullptr;
 }
