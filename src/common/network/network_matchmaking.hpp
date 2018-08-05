@@ -16,8 +16,8 @@ namespace Engine
     {
         std::array<char, NETWORK_PROTOCOL_VERSION_LEN> version;
         uint64_t protocol_id;
-        uint64_t token_create_time;
-        uint64_t token_expire_time;
+        double token_create_time;
+        double token_expire_time;
         uint64_t token_sequence;
         int32_t timeout_seconds;
         int32_t server_address_cnt;

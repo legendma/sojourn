@@ -93,6 +93,7 @@ namespace Engine
         void Read( uint8_t& out, uint32_t bit_cnt = 8 )   { ReadBits( &out, bit_cnt ); }
 
         void Read( float& out )                           { float temp;    ReadBits( &temp, 32 );      out = ByteSwap( temp ); }
+        void Read( double& out )                          { double temp;   ReadBits( &temp, 64 );      out = ByteSwap( temp ); }
 
         void ReadBytes( void* out, size_t byte_cnt ) { ReadBits( out, byte_cnt * 8 ); }
 
@@ -142,6 +143,7 @@ namespace Engine
         void Write( uint8_t out, uint32_t bit_cnt = 8 )   {                              WriteBits( &out, bit_cnt );  }
 
         void Write( float out )                           { auto temp = ByteSwap( out ); WriteBits( &temp, 32 );      }
+        void Write( double out )                          { auto temp = ByteSwap( out ); WriteBits( &temp, 64 );      }
 
         void WriteBytes( void* out, size_t byte_cnt ) { WriteBits( out, byte_cnt * 8 ); }
 
@@ -225,7 +227,7 @@ namespace Engine
     {
         std::array<char, NETWORK_PROTOCOL_VERSION_LEN> version;
         uint64_t protocol_id;
-        uint64_t token_expire_time;
+        double token_expire_time;
         uint64_t token_sequence;
         NetworkConnectionTokenRaw raw_token;
     };

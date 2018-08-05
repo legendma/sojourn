@@ -75,7 +75,7 @@ bool Engine::NetworkConnectionPassport::Read( NetworkConnectionPassportRaw &raw 
     /* create a fake passport for testing/development purposes - this will be replaced by a HTTPS packet from the matchmaking server */
     Engine::NetworkConnectionPassport passport;
     passport.protocol_id = NETWORK_SOJOURN_PROTOCOL_ID;
-    passport.token_create_time = time(nullptr);
+    passport.token_create_time = 0.0;
     passport.token_expire_time = passport.token_create_time + EXPIRE_DURATION;
     passport.token_sequence = SEQUENCE_NUM;
     passport.timeout_seconds = TIMEOUT_DURATION;

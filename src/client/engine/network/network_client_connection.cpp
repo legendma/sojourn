@@ -120,7 +120,7 @@ public:
         request.token_sequence = m_fsm.m_passport->token_sequence;
         request.raw_token = m_fsm.m_passport->raw_token;
 
-        connect_request = Engine::NetworkPacketFactory::CreateOutgoingConnectionRequest( request );
+        connect_request = Engine::NetworkPacketFactory::CreateConnectionRequest( request );
 
         m_fsm.ResetSendTimer();
     }
@@ -198,7 +198,7 @@ public:
         reply.token_sequence = m_fsm.m_challenge.token_sequence;
         reply.raw_challenge_token = m_fsm.m_challenge.raw_challenge_token;
 
-        connect_reply = Engine::NetworkPacketFactory::CreateOutgoingConnectionChallengeResponse( reply );
+        connect_reply = Engine::NetworkPacketFactory::CreateConnectionChallengeResponse( reply );
 
         m_fsm.ResetSendTimer();
     }
@@ -331,7 +331,7 @@ public:
     {
         m_fsm.m_allowed.Reset();
 
-        disconnect = Engine::NetworkPacketFactory::CreateOutgoingDisconnect();
+        disconnect = Engine::NetworkPacketFactory::CreateDisconnect();
         remaining_disconnects = NUMBER_OF_DISCONNECT_PACKETS;
     }
 
@@ -417,7 +417,7 @@ void Engine::NetworkConnection::ReceiveAndProcessPackets()
         }
 
         auto read = Engine::BitStreamFactory::CreateInputBitStream( data, byte_cnt, false );
-        auto packet = m_networking->ReadPacket( m_passport->protocol_id, m_passport->server_to_client_key, m_allowed, 0, read );
+        auto packet = Engine::NetworkPacket::ReadPacket( read, m_allowed, m_passport->protocol_id, m_passport->server_to_client_key, 0 );
         if( packet )
         {
             m_current_state->ProcessPacket( packet );
@@ -475,8 +475,8 @@ bool Engine::NetworkConnection::IsPassportExpired()
         return true;
     }
 
-    auto token_expiry = difftime( m_passport->token_create_time, m_passport->token_expire_time );
-    auto attempting_duration = difftime( m_connect_start_time, m_current_time );
+    auto token_expiry = m_passport->token_expire_time - m_passport->token_create_time;
+    auto attempting_duration = m_current_time - m_connect_start_time;
 
     return attempting_duration > token_expiry;
 }

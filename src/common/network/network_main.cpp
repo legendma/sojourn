@@ -833,7 +833,7 @@ Engine::NetworkPacketPtr Engine::NetworkConnectionDeniedPacket::Read( InputBitSt
 
 Engine::NetworkPacketPtr Engine::NetworkKeepAlivePacket::Read( InputBitStreamPtr & in )
 {
-    if( in->GetRemainingByteCount() != sizeof( NetworkAuthentication ) + sizeof( NetworkAuthentication ) )
+    if( in->GetRemainingByteCount() != sizeof( NetworkKeepAliveHeader ) + sizeof( NetworkAuthentication ) )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Denied.  Bad packet size.  Expected 0, got %d.", sizeof( NetworkAuthentication ) + sizeof( NetworkAuthentication ), in->GetSize() );
         return nullptr;
