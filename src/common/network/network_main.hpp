@@ -422,6 +422,7 @@ namespace Engine
 
         bool SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num );
         uint64_t AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, double now_time, double expire_time, int timeout_secs );
+        bool DeleteCryptoMapsFromAddress( NetworkAddressPtr &address );
         NetworkCryptoMapPtr FindCryptoMapByAddress( NetworkAddressPtr &search_address, double time );
         NetworkCryptoMapPtr FindCryptoMapByClientID( uint64_t search_id, NetworkAddressPtr &expected_address, double time );
 

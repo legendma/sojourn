@@ -121,14 +121,14 @@ bool Client::App<T>::StartNetworking()
     m_networking = Engine::NetworkingFactory::StartNetworking();
     if( m_networking == nullptr )
     {
-        Engine::ReportError( L"Networking system could not be started.  Exiting..." );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"Networking system could not be started.  Exiting..." );
         return false;
     }
 
     m_connection = Engine::NetworkConnectionFactory::CreateConnection( m_network_config, m_networking );
     if( m_networking == nullptr )
     {
-        Engine::ReportError( L"Networking connection could not be created.  Exiting..." );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"Networking connection could not be created.  Exiting..." );
         return false;
     }
 

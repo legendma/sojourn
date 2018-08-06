@@ -10,7 +10,8 @@ namespace Engine
         LOG_LEVEL_INFO
     } LogLevel;
 
-    void ReportError( std::wstring message );
+    void ReportWindowsError( std::wstring message );
+    void ReportWinsockError( std::wstring message, int given_error = 0 );
     void Log( const LogLevel level, std::wstring format, ... );
     void SetLogLevel( const LogLevel min_level );
 

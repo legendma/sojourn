@@ -6,7 +6,11 @@
 
 Engine::NetworkSocketUDP::~NetworkSocketUDP()
 {
-    closesocket( m_socket );
+    auto result = closesocket( m_socket );
+    if( result == SOCKET_ERROR )
+    {
+        Engine::ReportWinsockError( L"NetworkSocketUDP::~NetworkSocketUDP" );
+    }
 }
 
 int Engine::NetworkSocketUDP::Bind( const NetworkAddressPtr &from_address )
@@ -14,7 +18,7 @@ int Engine::NetworkSocketUDP::Bind( const NetworkAddressPtr &from_address )
     auto result = bind( m_socket, &from_address->m_address, static_cast<int>( from_address->GetSize() ) );
     if( result == SOCKET_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketUDP::Bind" );
+        Engine::ReportWinsockError( L"NetworkSocketUDP::Bind" );
         return -WSAGetLastError();
     }
 
@@ -26,7 +30,7 @@ int Engine::NetworkSocketUDP::SendTo( const void *data_to_send, size_t length, c
     auto result = sendto( m_socket, static_cast<PCSTR>( data_to_send ), static_cast<int>( length ), 0, &to_address->m_address, static_cast<int>( to_address->GetSize() ) );
     if( result == SOCKET_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketUDP::SendTo" );
+        Engine::ReportWinsockError( L"NetworkSocketUDP::SendTo" );
         // return negative of error code, so it's not mistaken for bytes sent
         return -WSAGetLastError();
     }
@@ -49,7 +53,7 @@ int Engine::NetworkSocketUDP::ReceiveFrom( void *data_received, size_t buffer_si
             return 0;
         }
 
-        Engine::ReportError( L"NetworkSocketUDP::ReceiveFrom" );
+        Engine::ReportWinsockError( L"NetworkSocketUDP::ReceiveFrom", error );
         Engine::Log( LOG_LEVEL_ERROR, L"Error code: %d", error );
         return 0;
     }
@@ -64,7 +68,7 @@ Engine::NetworkSocketUDPPtr Engine::NetworkSocketUDPFactory::CreateUDPSocket( si
     auto s = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
     if( s == INVALID_SOCKET )
     {
-        Engine::ReportError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to create a new socket" );
+        Engine::ReportWinsockError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to create a new socket" );
         return( nullptr );
     }
 
@@ -74,7 +78,7 @@ Engine::NetworkSocketUDPPtr Engine::NetworkSocketUDPFactory::CreateUDPSocket( si
         auto result = setsockopt( s, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<LPCSTR>( &receive_buffer_size ), sizeof( receive_buffer_size ) );
         if( result != NO_ERROR )
         {
-            Engine::ReportError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to set new recieve buffer size" );
+            Engine::ReportWinsockError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to set new recieve buffer size" );
             closesocket( s );
             return nullptr;
         }
@@ -85,7 +89,7 @@ Engine::NetworkSocketUDPPtr Engine::NetworkSocketUDPFactory::CreateUDPSocket( si
         auto result = setsockopt( s, SOL_SOCKET, SO_SNDBUF, reinterpret_cast<LPCSTR>(&send_buffer_size), sizeof( send_buffer_size ) );
         if( result != NO_ERROR )
         {
-            Engine::ReportError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to set new send buffer size" );
+            Engine::ReportWinsockError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to set new send buffer size" );
             closesocket( s );
             return nullptr;
         }
@@ -96,7 +100,7 @@ Engine::NetworkSocketUDPPtr Engine::NetworkSocketUDPFactory::CreateUDPSocket( si
     auto result = ioctlsocket( s, FIONBIO, &dont_block );
     if( result != NO_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to set socket as non-blocking" );
+        Engine::ReportWinsockError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to set socket as non-blocking" );
         closesocket( s );
         return nullptr;
     }
@@ -115,7 +119,7 @@ Engine::NetworkSocketUDPPtr Engine::NetworkSocketUDPFactory::CreateUDPSocket( En
     auto result = new_socket->Bind( our_address );
     if( result != NO_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to bind to the address and port" );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"NetworkSocketUDPFactory::CreateUDPSocket failed to bind to the address and port" );
         return nullptr;
     }
 
@@ -133,7 +137,7 @@ Engine::NetworkSocketTCPPtr Engine::NetworkSocketTCP::Accept( NetworkAddress &fr
     auto new_socket = accept( m_socket, &from_address.m_address, &from_length );
     if( new_socket == INVALID_SOCKET )
     {
-        Engine::ReportError( L"NetworkSocketTCP::Accept" );
+        Engine::ReportWinsockError( L"NetworkSocketTCP::Accept" );
         return nullptr;
     }
 
@@ -145,7 +149,7 @@ int Engine::NetworkSocketTCP::Bind( const NetworkAddress &from_address )
     auto result = bind( m_socket, &from_address.m_address, static_cast<int>( from_address.GetSize() ) );
     if( result == SOCKET_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketTCP::Bind" );
+        Engine::ReportWinsockError( L"NetworkSocketTCP::Bind" );
         return -WSAGetLastError();
     }
     return NO_ERROR;
@@ -156,7 +160,7 @@ int Engine::NetworkSocketTCP::Connect( const NetworkAddress &to_address )
     auto result = connect( m_socket, &to_address.m_address, static_cast<int>(to_address.GetSize() ) );
     if( result == SOCKET_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketTCP::Connect" );
+        Engine::ReportWinsockError( L"NetworkSocketTCP::Connect" );
         return -WSAGetLastError();
     }
 
@@ -168,7 +172,7 @@ int Engine::NetworkSocketTCP::Listen( int back_log )
     auto result = listen( m_socket, back_log );
     if( result == SOCKET_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketTCP::Listen" );
+        Engine::ReportWinsockError( L"NetworkSocketTCP::Listen" );
         return -WSAGetLastError();
     }
 
@@ -180,7 +184,7 @@ int Engine::NetworkSocketTCP::Send( const void *data_to_send, size_t length )
     auto result = send( m_socket, static_cast<PCSTR>( data_to_send ), static_cast<int>( length ), 0 );
     if( result == SOCKET_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketTCP::Send" );
+        Engine::ReportWinsockError( L"NetworkSocketTCP::Send" );
         // return negative of error code, so it's not mistaken for bytes sent
         return -WSAGetLastError();
     }
@@ -194,7 +198,7 @@ int Engine::NetworkSocketTCP::Receive( void *data_received, size_t buffer_size )
     auto result = recv( m_socket, static_cast<PSTR>( data_received ), static_cast<int>( buffer_size ), 0 );
     if( result == SOCKET_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketTCP::Receive" );
+        Engine::ReportWinsockError( L"NetworkSocketTCP::Receive" );
         // return negative of error code, so it's not mistaken for bytes received
         return -WSAGetLastError();
     }
@@ -208,7 +212,7 @@ Engine::NetworkSocketTCPPtr Engine::NetworkSocketTCPFactory::CreateListenSocket(
     auto s = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
     if( s == INVALID_SOCKET )
     {
-        Engine::ReportError( L"NetworkSocketTCPFactory::CreateListenSocket" );
+        Engine::ReportWinsockError( L"NetworkSocketTCPFactory::CreateListenSocket" );
         return(nullptr);
     }
 
@@ -217,7 +221,7 @@ Engine::NetworkSocketTCPPtr Engine::NetworkSocketTCPFactory::CreateListenSocket(
     auto result = tcp->Bind( our_address );
     if( result != NO_ERROR )
     {
-        Engine::ReportError( L"NetworkSocketTCPFactory::CreateListenSocket" );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"NetworkSocketTCPFactory::CreateListenSocket" );
         return( nullptr );
     }
 

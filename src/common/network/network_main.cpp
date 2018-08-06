@@ -21,7 +21,7 @@ void Engine::Networking::Initialize()
     auto result = WSAStartup( MAKEWORD( 2, 2 ), &m_wsa_data );
     if( result != NO_ERROR )
     {
-        Engine::ReportError( L"Networking::Initialize could not initialize Winsock DLL." );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"Networking::Initialize could not initialize Winsock DLL." );
         throw std::runtime_error( "WSAStartup" );
     }
 }
@@ -34,6 +34,7 @@ bool Engine::Networking::SendPacket( Engine::NetworkSocketUDPPtr &socket, Networ
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Networking::SendPacket unable to write packet." );
         return false;
     }
+    assert( buffer->GetSize() < NETWORK_MAX_PACKET_SIZE );
 
     if( socket->SendTo( buffer->GetBuffer(), buffer->GetSize(), to ) < 0 )
     {
@@ -90,6 +91,22 @@ uint64_t Engine::Networking::AddCryptoMap( NetworkAddressPtr &client_address, Ne
     new_record->receive_key = receive_key;
 
     return out_id;
+}
+
+bool Engine::Networking::DeleteCryptoMapsFromAddress( NetworkAddressPtr &address )
+{
+    bool found = false;
+    for( auto mapping : m_crypto_map )
+    {
+        auto crypto = mapping.second;
+        if( crypto->address->Matches( *address ) )
+        {
+            found = true;
+            m_crypto_map.erase( mapping.first );
+        }
+    }
+
+    return found;
 }
 
 Engine::NetworkCryptoMapPtr Engine::Networking::FindCryptoMapByAddress( NetworkAddressPtr &search_address, double time )

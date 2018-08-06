@@ -3,26 +3,53 @@
 
 static Engine::LogLevel s_log_level = Engine::LOG_LEVEL_ERROR;
 
-void Engine::ReportError( std::wstring message )
+void Engine::ReportWindowsError( std::wstring message )
 {
-    LPTSTR errorText = NULL;
-    DWORD errorNum = GetLastError();
+    LPTSTR error_text = NULL;
+    DWORD error_num = GetLastError();
 
     FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER |
         FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
-        errorNum,
+        error_num,
         MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
-        (LPTSTR)&errorText,
+        (LPTSTR)&error_text,
         0, NULL );
 
-    if( errorText )
+    if( error_text )
     {
-        Log( Engine::LOG_LEVEL_ERROR, L"%s: %d- %s", message.c_str(), errorNum, errorText );
-        LocalFree( errorText );
-        errorText = NULL;
+        Log( Engine::LOG_LEVEL_ERROR, L"%s: %d- %s", message.c_str(), error_num, error_text );
+        LocalFree( error_text );
+        error_text = NULL;
+    }
+}
+
+void Engine::ReportWinsockError( std::wstring message, int given_error /*= 0*/ )
+{   
+    int error_num = given_error;
+    if( given_error == NO_ERROR )
+    {
+    error_num = WSAGetLastError();
+    }
+
+    LPTSTR error_text = NULL;
+    FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        error_num,
+        MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
+        (LPTSTR)&error_text,
+        0, NULL );
+
+    if( error_text )
+    {
+        Log( Engine::LOG_LEVEL_ERROR, L"%s: %d- %s", message.c_str(), error_num, error_text );
+        LocalFree( error_text );
+        error_text = NULL;
     }
 }
 

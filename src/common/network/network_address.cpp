@@ -71,7 +71,7 @@ Concurrency::task<Engine::NetworkAddressPtr> Engine::NetworkAddressFactory::Crea
         if( error != 0
          && results != nullptr )
         {
-            Engine::ReportError( L"NetworkAddressFactory::CreateAddressFromString" );
+            Engine::Log( Engine::LOG_LEVEL_ERROR, L"NetworkAddressFactory::CreateAddressFromString" );
             FreeAddrInfoW( results );
             return( nullptr );
         }

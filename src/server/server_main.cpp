@@ -45,14 +45,14 @@ int wmain( int argc, wchar_t* argv[] )
     auto networking = Engine::NetworkingFactory::StartNetworking();
     if( networking == nullptr )
     {
-        Engine::ReportError( L"Networking system could not be started.  Exiting..." );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"Networking system could not be started.  Exiting..." );
         return -1;
     }
 
     auto server = Server::ServerFactory::CreateServer( config, networking );
     if( server == nullptr )
     {
-        Engine::ReportError( L"Server was unable to be created.  Exiting..." );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"Server was unable to be created.  Exiting..." );
         return -1;
     }
 
@@ -87,7 +87,7 @@ void Server::Server::Initialize()
     m_server_address = Engine::NetworkAddressFactory::CreateAddressFromStringAsync( m_config.server_address ).get();
     if( m_server_address == nullptr )
     {
-        Engine::ReportError( L"Server::Initialize Given server address is invalid!" );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"Server::Initialize Given server address is invalid!" );
         throw std::runtime_error( "CreateAddressFromStringAsync" );
     }
 
@@ -95,7 +95,7 @@ void Server::Server::Initialize()
     m_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_server_address, m_config.receive_buff_size, m_config.send_buff_size );
     if( m_socket == nullptr )
     {
-        Engine::ReportError( L"Server::Initialize Unable to create server socket." );
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"Server::Initialize Unable to create server socket." );
         throw std::runtime_error( "CreateUDPSocket" );
     }
 
@@ -123,11 +123,11 @@ void Server::Server::Update()
     m_now_time = m_timer.GetTotalSeconds();
 
     ReceivePackets();
-    KeepClientsAlive(); // TODO IMPLEMENT
     CheckClientTimeouts(); // TODO IMPLEMENT
     HandleGamePacketsFromClients(); // TODO IMPLEMENT
     RunGameSimulation(); // TODO IMPLEMENT
     SendPacketsToClients(); // TODO IMPLEMENT
+    KeepClientsAlive(); // TODO IMPLEMENT
 }
 
 void Server::Server::ReceivePackets()
@@ -369,10 +369,80 @@ void Server::Server::OnReceivedKeepAlive( Engine::NetworkKeepAlivePacket &keep_a
 
 void Server::Server::KeepClientsAlive()
 {
+    for( auto client : m_clients )
+    {
+        if( m_now_time - client->last_time_sent_packet < m_config.send_rate )
+        {
+            continue;
+        }
+
+        auto crypto = m_networking->FindCryptoMapByClientID( client->client_id, client->client_address, m_now_time );
+        if( !crypto )
+        {
+            Engine::Log( Engine::LOG_LEVEL_ERROR, L"Could not find crypto credentials for client ID %d", client->client_id );
+            continue;
+        }
+
+        Engine::NetworkKeepAliveHeader keep_alive;
+        keep_alive.client_id = client->client_id;
+        keep_alive.max_clients = m_config.max_num_clients;
+
+        auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( keep_alive );
+        m_networking->SendPacket( m_socket, client->client_address, packet, m_config.protocol_id, crypto->send_key, client->client_sequence++ );
+    }
 }
 
 void Server::Server::CheckClientTimeouts()
 {
+    for( auto client : m_clients )
+    {
+        if( client->timeout_seconds <= 0
+         || client->last_time_received_packet + client->timeout_seconds > m_now_time )
+        {
+            continue;
+        }
+
+        /* client has timeout out.  haven't recieved a packet from them in a while.  disconnect them */
+        Engine::Log( Engine::LOG_LEVEL_INFO, L"Server found Client ID %d has timed out.", client->client_id );
+        DisconnectClient( client->client_id, 0 );
+    }
+}
+
+void Server::Server::DisconnectClient( uint64_t client_id, int num_of_disconnect_packets /*=SERVER_NUM_OF_DISCONNECT_PACKETS*/ )
+{
+    ClientRecordPtr client;
+    auto it = m_clients.begin();
+    for( ; it != m_clients.end(); it++ )
+    {
+        if( (*it)->client_id == client_id )
+        {
+            client = *it;
+            break;
+        }
+    }
+    
+    if( !client )
+    {
+        Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::DisconnectClient was ordered to disconnect, but client ID %d didn't exist.", client_id );
+        return;
+    }
+
+    if( num_of_disconnect_packets > 0 )
+    {
+        auto crypto = m_networking->FindCryptoMapByClientID( client_id, client->client_address, m_now_time );
+        auto packet = Engine::NetworkPacketFactory::CreateDisconnect();
+        for( auto i = 0; i < num_of_disconnect_packets; i++ )
+        {
+            m_networking->SendPacket( m_socket, client->client_address, packet, m_config.protocol_id, crypto->send_key, client->client_sequence++ );
+        }
+    }
+
+    if( !m_networking->DeleteCryptoMapsFromAddress( client->client_address ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::DisconnectClient tried to delete cryptographic credentials from client address, but none found!" );
+    }
+
+    m_clients.erase( it );
 }
 
 void Server::Server::HandleGamePacketsFromClients()
@@ -385,6 +455,8 @@ void Server::Server::RunGameSimulation()
 
 void Server::Server::SendPacketsToClients()
 {
+    // TODO <MPA>: This needs to send a keep alive packet to each client every frame, before any payload packet is sent - until
+    //             the client's connection is 'confirmed'.
 }
 
 Server::ClientRecordPtr Server::Server::FindClientByAddress( Engine::NetworkAddressPtr &search )

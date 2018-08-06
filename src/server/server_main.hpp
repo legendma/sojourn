@@ -11,7 +11,9 @@
 #define DEFAULT_SERVER_SOCKET_RCVBUF_SIZE ( 4 * 1024 * 1024 )
 #define DEFAULT_SERVER_FRAMES_PER_SEC     ( 60 )
 #define DEFAULT_SERVER_MAX_CLIENT_CNT     ( 8 )
+#define DEFAULT_CONNECT_SEND_PERIOD_MS    ( 100 )
 
+#define SERVER_NUM_OF_DISCONNECT_PACKETS  ( 10 )
 #define SERVER_MAX_CONNECT_TOKENS         ( 2000 )
 
 namespace Server
@@ -24,12 +26,14 @@ namespace Server
         double last_time_received_packet;
         double last_time_sent_packet;
         int timeout_seconds;
+        uint64_t client_sequence;
 
         ClientRecord() :
             client_id( 0 ),
             last_time_received_packet( 0.0 ),
             last_time_sent_packet( 0.0 ),
             timeout_seconds( 0 ),
+            client_sequence( 0 ),
             is_confirmed( false ) {};
     }; typedef std::shared_ptr<ClientRecord> ClientRecordPtr;
 
@@ -42,13 +46,15 @@ namespace Server
         std::wstring server_address;
         unsigned int max_num_clients;
         Engine::NetworkKey challenge_key;
+        double send_rate;
 
         ServerConfig() : 
             protocol_id( NETWORK_SOJOURN_PROTOCOL_ID ),
             send_buff_size( DEFAULT_SERVER_SOCKET_SNDBUF_SIZE ),
             receive_buff_size( DEFAULT_SERVER_SOCKET_RCVBUF_SIZE ),
             server_fps( DEFAULT_SERVER_FRAMES_PER_SEC ),
-            max_num_clients( DEFAULT_SERVER_MAX_CLIENT_CNT )
+            max_num_clients( DEFAULT_SERVER_MAX_CLIENT_CNT ),
+            send_rate( DEFAULT_CONNECT_SEND_PERIOD_MS )
         {
             Engine::Networking::GenerateEncryptionKey( challenge_key );
         };
@@ -97,6 +103,7 @@ namespace Server
         void ReceivePackets();
         void KeepClientsAlive();
         void CheckClientTimeouts();
+        void DisconnectClient( uint64_t client_id, int num_of_disconnect_packets = SERVER_NUM_OF_DISCONNECT_PACKETS );
         void HandleGamePacketsFromClients();
         void RunGameSimulation();
         void SendPacketsToClients();
