@@ -126,7 +126,7 @@ void Server::Server::Update()
     CheckClientTimeouts(); // TODO IMPLEMENT
     HandleGamePacketsFromClients(); // TODO IMPLEMENT
     RunGameSimulation(); // TODO IMPLEMENT
-    SendPacketsToClients(); // TODO IMPLEMENT
+    SendGamePacketsToClients(); // TODO IMPLEMENT
     KeepClientsAlive(); // TODO IMPLEMENT
 }
 
@@ -336,14 +336,11 @@ void Server::Server::OnReceivedConnectionChallengeResponse( Engine::NetworkConne
     new_client->last_time_sent_packet = m_now_time;
     new_client->last_time_received_packet = new_client->last_time_sent_packet;
     new_client->timeout_seconds = crypto->timeout_seconds;
+    m_clients.push_back( new_client );
 
     /* let the client know the connection was accepted by sending a keep alive packet */
-    Engine::NetworkKeepAliveHeader keep_alive;
-    keep_alive.client_id = response.token->client_id;
-    keep_alive.max_clients = m_config.max_num_clients;
-    auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( keep_alive );
-    (void)m_networking->SendPacket( m_socket, from, packet, m_config.protocol_id, crypto->send_key, m_next_sequence++ );
-
+    auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( response.token->client_id, m_config.max_num_clients );
+    (void)SendClientPacket( response.token->client_id, packet );
 }
 
 void Server::Server::OnReceivedKeepAlive( Engine::NetworkKeepAlivePacket &keep_alive, Engine::NetworkAddressPtr &from )
@@ -376,19 +373,11 @@ void Server::Server::KeepClientsAlive()
             continue;
         }
 
-        auto crypto = m_networking->FindCryptoMapByClientID( client->client_id, client->client_address, m_now_time );
-        if( !crypto )
+        auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( client->client_id, m_config.max_num_clients );
+        if( !SendClientPacket( client->client_id, packet ) )
         {
-            Engine::Log( Engine::LOG_LEVEL_ERROR, L"Could not find crypto credentials for client ID %d", client->client_id );
-            continue;
+            Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::KeepClientsAlive not able to send client %d keep alive packet.", client->client_id );
         }
-
-        Engine::NetworkKeepAliveHeader keep_alive;
-        keep_alive.client_id = client->client_id;
-        keep_alive.max_clients = m_config.max_num_clients;
-
-        auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( keep_alive );
-        m_networking->SendPacket( m_socket, client->client_address, packet, m_config.protocol_id, crypto->send_key, client->client_sequence++ );
     }
 }
 
@@ -453,10 +442,36 @@ void Server::Server::RunGameSimulation()
 {
 }
 
-void Server::Server::SendPacketsToClients()
+void Server::Server::SendGamePacketsToClients()
 {
     // TODO <MPA>: This needs to send a keep alive packet to each client every frame, before any payload packet is sent - until
     //             the client's connection is 'confirmed'.
+}
+
+bool Server::Server::SendClientPacket( uint64_t client_id, Engine::NetworkPacketPtr &packet )
+{
+    auto client = FindClientByClientID( client_id );
+    if( !client )
+    {
+        Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::SendClientPacket could not find the client by given client ID %d", client_id );
+        return false;
+    }
+
+    auto crypto = m_networking->FindCryptoMapByClientID( client_id, client->client_address, m_now_time );
+    if( !crypto )
+    {
+        Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::SendClientPacket could not find client %d 's cryptographic credentials.", client_id );
+        return false;
+    }
+
+    if( !m_networking->SendPacket( m_socket, client->client_address, packet, m_config.protocol_id, crypto->send_key, client->client_sequence++ ) )
+    {
+        Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::SendClientPacket failed to send packet to client %d.", client_id );
+        return false;
+    }
+
+    client->last_time_sent_packet = m_now_time;
+    return true;
 }
 
 Server::ClientRecordPtr Server::Server::FindClientByAddress( Engine::NetworkAddressPtr &search )

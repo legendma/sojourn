@@ -437,6 +437,15 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( NetworkK
     return packet;
 }
 
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( uint64_t client_id, uint32_t max_num_clients )
+{
+    auto packet = std::shared_ptr<NetworkKeepAlivePacket>( new NetworkKeepAlivePacket() );
+    packet->header.client_id = client_id;
+    packet->header.max_clients = max_num_clients;
+
+    return packet;
+}
+
 Engine::NetworkPacketPtr Engine::NetworkPacket::ReadPacket( InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time )
 {
     Engine::NetworkPacketPrefix prefix;

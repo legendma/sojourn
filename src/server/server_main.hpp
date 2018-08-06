@@ -106,7 +106,9 @@ namespace Server
         void DisconnectClient( uint64_t client_id, int num_of_disconnect_packets = SERVER_NUM_OF_DISCONNECT_PACKETS );
         void HandleGamePacketsFromClients();
         void RunGameSimulation();
-        void SendPacketsToClients();
+        void SendGamePacketsToClients();
+        bool SendClientPacket( uint64_t client_id, Engine::NetworkPacketPtr &packet );
+
         ClientRecordPtr FindClientByAddress( Engine::NetworkAddressPtr &search );
         ClientRecordPtr FindClientByClientID( uint64_t search );
         void Initialize();

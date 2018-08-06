@@ -385,6 +385,7 @@ namespace Engine
         static NetworkPacketPtr CreateConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header );
         static NetworkPacketPtr CreateDisconnect();
         static NetworkPacketPtr CreateKeepAlive( NetworkKeepAliveHeader &header );
+        static NetworkPacketPtr CreateKeepAlive( uint64_t client_id, uint32_t max_num_clients );
     };
 
     class NetworkCryptoMap
