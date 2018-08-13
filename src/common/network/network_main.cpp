@@ -1,11 +1,12 @@
 #include "pch.hpp"
-#include "network_main.hpp"
-#include "network_matchmaking.hpp"
 
 #include "common/engine/engine_utilities.hpp"
 
-Engine::Networking::Networking() :
-    m_crypto_map_next_id( 1 )
+#include "network_main.hpp"
+#include "network_matchmaking.hpp"
+
+
+Engine::Networking::Networking()
 {
     Initialize();
 }
@@ -45,23 +46,20 @@ bool Engine::Networking::SendPacket( Engine::NetworkSocketUDPPtr &socket, Networ
     return true;
 }
 
-uint64_t Engine::Networking::AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, double now_time, double expire_time, int timeout_secs )
+void Engine::Networking::AddCryptoMap( uint64_t client_id, NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, double now_time, double expire_time, int timeout_secs )
 {
-    NetworkCryptoMapPtr free_record;
-    uint64_t out_id;
-    for( auto mapping : m_crypto_map )
+    auto mapping = m_crypto_map.begin();
+    while( mapping != m_crypto_map.end() )
     {
-        auto crypto = mapping.second;
-        auto expired = crypto->IsExpired( now_time );
-        if( expired
-         && !free_record )
+        auto crypto = mapping->second;
+        if( mapping->second->IsExpired( now_time ) )
         {
-            free_record = crypto;
-            out_id = mapping.first;
+            mapping = m_crypto_map.erase( mapping );
+            continue;
         }
 
-        if( !expired
-          && crypto->address->Matches( *client_address ) )
+        if( crypto->address->Matches( *client_address )
+          && mapping->first == client_id )
         {
             /* found an existing mapping from this client, so just update it */
             crypto->expire_time = expire_time;
@@ -70,18 +68,13 @@ uint64_t Engine::Networking::AddCryptoMap( NetworkAddressPtr &client_address, Ne
             crypto->send_key = send_key;
             crypto->receive_key = receive_key;            
 
-            return mapping.first;
+            return;
         }
     }
 
-    /* use expired record if found, rather than always creating new */
-    NetworkCryptoMapPtr new_record = free_record;
-    if( !new_record )
-    {
-        new_record = NetworkCryptoMapPtr( new NetworkCryptoMap() );
-        out_id = m_crypto_map_next_id++;
-        m_crypto_map.insert( std::make_pair( out_id, new_record ) );
-    }
+    /* create a new record */
+    auto new_record = NetworkCryptoMapPtr( new NetworkCryptoMap() );
+    m_crypto_map.insert( std::make_pair( client_id, new_record ) );
 
     new_record->address = client_address;
     new_record->expire_time = expire_time;
@@ -90,20 +83,23 @@ uint64_t Engine::Networking::AddCryptoMap( NetworkAddressPtr &client_address, Ne
     new_record->send_key = send_key;
     new_record->receive_key = receive_key;
 
-    return out_id;
 }
 
 bool Engine::Networking::DeleteCryptoMapsFromAddress( NetworkAddressPtr &address )
 {
     bool found = false;
-    for( auto mapping : m_crypto_map )
+    auto mapping = m_crypto_map.begin();
+    while( mapping != m_crypto_map.end() )
     {
-        auto crypto = mapping.second;
+        auto crypto = mapping->second;
         if( crypto->address->Matches( *address ) )
         {
             found = true;
-            m_crypto_map.erase( mapping.first );
+            mapping = m_crypto_map.erase( mapping );
+            continue;
         }
+
+        mapping++;
     }
 
     return found;
@@ -165,12 +161,17 @@ bool Engine::Networking::Decrypt( void *data_to_decrypt, size_t data_length, byt
     unsigned long long decrypted_length;
     auto data = reinterpret_cast<unsigned char*>(data_to_decrypt);
     auto result = crypto_aead_chacha20poly1305_ietf_decrypt( data, &decrypted_length,
-                                                             nullptr, data, static_cast<unsigned long long>(data_length) - sizeof( NetworkAuthentication ),
+                                                             nullptr, data, static_cast<unsigned long long>(data_length),
                                                              salt, salt_length,
                                                              nonce.data(), key.data() );
 
-    assert( decrypted_length == data_length );
-    return result == 0;
+    if( result != 0 )
+    {
+        return false;
+    }
+
+    assert( decrypted_length == data_length - sizeof( NetworkAuthentication ) );
+    return true;
 }
 
 void Engine::Networking::GenerateEncryptionKey( NetworkKey &key )
@@ -194,211 +195,19 @@ Engine::NetworkingPtr Engine::NetworkingFactory::StartNetworking()
     return( nullptr );
 }
 
-Engine::BitStreamBase::BitStreamBase( bool is_owned ) :
-    m_buffer( nullptr ),
-    m_bit_head( 0 ),
-    m_bit_capacity( 0 ),
-    m_owned( is_owned )
-{
-}
-
-void Engine::BitStreamBase::ReallocateBuffer( const size_t size )
-{
-    assert( m_owned );
-    if( !m_buffer )
-    {
-        BindBuffer( static_cast<byte*>( std::malloc( size ) ), size );
-    }
-    else
-    {
-        BindBuffer( static_cast<byte*>( std::realloc( m_buffer, size ) ), size );
-    }
-}
-
-void Engine::BitStreamBase::BindBuffer( byte* buffer, const size_t size )
-{
-    m_buffer = buffer;
-    m_bit_capacity = 8 * size;
-}
-
-int Engine::BitStreamBase::BitsRequired( uint64_t value )
-{
-    int required_bits = 0;
-    while( value )
-    {
-        value >>= 1;
-        required_bits++;
-    }
-
-    return required_bits;
-}
-
-int Engine::BitStreamBase::BytesRequired( uint64_t value )
-{
-    int required_bits = BitsRequired( value );
-    return ( required_bits + 7 ) / 8;
-}
-
-Engine::InputBitStream::InputBitStream( byte *input, const size_t size, bool owned ) :
-    Engine::BitStreamBase( owned )
-{
-    if( !owned )
-    {
-        BindBuffer( input, size );
-        return;
-    }
-
-    ReallocateBuffer( size );
-    std::memcpy( m_buffer, input, size );
-}
-
-void Engine::InputBitStream::ReadBits( byte &out, uint32_t bit_cnt )
-{
-    uint32_t byte_offset = m_bit_head / 8;
-    uint32_t bit_offset  = m_bit_head % 8;
-
-    out = m_buffer[byte_offset] >> bit_offset;
-
-    auto free_bits_this_byte = 8 - bit_offset;
-    if( free_bits_this_byte < bit_cnt )
-    {
-        /* go to the next byte */
-        out |= m_buffer[byte_offset + 1] << free_bits_this_byte;
-    }
-
-    out &= ~( 0xff << bit_cnt);
-    m_bit_head += bit_cnt;
-}
-
-void Engine::InputBitStream::Read( NetworkKey & out )
-{
-    for( size_t i = 0; i < out.size(); i++ )
-    {
-        Read( out[i] );
-    }
-}
-
-void Engine::InputBitStream::Read( sockaddr &out )
-{
-    Read( out.sa_family );
-    ReadBytes( &out.sa_data, sizeof( out.sa_data ) );
-}
-
-void Engine::InputBitStream::ReadBits( void *out, uint32_t bit_cnt )
-{
-    auto destination = reinterpret_cast<byte*>(out);
-
-    /* read the whole bytes */
-    while( bit_cnt > 8 )
-    {
-        ReadBits( *destination, 8 );
-        ++destination;
-        bit_cnt -= 8;
-    }
-
-    /* read any left over bits */
-    if( bit_cnt > 0 )
-    {
-        ReadBits( *destination, bit_cnt );
-    }
-}
-
-Engine::OutputBitStream::OutputBitStream( byte *input, const size_t size, bool owned ) :
-    BitStreamBase( owned )
-{
-    if( !owned )
-    {
-        assert( input );
-        BindBuffer( input, size );
-        return;
-    }
-
-    ReallocateBuffer( size );
-    if( input )
-    {
-        std::memcpy( m_buffer, input, size );
-    }
-}
-
-void Engine::OutputBitStream::WriteBits( byte &out, uint32_t bit_cnt )
-{
-	auto next_bit_head = m_bit_head + bit_cnt;
-	
-	if( next_bit_head > m_bit_capacity )
-	{
-        ReallocateBuffer( std::max( m_bit_capacity * 2, next_bit_head ) );
-	}
-	
-    uint32_t byte_offset = m_bit_head / 8;
-    uint32_t bit_offset  = m_bit_head % 8;
-	
-	auto mask = ~( 0xff << bit_offset );
-    m_buffer[byte_offset] = (m_buffer[byte_offset] & mask) | (out << bit_offset);
-	
-    auto free_bits_this_byte = 8 - bit_offset;
-	if( free_bits_this_byte < bit_cnt )
-	{
-        /* go to the next byte */
-		m_buffer[byte_offset + 1 ] = out >> free_bits_this_byte;
-	}
-	
-    m_bit_head = next_bit_head;
-}
-
-void Engine::OutputBitStream::Write( NetworkKey &out )
-{
-    for( size_t i = 0; i < out.size(); i++ )
-    {
-        Write( out[i] );
-    }
-}
-
-void Engine::OutputBitStream::Write( NetworkAuthentication &out )
-{
-    for( size_t i = 0; i < out.size(); i++ )
-    {
-        Write( out[i] );
-    }
-}
-
-void Engine::OutputBitStream::Write( sockaddr &out )
-{
-    Write( out.sa_family );
-    WriteBytes( out.sa_data, sizeof( out.sa_data ) );
-}
-
-size_t Engine::OutputBitStream::Collapse()
-{
-    assert( m_owned );
-    size_t size = GetSize();
-    ReallocateBuffer( size );
-    return( size );
-}
-
-void Engine::OutputBitStream::WriteBits( void *out, uint32_t bit_cnt )
-{
-    auto source = reinterpret_cast<byte*>(out);
-
-    /* write the whole bytes */
-    while( bit_cnt > 8 )
-    {
-        WriteBits( *source, 8 );
-        ++source;
-        bit_cnt -= 8;
-    }
-
-    /* write any left over bits */
-    if( bit_cnt > 0 )
-    {
-        WriteBits( *source, bit_cnt );
-    }
-}
-
 Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token )
 {
     auto packet = std::shared_ptr<NetworkConnectionRequestPacket>( new NetworkConnectionRequestPacket() );
     packet->header = header;
-    packet->token = token;
+
+    if( token )
+    {
+        packet->token = token;
+    }
+    else
+    {
+        packet->token = NetworkConnectionTokenPtr( new NetworkConnectionToken() );
+    }
 
     return packet;
 }
@@ -420,6 +229,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallenge
 {
     auto packet = std::shared_ptr<NetworkConnectionChallengeResponsePacket>( new NetworkConnectionChallengeResponsePacket() );
     packet->header = header;
+    packet->token = NetworkChallengeTokenPtr( new NetworkChallengeToken() );
 
     return packet;
 }
@@ -478,7 +288,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacket::ReadPacket( InputBitStreamPtr &r
 
     /* read the sequence number */
     uint64_t sequence_number = 0;
-    read->Read( sequence_number, prefix.sequence_byte_cnt );
+    read->Read( sequence_number, prefix.sequence_byte_cnt * 8 );
 
     /* create the nonce */
     NetworkNonce nonce;
@@ -499,7 +309,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacket::ReadPacket( InputBitStreamPtr &r
     salt_alias->Write( protocol_id );
     salt_alias->Write( prefix.b );
 
-    if( !Networking::Decrypt( read->GetBuffer(), read->GetRemainingByteCount(), salt_alias->GetBuffer(), salt_alias->GetCurrentByteCount(), nonce, read_key ) )
+    if( !Networking::Decrypt( read->GetBufferAtCurrent(), read->GetRemainingByteCount(), salt_alias->GetBuffer(), salt_alias->GetCurrentByteCount(), nonce, read_key ) )
     {
         return nullptr;
     }
@@ -539,6 +349,10 @@ Engine::OutputBitStreamPtr Engine::NetworkPacket::WritePacket( uint64_t sequence
     /* handle connection requests without encryption */
     if( packet_type == PACKET_CONNECT_REQUEST )
     {
+        NetworkPacketPrefix prefix;
+        prefix.packet_type = packet_type;
+        prefix.sequence_byte_cnt = 0;
+        out->Write( prefix.b );
         Write( out );
         return out;
     }
@@ -576,17 +390,15 @@ Engine::OutputBitStreamPtr Engine::NetworkPacket::WritePacket( uint64_t sequence
     salt_alias->Write( protocol_id );
     salt_alias->Write( prefix.b );
 
-    /* pad for authentication */
-    auto message_length = encrypted->GetCurrentByteCount();
     NetworkAuthentication authentication;
     encrypted->Write( authentication );
 
     /* encrypt and append to the output packet buffer */
-    if( !Networking::Encrypt( encrypted->GetBuffer(), message_length, salt_alias->GetBuffer(), salt_alias->GetCurrentByteCount(), nonce, key ) )
+    if( !Networking::Encrypt( encrypted->GetBuffer(), encrypted->GetCurrentByteCount(), salt_alias->GetBuffer(), salt_alias->GetCurrentByteCount(), nonce, key ) )
     {
         return nullptr;
     }
-
+    
     out->WriteBytes( encrypted->GetBuffer(), encrypted->GetSize() );
     
     return out;
@@ -598,15 +410,12 @@ void Engine::NetworkConnectionRequestPacket::Write( OutputBitStreamPtr &out )
     out->Write( header.protocol_id );
     out->Write( header.token_expire_time );
     out->Write( header.token_sequence );
-
-    NetworkConnectionTokenRaw raw_token;
-    token->Write( raw_token );
-    out->WriteBytes( reinterpret_cast<byte*>(&raw_token), sizeof( NetworkConnectionTokenRaw ) );
+    out->WriteBytes( reinterpret_cast<byte*>(&header.raw_token), sizeof( NetworkConnectionTokenRaw ) );
 }
 
 Engine::NetworkPacketPtr Engine::NetworkConnectionRequestPacket::Read( InputBitStreamPtr &in, uint64_t &protocol_id, double now_time )
 {
-    if( in->GetSize() != sizeof( Engine::NetworkConnectionRequestHeader ) )
+    if( in->GetRemainingByteCount() != sizeof( Engine::NetworkConnectionRequestHeader ) )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Bad packet size.  Expected %d, got %d.", sizeof( Engine::NetworkConnectionRequestHeader ), in->GetSize() );
         return nullptr;
@@ -643,7 +452,7 @@ Engine::NetworkPacketPtr Engine::NetworkConnectionRequestPacket::Read( InputBitS
     in->Read( request.token_sequence );
 
     in->ReadBytes( &request.raw_token, sizeof( request.raw_token ) );
-    if( !NetworkConnectionToken::Decrypt( request.raw_token, request.token_sequence, protocol_id, now_time, Engine::SOJOURN_PRIVILEGED_KEY ) )
+    if( !NetworkConnectionToken::Decrypt( request.raw_token, request.token_sequence, protocol_id, request.token_expire_time, Engine::SOJOURN_PRIVILEGED_KEY ) )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Ignored Connection Request.  Could not decrypt." );
         return nullptr;
@@ -662,8 +471,6 @@ Engine::NetworkPacketPtr Engine::NetworkConnectionRequestPacket::Read( InputBitS
 bool Engine::NetworkConnectionToken::Read( NetworkConnectionTokenRaw &raw )
 {
     auto in = Engine::BitStreamFactory::CreateInputBitStream( reinterpret_cast<byte*>(&raw), raw.size(), false );
-    assert( server_address_cnt > 0 );
-    assert( server_address_cnt <= (int)server_addresses.size() );
 
     in->Read( client_id );
     in->Read( timeout_seconds );
@@ -722,7 +529,7 @@ bool Engine::NetworkConnectionToken::Encrypt( NetworkConnectionTokenRaw &raw, ui
     {
         byte version[NETWORK_PROTOCOL_VERSION_LEN];
         uint64_t protocol_id;
-        uint64_t expire_time;
+        double expire_time;
     } salt;
 
     auto salt_alias = BitStreamFactory::CreateOutputBitStream( reinterpret_cast<byte*>(&salt), sizeof( salt ), false );

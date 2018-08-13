@@ -123,6 +123,21 @@ Engine::NetworkSocketUDPPtr Engine::NetworkSocketUDPFactory::CreateUDPSocket( En
         return nullptr;
     }
 
+    if( our_address->Port() == 0 )
+    {
+        /* get the actual address and port */
+        sockaddr name;
+        int length = sizeof( name );
+        result = getsockname( new_socket->m_socket, &name, &length );
+        if( result != NO_ERROR )
+        {
+            Engine::ReportWinsockError( L"NetworkSocketUDPFactory::CreateUDPSocket failed to query the address of an ANY_ADDRESS" );
+            return nullptr;
+        }
+
+        our_address = Engine::NetworkAddressFactory::CreateFromAddress( name );
+    }
+
     return new_socket;
 }
 

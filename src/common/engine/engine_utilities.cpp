@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "engine_utilities.hpp"
 
-static Engine::LogLevel s_log_level = Engine::LOG_LEVEL_ERROR;
+static Engine::LogLevel s_log_level = Engine::LOG_LEVEL_INFO;
 
 void Engine::ReportWindowsError( std::wstring message )
 {

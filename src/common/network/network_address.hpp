@@ -13,6 +13,7 @@ namespace Engine
         size_t GetSize() const { return sizeof( sockaddr ); }
         sockaddr Address() { return m_address; }
         std::wstring Print();
+        int Port();
         boolean Matches( const NetworkAddress &other );
 
     private:

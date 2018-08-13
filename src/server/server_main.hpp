@@ -125,3 +125,23 @@ namespace Server
         static ServerPtr CreateServer( ServerConfig &config, Engine::NetworkingPtr &networking );
     };
 }
+
+static const wchar_t *SPLASH = L"\n"
+    L"     .d8888b.            d8b                                         \n"
+    L"     d88P  Y88b           Y8P                                        \n"
+    L"     Y88b.                                                           \n"
+    L"      `Y888b.    .d88b.  8888  .d88b.  888  888 888d888 88888b.      \n"
+    L"         `Y88b. d88`'88b `888 d88'`88b 888  888 888P'   888 `88b     \n"
+    L"           `888 888  888  888 888  888 888  888 888     888  888     \n"
+    L"     Y88b  d88P Y88..88P  888 Y88..88P Y88b 888 888     888  888     \n"
+    L"      `Y8888P'   `Y88P'   888  `Y88P'   `Y88888 888     888  888     \n"
+    L"                          888                                        \n"
+    L"            .d8888b.     d88P                                        \n"
+    L"           d88P  Y88b  888P'                                         \n"
+    L"           Y88b.                                                     \n"
+    L"            `Y888b.    .d88b.  888d888 888  888  .d88b.  888d888     \n"
+    L"               `Y88b. d8P  Y8b 888P'   888  888 d8P  Y8b 888P'       \n"
+    L"                 `888 88888888 888     Y88  88P 88888888 888         \n"
+    L"           Y88b  d88P Y8b.     888      Y8bd8P  Y8b.     888         \n"
+    L"            `Y8888P'   `Y8888  888       Y88P    `Y8888  888         \n\n"
+    L"---------------------------------------------------------------------\n\n";        

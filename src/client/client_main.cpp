@@ -57,14 +57,13 @@ bool Client::App<T>::Start( HINSTANCE hinstance )
     m_graphics->SetWindow( window );
 
     // Create the Networking Adapter
-    
     if( !StartNetworking() )
     {
         return false;
     }
 
     // Create the application
-    m_main = std::make_unique<T>( m_graphics );
+    m_main = std::make_unique<T>( m_timer, m_graphics );
     
     return true;
 }
@@ -73,7 +72,17 @@ template <typename T>
 int Client::App<T>::Run()
 {
     MSG msg = { 0 };
-    //mTimer.Reset();
+    /* REMOVE THIS */
+    Engine::NetworkConnectionPassportRaw raw_passport;
+    Engine::FAKE_NetworkGetPassport( raw_passport );
+    Engine::NetworkConnectionPassportPtr passport( new Engine::NetworkConnectionPassport() );
+    if( !passport->Read( raw_passport ) )
+    {
+        return -1;
+    }
+
+    m_connection->Connect( passport );
+    /* END REMOVE THIS */
 
     while( msg.message != WM_QUIT )
     {
@@ -91,15 +100,7 @@ int Client::App<T>::Run()
             {
                 UpdateNetworking();
                 m_main->Update();
-                if( m_is_active )
-                {
                 m_main->Render();
-                }
-                else
-                {
-                    Sleep( 100 );
-                }
-
                 SendPacketsToServer(); // TODO IMPLEMENT
             } );
             
@@ -117,7 +118,6 @@ void Client::App<T>::Shutdown()
 template<typename T>
 bool Client::App<T>::StartNetworking()
 {
-    //m_network_config.server_address = L"127.0.0.1:48000";
     m_networking = Engine::NetworkingFactory::StartNetworking();
     if( m_networking == nullptr )
     {
@@ -125,6 +125,7 @@ bool Client::App<T>::StartNetworking()
         return false;
     }
 
+    m_network_config.our_address = L"0.0.0.0";
     m_connection = Engine::NetworkConnectionFactory::CreateConnection( m_network_config, m_networking );
     if( m_networking == nullptr )
     {

@@ -1,4 +1,5 @@
 #include "pch.hpp"
+
 #include "network_matchmaking.hpp"
 
 void Engine::NetworkConnectionPassport::Write( NetworkConnectionPassportRaw &raw )
@@ -31,7 +32,7 @@ bool Engine::NetworkConnectionPassport::Read( NetworkConnectionPassportRaw &raw 
 {
     auto in = Engine::BitStreamFactory::CreateInputBitStream( reinterpret_cast<byte*>(&raw), raw.size(), false );
 
-    in->ReadBytes( (void*)NETWORK_PROTOCOL_VERSION, NETWORK_PROTOCOL_VERSION_LEN );
+    in->ReadBytes( version.data(), NETWORK_PROTOCOL_VERSION_LEN );
     in->Read( protocol_id );
     in->Read( token_create_time );
     in->Read( token_expire_time );
@@ -75,7 +76,7 @@ bool Engine::NetworkConnectionPassport::Read( NetworkConnectionPassportRaw &raw 
     /* create a fake passport for testing/development purposes - this will be replaced by a HTTPS packet from the matchmaking server */
     Engine::NetworkConnectionPassport passport;
     passport.protocol_id = NETWORK_SOJOURN_PROTOCOL_ID;
-    passport.token_create_time = 0.0;
+    passport.token_create_time = Engine::Time::GetSystemTime();
     passport.token_expire_time = passport.token_create_time + EXPIRE_DURATION;
     passport.token_sequence = SEQUENCE_NUM;
     passport.timeout_seconds = TIMEOUT_DURATION;

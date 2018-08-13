@@ -9,31 +9,11 @@
 #include "server_main.hpp"
 
 int wmain( int argc, wchar_t* argv[] )
-{
-    const wchar_t *splash = L"\n"
-    L"     .d8888b.            d8b                                         \n"
-    L"     d88P  Y88b           Y8P                                        \n"
-    L"     Y88b.                                                           \n"
-    L"      `Y888b.    .d88b.  8888  .d88b.  888  888 888d888 88888b.      \n"
-    L"         `Y88b. d88`'88b `888 d88'`88b 888  888 888P'   888 `88b     \n"
-    L"           `888 888  888  888 888  888 888  888 888     888  888     \n"
-    L"     Y88b  d88P Y88..88P  888 Y88..88P Y88b 888 888     888  888     \n"
-    L"      `Y8888P'   `Y88P'   888  `Y88P'   `Y88888 888     888  888     \n"
-    L"                          888                                        \n"
-    L"            .d8888b.     d88P                                        \n"
-    L"           d88P  Y88b  888P'                                         \n"
-    L"           Y88b.                                                     \n"
-    L"            `Y888b.    .d88b.  888d888 888  888  .d88b.  888d888     \n"
-    L"               `Y88b. d8P  Y8b 888P'   888  888 d8P  Y8b 888P'       \n"
-    L"                 `888 88888888 888     Y88  88P 88888888 888         \n"
-    L"           Y88b  d88P Y8b.     888      Y8bd8P  Y8b.     888         \n"
-    L"            `Y8888P'   `Y8888  888       Y88P    `Y8888  888         \n\n"
-    L"---------------------------------------------------------------------\n\n";                                                             
-                                                            
-    wprintf( splash );
+{                                                                              
+    wprintf( SPLASH );
     wprintf( L"Starting Server...\n" );
                                                             
-    Engine::SetLogLevel( Engine::LOG_LEVEL_DEBUG );
+    Engine::SetLogLevel( Engine::LOG_LEVEL_INFO );
 
     Server::ServerConfig config;
     config.server_address = std::wstring( L"127.0.0.1:48000" );
@@ -73,7 +53,7 @@ Server::Server::Server( ServerConfig &config, Engine::NetworkingPtr &networking 
     m_next_sequence( 1 ),
     m_next_challenge_sequence( 1 )
 {
-    m_now_time = m_timer.GetTotalSeconds();
+    m_now_time = Engine::Time::GetSystemTime();
     Initialize();
 }
 
@@ -120,7 +100,7 @@ void Server::Server::Run()
 
 void Server::Server::Update()
 {
-    m_now_time = m_timer.GetTotalSeconds();
+    m_now_time = Engine::Time::GetSystemTime();
 
     ReceivePackets();
     CheckClientTimeouts(); // TODO IMPLEMENT
@@ -260,7 +240,7 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkConnectionReque
         expire_time = m_now_time + connect_token->timeout_seconds;
     }
 
-    m_networking->AddCryptoMap( from, connect_token->server_to_client_key, connect_token->client_to_server_key, m_now_time, expire_time, connect_token->timeout_seconds );
+    m_networking->AddCryptoMap( connect_token->client_id, from, connect_token->server_to_client_key, connect_token->client_to_server_key, m_now_time, expire_time, connect_token->timeout_seconds );
 
     Engine::NetworkConnectionChallengeHeader challenge;
     challenge.token_sequence = m_next_challenge_sequence++;
@@ -272,7 +252,7 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkConnectionReque
     Engine::NetworkChallengeToken::Encrypt( challenge.raw_challenge_token, challenge.token_sequence, m_config.challenge_key );
 
     auto challenge_packet = Engine::NetworkPacketFactory::CreateConnectionChallenge( challenge );
-    if( m_networking->SendPacket( m_socket, from, challenge_packet, m_config.protocol_id, connect_token->server_to_client_key, challenge.token_sequence ) )
+    if( !m_networking->SendPacket( m_socket, from, challenge_packet, m_config.protocol_id, connect_token->server_to_client_key, challenge.token_sequence ) )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server unable to send a connection challenge to %s.", from->Print().c_str() );
         return;
@@ -314,7 +294,7 @@ void Server::Server::OnReceivedConnectionChallengeResponse( Engine::NetworkConne
         return;
     }
 
-    auto crypto = m_networking->FindCryptoMapByClientID( response.token->client_id, from, m_now_time );
+    auto crypto = m_networking->FindCryptoMapByAddress( from, m_now_time );
     if( !crypto )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response ignored.  Could not find client cryptographic credentials." );
@@ -337,6 +317,8 @@ void Server::Server::OnReceivedConnectionChallengeResponse( Engine::NetworkConne
     new_client->last_time_received_packet = new_client->last_time_sent_packet;
     new_client->timeout_seconds = crypto->timeout_seconds;
     m_clients.push_back( new_client );
+
+    Engine::Log( Engine::LOG_LEVEL_INFO, L"Server connected Client ID %d", response.token->client_id );
 
     /* let the client know the connection was accepted by sending a keep alive packet */
     auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( response.token->client_id, m_config.max_num_clients );
@@ -368,7 +350,7 @@ void Server::Server::KeepClientsAlive()
 {
     for( auto client : m_clients )
     {
-        if( m_now_time - client->last_time_sent_packet < m_config.send_rate )
+        if( m_now_time - client->last_time_sent_packet < m_config.send_rate / 1000.0f )
         {
             continue;
         }

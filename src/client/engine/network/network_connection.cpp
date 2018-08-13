@@ -1,5 +1,5 @@
 ﻿#include "pch.hpp"
-#include "network_client_connection.hpp"
+#include "network_connection.hpp"
 
 #define NUMBER_OF_DISCONNECT_PACKETS ( 10 )
 
@@ -18,7 +18,6 @@ public:
     {
         m_fsm.m_allowed.Reset();
         m_fsm.m_server_address.reset();
-        m_fsm.m_socket.reset();
         m_fsm.m_passport.reset();
     }
 
@@ -29,9 +28,9 @@ public:
 
     virtual void Update()
     {
-        if( !m_fsm.m_passport )
+        if( m_fsm.m_passport )
         {
-             m_fsm.m_connect_start_time = time( nullptr );
+             m_fsm.m_connect_start_time = Engine::Time::GetSystemTime();
              m_fsm.m_passport->current_server = -1;
              m_fsm.ChangeState( Engine::NetworkConnection::TRY_NEXT_SERVER );
         }
@@ -53,7 +52,6 @@ public:
     {
         m_fsm.m_allowed.Reset();
         m_fsm.m_server_address.reset();
-        m_fsm.m_socket.reset();
     }
 
     virtual void Update()
@@ -67,6 +65,7 @@ public:
         }
 
         /* check if we have a server we haven't tried */
+        m_fsm.m_passport->current_server++;
         if( m_fsm.NeedsMoreServers() )
         {
             Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::TryNextServerState ran out of servers while trying to connect." );
@@ -74,18 +73,8 @@ public:
             return;
         }
 
-        /* Create the server socket */
-        auto server_address = Engine::NetworkAddressFactory::CreateFromAddress( m_fsm.m_passport->server_addresses[++m_fsm.m_passport->current_server] );
-        auto server_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_fsm.m_server_address, m_fsm.m_config.send_buff_size, m_fsm.m_config.receive_buff_size );
-        if( server_socket == nullptr )
-        {
-            Engine::Log( Engine::LOG_LEVEL_WARNING, L"NetworkConnection::TryNextServerState socket creation failed." );
-            m_fsm.m_connect_error = Engine::NetworkConnection::SERVER_SOCKET_ERROR;
-            return;
-        }
-
-        m_fsm.m_server_address = server_address;
-        m_fsm.m_socket = server_socket;
+        /* Create the server address */
+        m_fsm.m_server_address = Engine::NetworkAddressFactory::CreateFromAddress( m_fsm.m_passport->server_addresses[m_fsm.m_passport->current_server] );
 
         /* switch to request connection */
         Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::TryNextServer trying %s...", m_fsm.m_server_address->Print().c_str() );
@@ -141,9 +130,17 @@ public:
             return;
         }
 
+        if( !m_fsm.m_server_address )
+        {
+            Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::SendingConnectRequestsState unable to look server address." );
+            m_fsm.m_connect_error = Engine::NetworkConnection::CANT_REACH_SERVER;
+            m_fsm.ChangeState( Engine::NetworkConnection::TRY_NEXT_SERVER );
+            return;
+        }
+
         m_fsm.m_send_timer.Tick( [&]()
         {
-            if( m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, connect_request, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )
+            if( !m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, connect_request, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )
             {
                 Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::SendingConnectRequestsState unable to send a connection request to %s...", m_fsm.m_server_address->Print().c_str() );
                 m_fsm.m_connect_error = Engine::NetworkConnection::CANT_REACH_SERVER;
@@ -221,7 +218,7 @@ public:
 
         m_fsm.m_send_timer.Tick( [&]()
         {
-            if( m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, connect_reply, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )
+            if( !m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, connect_reply, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_challenge.token_sequence ) )
             {
                 Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::SendingConnectRepliesState unable to send a connection request to %s...", m_fsm.m_server_address->Print().c_str() );
                 m_fsm.m_connect_error = Engine::NetworkConnection::CANT_REACH_SERVER;
@@ -282,7 +279,7 @@ public:
     {
         m_fsm.m_send_timer.Tick( [&]()
         {
-            if( m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, m_fsm.m_keep_alive_packet, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )
+            if( !m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, m_fsm.m_keep_alive_packet, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )
             {
                 Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::ConnectedState unable to send a keep alive to %s...", m_fsm.m_server_address->Print().c_str() );
                 return;
@@ -371,10 +368,28 @@ Engine::NetworkConnection::NetworkConnection( const NetworkClientConfig &config,
     m_config( config ),
     m_networking( networking )
 {
+    /* create our address and the socket bound to it */
+    m_our_address = Engine::NetworkAddressFactory::CreateAddressFromStringAsync( config.our_address ).get();
+    if( !m_our_address )
+    {
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"NetworkConnection could create client address." );
+        throw std::runtime_error( "NetworkConnection" );
+    }
+
+    m_socket = Engine::NetworkSocketUDPFactory::CreateUDPSocket( m_our_address, config.receive_buff_size, config.send_buff_size );
+    if( !m_socket )
+    {
+        Engine::Log( Engine::LOG_LEVEL_ERROR, L"NetworkConnection could not create client socket." );
+        throw std::runtime_error( "NetworkConnection" );
+    }
+            
     /* create the discrete states */
     auto disconnected = Engine::NetworkConnection::StatePtr( new DisconnectedState( *this ) );
     m_current_state = disconnected;
     m_states.insert( std::make_pair( disconnected->Id(), disconnected ) );
+
+    auto try_next_server = Engine::NetworkConnection::StatePtr( new TryNextServerState( *this ) );
+    m_states.insert( std::make_pair( try_next_server->Id(), try_next_server ) );
 
     auto requests = Engine::NetworkConnection::StatePtr( new SendingConnectRequestsState( *this ) );
     m_states.insert( std::make_pair( requests->Id(), requests ) );
@@ -385,16 +400,19 @@ Engine::NetworkConnection::NetworkConnection( const NetworkClientConfig &config,
     auto connected = Engine::NetworkConnection::StatePtr( new ConnectedState( *this ) );
     m_states.insert( std::make_pair( connected->Id(), connected ) );
 
+    auto disconnecting = Engine::NetworkConnection::StatePtr( new DisconnectingState( *this ) );
+    m_states.insert( std::make_pair( disconnecting->Id(), disconnecting ) );
+
     /* create the send timer */
     m_send_timer.SetFixedTimeStep( true );
     m_send_timer.SetTargetElapsedSeconds( m_config.connect_send_period / 1000.0f );
 
-    m_current_time = time( nullptr );
+    m_current_time = Engine::Time::GetSystemTime();
 }
 
 void Engine::NetworkConnection::SendAndReceivePackets()
 {
-    m_current_time = time( nullptr );
+    m_current_time = Engine::Time::GetSystemTime();
     m_current_state->Update();
     ReceiveAndProcessPackets();
 }
@@ -422,6 +440,10 @@ void Engine::NetworkConnection::ReceiveAndProcessPackets()
         {
             m_current_state->ProcessPacket( packet );
         }
+        else
+        {
+            Engine::Log( Engine::LOG_LEVEL_DEBUG, L"NetworkConnection::ReceiveAndProcessPackets received a packet it could not read or was not allowed." );
+        }
     }
 }
 
@@ -445,13 +467,12 @@ bool Engine::NetworkConnection::NeedsMoreServers()
         return true;
     }
 
-    if( m_current_state->Id() != DISCONNECTED )
+    if( m_passport->current_server > m_passport->server_address_cnt - 1 )
     {
-        return false;
+        return true;
     }
 
-    auto has_more_servers = m_passport->current_server < m_passport->server_address_cnt - 1;
-    return !has_more_servers;
+    return m_current_state->Id() == DISCONNECTED;
 }
 
 void Engine::NetworkConnection::ChangeState( StateID to_state )
@@ -483,5 +504,11 @@ bool Engine::NetworkConnection::IsPassportExpired()
 
 Engine::NetworkConnectionPtr Engine::NetworkConnectionFactory::CreateConnection( const NetworkClientConfig &config, NetworkingPtr &networking )
 {
-    return Engine::NetworkConnectionPtr( new NetworkConnection( config, networking ) );
+    try
+    {
+        return Engine::NetworkConnectionPtr( new NetworkConnection( config, networking ) );
+    }
+    catch( std::runtime_error() ) {}
+
+    return nullptr;
 }

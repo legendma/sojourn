@@ -1,10 +1,10 @@
 #pragma once
 
-#include "common/network/network_platform.hpp"
-#include "common/network/network_sockets.hpp"
-#include "common/network/network_address.hpp"
-
-#define NETWORK_ENDIANNESS                   LITTLE_ENDIAN
+#include "network_platform.hpp"
+#include "network_sockets.hpp"
+#include "network_address.hpp"
+#include "network_types.hpp"
+#include "network_buffers.hpp"
                                              
 #define NETWORK_PRIVATE_KEY_BYTE_CNT         ( 32 )
 #define NETWORK_SOJOURN_PROTOCOL_ID          ( 0xda47091958c38397 )
@@ -19,152 +19,9 @@
                                              
 #define NETWORK_PACKET_TYPE_BITS             ( 4 )
 #define NETWORK_SEQUENCE_NUM_BITS            ( 4 )
-                                             
-#define NETWORK_KEY_LENGTH                   ( crypto_aead_chacha20poly1305_IETF_KEYBYTES )
-#define NETWORK_AUTHENTICATION_LENGTH        ( crypto_aead_chacha20poly1305_IETF_ABYTES )
-#define NETWORK_NONCE_LENGTH                 ( crypto_aead_chacha20poly1305_IETF_NPUBBYTES )
 
 namespace Engine
 {
-    typedef std::array<byte, NETWORK_KEY_LENGTH> NetworkKey;
-    typedef std::array<byte, NETWORK_AUTHENTICATION_LENGTH> NetworkAuthentication;
-    typedef std::array<byte, NETWORK_NONCE_LENGTH> NetworkNonce;
-    typedef std::array<byte, NETWORK_FUZZ_LENGTH> NetworkFuzz;
-
-    class BitStreamBase
-    {
-    public:
-        BitStreamBase( bool is_owned );
-        ~BitStreamBase() { std::free( m_buffer ); }
-
-        byte * GetBuffer() { return m_buffer; }
-        static int BitsRequired( uint64_t value );
-        static int BytesRequired( uint64_t value );
-        virtual size_t GetSize() = 0;
-        
-    protected:
-        byte     *m_buffer;
-        uint32_t  m_bit_head;
-        uint32_t  m_bit_capacity;
-        bool      m_owned;
-
-        void ReallocateBuffer( const size_t size );
-        void BindBuffer( byte* buffer, const size_t size );
-    };
-
-    class InputBitStream : public BitStreamBase
-    {
-        friend class BitStreamFactory;
-    public:
-        ~InputBitStream() {};
-
-        size_t GetRemainingBitCount()  { return m_bit_capacity - m_bit_head; }
-        size_t GetRemainingByteCount() { return ( GetRemainingBitCount() + 7 ) / 8; }
-        size_t GetSize() { return ( 7 + m_bit_capacity ) / 8; }
-        uint32_t SaveCurrentLocation() { return m_bit_head; }
-        void SeekToLocation( uint32_t location ) { m_bit_head = location; }
-
-        void Advance( uint32_t bit_cnt ) { m_bit_head += bit_cnt; }
-        void ReadBits( void *out, uint32_t bit_cnt );
-        void ReadBits( byte &out, uint32_t bit_cnt );
-        template <typename T> void Read( T &data, uint32_t bit_cnt = sizeof(T) * 8 )
-        {
-            static_assert( std::is_arithmetic<T>::value
-                        || std::is_enum<T>::value,
-                           "Generic Read only supports primitive data types" );
-            T read;
-            ReadBits( &read, size * 8 );
-            data = ByteSwap( read );
-        }
-
-        void Read( NetworkKey &out );
-        void Read( sockaddr &out );
-
-        void Read( uint64_t &out, uint32_t bit_cnt = 32 ) { uint32_t temp; ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-        void Read( int64_t &out, uint32_t bit_cnt = 32 )  { int temp;      ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-
-        void Read( uint32_t &out, uint32_t bit_cnt = 32 ) { uint32_t temp; ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-        void Read( int& out, uint32_t bit_cnt = 32 )      { int temp;      ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-             
-        void Read( uint16_t& out, uint32_t bit_cnt = 16 ) { uint16_t temp; ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-        void Read( int16_t& out, uint32_t bit_cnt = 16 )  { int16_t temp;  ReadBits( &temp, bit_cnt ); out = ByteSwap( temp ); }
-             
-        void Read( bool& out )                            { bool temp;     ReadBits( &temp, 1 );       out = ByteSwap( temp ); }
-        void Read( uint8_t& out, uint32_t bit_cnt = 8 )   { ReadBits( &out, bit_cnt ); }
-
-        void Read( float& out )                           { float temp;    ReadBits( &temp, 32 );      out = ByteSwap( temp ); }
-        void Read( double& out )                          { double temp;   ReadBits( &temp, 64 );      out = ByteSwap( temp ); }
-
-        void ReadBytes( void* out, size_t byte_cnt ) { ReadBits( out, byte_cnt * 8 ); }
-
-    private:
-        InputBitStream( byte *input, const size_t size, bool owned );
-    }; typedef std::shared_ptr<InputBitStream> InputBitStreamPtr;
-
-    class OutputBitStream : public BitStreamBase
-    {
-        friend class BitStreamFactory;
-    public:
-        ~OutputBitStream() {};
-    
-        size_t GetCurrentBitCount()  { return m_bit_head; }
-        size_t GetCurrentByteCount() { return ( GetCurrentBitCount() + 7 ) / 8; }
-        size_t GetSize() { return GetCurrentByteCount(); }
-        size_t Collapse();
-    
-        void WriteBits( void *out, uint32_t bit_cnt );
-        void WriteBits( byte &out, uint32_t bit_cnt );
-
-        template< typename T >
-        void Write( T &data, uint32_t bit_cnt = sizeof(T) * 8 )
-        {
-            static_assert(std::is_arithmetic<T>::value
-                       || std::is_enum<T>::value,
-                          "Generic Write only supports primitive data types" );
-
-            T write = ByteSwap( data );
-            WriteBits( &write, bit_cnt );
-        }
-    
-        void Write( NetworkKey &out );
-        void Write( NetworkAuthentication &out );
-        void Write( sockaddr &out );
-
-        void Write( uint64_t out, uint32_t bit_cnt = 32 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( int64_t out, uint32_t bit_cnt = 32 )  { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-
-        void Write( uint32_t out, uint32_t bit_cnt = 32 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( int out, uint32_t bit_cnt = 32 )      { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-             
-        void Write( uint16_t out, uint32_t bit_cnt = 16 ) { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-        void Write( int16_t out, uint32_t bit_cnt = 16 )  { auto temp = ByteSwap( out ); WriteBits( &temp, bit_cnt ); }
-             
-        void Write( bool out )                            { auto temp = ByteSwap( out ); WriteBits( &temp, 1 );       }
-        void Write( uint8_t out, uint32_t bit_cnt = 8 )   {                              WriteBits( &out, bit_cnt );  }
-
-        void Write( float out )                           { auto temp = ByteSwap( out ); WriteBits( &temp, 32 );      }
-        void Write( double out )                          { auto temp = ByteSwap( out ); WriteBits( &temp, 64 );      }
-
-        void WriteBytes( void* out, size_t byte_cnt ) { WriteBits( out, byte_cnt * 8 ); }
-
-    private:
-        OutputBitStream( byte *input, const size_t size, bool owned );
-    }; typedef std::shared_ptr<OutputBitStream> OutputBitStreamPtr;
-
-    class BitStreamFactory
-    {
-    public:
-        static OutputBitStreamPtr CreateOutputBitStream( byte *input = nullptr, size_t size = 0, bool owned = true )
-        {
-            return OutputBitStreamPtr( new OutputBitStream( input, size, owned ) );
-        }
-
-        static InputBitStreamPtr CreateInputBitStream( byte *input, const size_t size, bool owned = true )
-        {
-            return InputBitStreamPtr( new InputBitStream( input, size, owned ) );
-        }
-    };
-
     typedef std::array<byte, NETWORK_CONNECT_TOKEN_RAW_LENGTH> NetworkConnectionTokenRaw;
     struct NetworkConnectionToken
     {
@@ -195,19 +52,6 @@ namespace Engine
         static bool Decrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, const NetworkKey &key );
         static bool Encrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, NetworkKey &key );
     }; typedef std::shared_ptr<NetworkChallengeToken> NetworkChallengeTokenPtr;
-
-    typedef enum
-    {
-        PACKET_CONNECT_REQUEST,
-        PACKET_CONNECT_DENIED,
-        PACKET_CONNECT_CHALLENGE,
-        PACKET_CONNECT_CHALLENGE_RESPONSE,
-        PACKET_KEEP_ALIVE,
-        PACKET_PAYLOAD,
-        PACKET_DISCONNECT,
-        PACKET_TYPE_CNT,
-        PACKET_INVALID = PACKET_TYPE_CNT
-    } NetworkPacketType;
 
 #pragma pack(push, 1)
     union NetworkPacketPrefix
@@ -270,17 +114,6 @@ namespace Engine
         NetworkPacketPrefix prefix;
     };
 #pragma pack(pop)
-
-    struct NetworkPacketTypesAllowed
-    {
-        boolean allowed[ PACKET_TYPE_CNT ];
-
-        inline void SetAllowed( const NetworkPacketType packet_type )   { allowed[ packet_type ] = true;  }
-        inline boolean IsAllowed( const NetworkPacketType packet_type ) { return( allowed[packet_type] ); }
-        inline void Reset() { ::ZeroMemory( allowed, sizeof( allowed ) ); }
-
-        NetworkPacketTypesAllowed() { Reset(); }
-    };
     
     class NetworkPacket;
     typedef std::shared_ptr<NetworkPacket> NetworkPacketPtr;
@@ -402,11 +235,15 @@ namespace Engine
 
         bool IsExpired( double current_time )
         {
-            if( timeout_seconds > 0
-             && last_seen + timeout_seconds < current_time )
+            if( timeout_seconds > 0 )
             {
-            /* timed out */
-            return false;
+                if( last_seen + timeout_seconds < current_time )
+                {
+                    /* timed out */
+                    return true;
+                }
+
+                return false;
             }
 
             /* check expiration */
@@ -422,7 +259,7 @@ namespace Engine
         ~Networking();
 
         bool SendPacket( Engine::NetworkSocketUDPPtr &socket, NetworkAddressPtr &to, NetworkPacketPtr &packet, uint64_t protocol_id, NetworkKey &key, uint64_t sequence_num );
-        uint64_t AddCryptoMap( NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, double now_time, double expire_time, int timeout_secs );
+        void AddCryptoMap( uint64_t client_id, NetworkAddressPtr &client_address, NetworkKey &send_key, NetworkKey &receive_key, double now_time, double expire_time, int timeout_secs );
         bool DeleteCryptoMapsFromAddress( NetworkAddressPtr &address );
         NetworkCryptoMapPtr FindCryptoMapByAddress( NetworkAddressPtr &search_address, double time );
         NetworkCryptoMapPtr FindCryptoMapByClientID( uint64_t search_id, NetworkAddressPtr &expected_address, double time );
@@ -435,7 +272,6 @@ namespace Engine
     private:
         WSADATA m_wsa_data;
         std::map<uint64_t, NetworkCryptoMapPtr> m_crypto_map;
-        uint64_t m_crypto_map_next_id;
 
         Networking();
         void Initialize();

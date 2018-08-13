@@ -164,9 +164,11 @@
     <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
     <ClInclude Include="..\common\engine\engine_utilities.hpp" />
     <ClInclude Include="..\common\network\network_address.hpp" />
+    <ClInclude Include="..\common\network\network_buffers.hpp" />
     <ClInclude Include="..\common\network\network_main.hpp" />
     <ClInclude Include="..\common\network\network_platform.hpp" />
     <ClInclude Include="..\common\network\network_sockets.hpp" />
+    <ClInclude Include="..\common\network\network_types.hpp" />
     <ClInclude Include="pch.hpp" />
     <ClInclude Include="server_main.hpp" />
   </ItemGroup>
@@ -179,6 +181,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="..\common\network\network_buffers.cpp" />
     <ClCompile Include="..\common\network\network_main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>

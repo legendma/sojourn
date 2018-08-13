@@ -30,7 +30,6 @@ namespace Engine
         typedef enum
         {
             NO_CONNECTION_ERROR,
-            SERVER_CANT_REACH,
             SERVER_SOCKET_ERROR,
             SERVER_NOT_RESPONDING,
             CANT_REACH_SERVER,
@@ -69,10 +68,10 @@ namespace Engine
         NetworkPacketTypesAllowed m_allowed;
         const NetworkClientConfig &m_config;
         StepTimer m_send_timer;
-        time_t m_connect_start_time;
-        time_t m_current_time;
-        time_t m_last_recieved_packet_time;
-        time_t m_last_sent_packet_time;
+        double m_connect_start_time;
+        double m_current_time;
+        double m_last_recieved_packet_time;
+        double m_last_sent_packet_time;
         NetworkConnectionChallengeHeader m_challenge;
         NetworkPacketPtr m_keep_alive_packet;
         

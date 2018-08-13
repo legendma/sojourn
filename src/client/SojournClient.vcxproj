@@ -23,6 +23,7 @@
     <ClCompile Include="..\common\engine\engine_scripts.cpp" />
     <ClCompile Include="..\common\engine\engine_utilities.cpp" />
     <ClCompile Include="..\common\network\network_address.cpp" />
+    <ClCompile Include="..\common\network\network_buffers.cpp" />
     <ClCompile Include="..\common\network\network_main.cpp" />
     <ClCompile Include="..\common\network\network_matchmaking.cpp" />
     <ClCompile Include="..\common\network\network_sockets.cpp" />
@@ -32,7 +33,7 @@
     <ClCompile Include="engine\graphics\graphics_camera.cpp" />
     <ClCompile Include="engine\graphics\graphics_shaders.cpp" />
     <ClCompile Include="engine\gui\gui_renderer.cpp" />
-    <ClCompile Include="engine\network\network_client_connection.cpp" />
+    <ClCompile Include="engine\network\network_connection.cpp" />
     <ClCompile Include="game\explorer\explorer_main.cpp" />
     <ClCompile Include="game\game_main.cpp" />
     <ClCompile Include="game\world\world_renderer.cpp" />
@@ -48,9 +49,11 @@
     <ClInclude Include="..\common\engine\engine_scripts.hpp" />
     <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
     <ClInclude Include="..\common\engine\engine_utilities.hpp" />
+    <ClInclude Include="..\common\network\network_buffers.hpp" />
     <ClInclude Include="..\common\network\network_main.hpp" />
     <ClInclude Include="..\common\network\network_matchmaking.hpp" />
     <ClInclude Include="..\common\network\network_sockets.hpp" />
+    <ClInclude Include="..\common\network\network_types.hpp" />
     <ClInclude Include="..\common\simulation\world_game_object.hpp" />
     <ClInclude Include="client_main.hpp" />
     <ClInclude Include="client_window.hpp" />
@@ -60,7 +63,7 @@
     <ClInclude Include="engine\graphics\graphics_utilities.hpp" />
     <ClInclude Include="engine\gui\gui_renderer.hpp" />
     <ClInclude Include="engine\network\network_client_config.hpp" />
-    <ClInclude Include="engine\network\network_client_connection.hpp" />
+    <ClInclude Include="engine\network\network_connection.hpp" />
     <ClInclude Include="game\explorer\explorer_main.hpp" />
     <ClInclude Include="game\game_main.h" />
     <ClInclude Include="game\shaders\shaders_structures.hpp" />
@@ -176,6 +179,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Ws2_32.lib;D3D11.lib;DXGI.lib;D2d1.lib;Dwrite.lib;sodium.lib;lua.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>python $(SolutionDir)src\client\sojourn_install.py $(SolutionDir)..\install $(SolutionDir)..\bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\ $(SolutionDir)assets</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -216,6 +222,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Ws2_32.lib;D3D11.lib;DXGI.lib;D2d1.lib;Dwrite.lib;sodium.lib;lua.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>python $(SolutionDir)src\client\sojourn_install.py $(SolutionDir)..\install $(SolutionDir)..\bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\ $(SolutionDir)assets</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

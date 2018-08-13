@@ -1,8 +1,8 @@
 #include "pch.hpp"
 
 #include "common/engine/engine_utilities.hpp"
-#include "network_address.hpp"
 
+#include "network_address.hpp"
 
 Engine::NetworkAddress::NetworkAddress( uint32_t in_address, uint16_t port )
 {
@@ -35,6 +35,11 @@ std::wstring Engine::NetworkAddress::Print()
     out.append( std::to_wstring( port ) );
      
     return out;
+}
+
+int Engine::NetworkAddress::Port()
+{
+    return ntohs( GetAddressIn()->sin_port );
 }
 
 boolean Engine::NetworkAddress::Matches( const NetworkAddress &other )

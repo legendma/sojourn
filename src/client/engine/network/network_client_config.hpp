@@ -14,6 +14,7 @@ namespace Engine
         size_t send_buff_size;
         size_t receive_buff_size;
         uint32_t connect_send_period;
+        std::wstring our_address;
 
         NetworkClientConfig() :
             protocol_id( NETWORK_SOJOURN_PROTOCOL_ID ),

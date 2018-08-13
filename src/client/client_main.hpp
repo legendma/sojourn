@@ -3,7 +3,7 @@
 #include "common/network/network_main.hpp"
 #include "common/engine/engine_step_timer.hpp"
 #include "engine/network/network_client_config.hpp"
-#include "engine/network/network_client_connection.hpp"
+#include "engine/network/network_connection.hpp"
 
 namespace Client
 {

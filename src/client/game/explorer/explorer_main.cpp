@@ -9,8 +9,8 @@ using namespace Windows::Foundation;
 using namespace Concurrency;
 
 // Loads and initializes application assets when the application is loaded.
-Game::SojournExplorer::SojournExplorer(const std::shared_ptr<Engine::GraphicsAdapter>& graphics )
-                  : Game::Main( graphics, m_timer )
+Game::SojournExplorer::SojournExplorer( Engine::StepTimer &timer, const std::shared_ptr<Engine::GraphicsAdapter>& graphics )
+                  : Game::Main( graphics, timer )
 {
 
 	// TODO: Replace this with your app's content initialization.

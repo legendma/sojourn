@@ -9,7 +9,7 @@ namespace Game
 	class SojournExplorer : public Game::Main
 	{
 	public:
-        SojournExplorer( const std::shared_ptr<Engine::GraphicsAdapter>& graphics );
+        SojournExplorer( Engine::StepTimer &timer, const std::shared_ptr<Engine::GraphicsAdapter>& graphics );
 		~SojournExplorer();
 		void CreateWindowSizeDependentResources();
 		void Update();

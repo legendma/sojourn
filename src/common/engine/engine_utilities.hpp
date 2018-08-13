@@ -4,10 +4,10 @@ namespace Engine
 {
     typedef enum
     {
-        LOG_LEVEL_ERROR,
-        LOG_LEVEL_WARNING,
+        LOG_LEVEL_INFO,
         LOG_LEVEL_DEBUG,
-        LOG_LEVEL_INFO
+        LOG_LEVEL_WARNING,
+        LOG_LEVEL_ERROR
     } LogLevel;
 
     void ReportWindowsError( std::wstring message );
@@ -72,5 +72,26 @@ namespace Engine
             fromT from;
             toT   to;
         } m_internal;
+    };
+
+    class Time
+    {
+    public:
+        static double GetSystemTime()
+        {
+            /* set the epoch to be new years 2018 */
+            tm epoch;
+            epoch.tm_sec = 0;
+            epoch.tm_min = 0;
+            epoch.tm_hour = 0;
+            epoch.tm_mday = 1;
+            epoch.tm_mon = 0;
+            epoch.tm_year = 2018 - 1900;
+            epoch.tm_isdst = 0;
+
+            auto start = mktime( &epoch );
+            auto now = time( nullptr );
+            return difftime( now, start );
+        }
     };
 }
