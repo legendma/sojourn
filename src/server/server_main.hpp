@@ -5,6 +5,7 @@
 #include "common/network/network_sockets.hpp"
 #include "common/network/network_address.hpp"
 #include "common/network/network_matchmaking.hpp"
+#include "common/network/network_reliable_endpoint.hpp"
 
 
 #define DEFAULT_SERVER_SOCKET_SNDBUF_SIZE ( 4 * 1024 * 1024 )
@@ -26,7 +27,8 @@ namespace Server
         double last_time_received_packet;
         double last_time_sent_packet;
         int timeout_seconds;
-        uint64_t client_sequence;
+        uint16_t client_sequence;
+        Engine::NetworkReliableEndpointPtr endpoint;
 
         ClientRecord() :
             client_id( 0 ),
@@ -99,7 +101,7 @@ namespace Server
         
         void Update();
         void ReadAndProcessPacket( uint64_t protocol_id, Engine::NetworkPacketTypesAllowed &allowed, Engine::NetworkAddressPtr &from, Engine::InputBitStreamPtr &read );
-        void ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from );
+        void ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, ClientRecordPtr &client );
         void ReceivePackets();
         void KeepClientsAlive();
         void CheckClientTimeouts();
@@ -116,7 +118,8 @@ namespace Server
 
         void OnReceivedConnectionRequest( Engine::NetworkConnectionRequestPacket &request, Engine::NetworkAddressPtr &from );
         void OnReceivedConnectionChallengeResponse( Engine::NetworkConnectionChallengeResponsePacket &response, Engine::NetworkAddressPtr &from );
-        void OnReceivedKeepAlive( Engine::NetworkKeepAlivePacket &keep_alive, Engine::NetworkAddressPtr &from );
+        void OnReceivedKeepAlive( Engine::NetworkKeepAlivePacket &keep_alive, ClientRecordPtr &client );
+
     }; typedef std::shared_ptr<Server> ServerPtr;
 
     class ServerFactory

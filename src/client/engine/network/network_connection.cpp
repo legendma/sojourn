@@ -277,6 +277,13 @@ public:
 
     virtual void Update()
     {
+        if( !m_fsm.m_keep_alive_packet )
+        {
+            m_fsm.m_connect_error = Engine::NetworkConnection::NO_CONNECTION_ERROR;
+            m_fsm.ChangeState( Engine::NetworkConnection::DISCONNECTING );
+            return;
+        }
+
         m_fsm.m_send_timer.Tick( [&]()
         {
             if( !m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, m_fsm.m_keep_alive_packet, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )

@@ -247,11 +247,18 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( NetworkK
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( uint64_t client_id, uint32_t max_num_clients )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( uint64_t client_id )
 {
     auto packet = std::shared_ptr<NetworkKeepAlivePacket>( new NetworkKeepAlivePacket() );
     packet->header.client_id = client_id;
-    packet->header.max_clients = max_num_clients;
+
+    return packet;
+}
+
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreatePayload( NetworkPayloadHeader &header )
+{
+    auto packet = std::shared_ptr<NetworkPayloadPacket>( new NetworkPayloadPacket() );
+    packet->header = header;
 
     return packet;
 }
@@ -676,7 +683,6 @@ Engine::NetworkPacketPtr Engine::NetworkKeepAlivePacket::Read( InputBitStreamPtr
     ::ZeroMemory( &keep_alive, sizeof( keep_alive ) );
 
     in->Read( keep_alive.client_id );
-    in->Read( keep_alive.max_clients );
 
     return NetworkPacketFactory::CreateKeepAlive( keep_alive );
 }
@@ -684,7 +690,6 @@ Engine::NetworkPacketPtr Engine::NetworkKeepAlivePacket::Read( InputBitStreamPtr
 void Engine::NetworkKeepAlivePacket::Write( OutputBitStreamPtr &out )
 {
     out->Write( header.client_id );
-    out->Write( header.max_clients );
 }
 
 Engine::NetworkPacketPtr Engine::NetworkDisconnectPacket::Read( InputBitStreamPtr & in )
@@ -696,4 +701,26 @@ Engine::NetworkPacketPtr Engine::NetworkDisconnectPacket::Read( InputBitStreamPt
     }
 
     return NetworkPacketFactory::CreateDisconnect();
+}
+
+Engine::NetworkPacketPtr Engine::NetworkPayloadPacket::Read( InputBitStreamPtr &in )
+{
+    NetworkPayloadHeader header;
+    in->Read( header.client_id );
+    in->Read( header.packet_ack_recent_sequence );
+    in->Read( header.packet_ack_sequence_bits );
+
+    header.message_bytes = in->GetRemainingByteCount();
+    in->ReadBytes( header.message_data.data(), header.message_bytes );
+
+    return NetworkPacketFactory::CreatePayload( header );
+}
+
+void Engine::NetworkPayloadPacket::Write( OutputBitStreamPtr &out )
+{
+    out->Write( header.client_id );
+    out->Write( header.packet_ack_recent_sequence );
+    out->Write( header.packet_ack_sequence_bits );
+
+    out->WriteBytes( header.message_data.data(), header.message_bytes );
 }

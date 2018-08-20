@@ -13,6 +13,7 @@
 #define NETWORK_PROTOCOL_VERSION             ( "Sojourn Ver 1.0\0" )
 #define NETWORK_CONNECT_TOKEN_RAW_LENGTH     ( 1024 )
 #define NETWORK_CHALLENGE_TOKEN_RAW_LENGTH   ( 400 )
+#define NETWORK_MESSAGE_DATA_RAW_LENGTH      ( 1100 )
 #define NETWORK_FUZZ_LENGTH                  ( 300 )
 #define NETCODE_MAX_SERVERS_PER_CONNECT      ( 32 )
 #define NETWORK_NUM_CRYPO_MAPS               ( 1024 )
@@ -52,6 +53,8 @@ namespace Engine
         static bool Decrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, const NetworkKey &key );
         static bool Encrypt( NetworkChallengeTokenRaw &raw, uint64_t sequence_num, NetworkKey &key );
     }; typedef std::shared_ptr<NetworkChallengeToken> NetworkChallengeTokenPtr;
+
+    typedef std::array<byte, NETWORK_MESSAGE_DATA_RAW_LENGTH> NetworkMessageDataRaw;
 
 #pragma pack(push, 1)
     union NetworkPacketPrefix
@@ -97,14 +100,17 @@ namespace Engine
     struct NetworkKeepAliveHeader
     {
         uint64_t client_id;
-        int32_t max_clients;
     };
 #pragma pack(pop)
 
 #pragma pack(push, 1)
     struct NetworkPayloadHeader
     {
-        NetworkPacketPrefix prefix;
+        uint64_t client_id;
+        uint16_t packet_ack_recent_sequence;
+        uint32_t packet_ack_sequence_bits;
+        NetworkMessageDataRaw message_data;
+        int message_bytes;
     };
 #pragma pack(pop)
 
@@ -209,6 +215,19 @@ namespace Engine
         NetworkDisconnectPacket() { packet_type = PACKET_DISCONNECT; }
     };
 
+    class NetworkPayloadPacket : public NetworkPacket
+    {
+        friend class NetworkPacketFactory;
+    public:
+        NetworkPayloadHeader header;
+
+        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+
+    private:
+        virtual void Write( OutputBitStreamPtr &out );
+        NetworkPayloadPacket() { packet_type = PACKET_PAYLOAD; }
+    };
+
     class NetworkPacketFactory
     {
     public:
@@ -218,7 +237,8 @@ namespace Engine
         static NetworkPacketPtr CreateConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header );
         static NetworkPacketPtr CreateDisconnect();
         static NetworkPacketPtr CreateKeepAlive( NetworkKeepAliveHeader &header );
-        static NetworkPacketPtr CreateKeepAlive( uint64_t client_id, uint32_t max_num_clients );
+        static NetworkPacketPtr CreateKeepAlive( uint64_t client_id );
+        static NetworkPacketPtr CreatePayload( NetworkPayloadHeader &header );
     };
 
     class NetworkCryptoMap

@@ -25,4 +25,5 @@
 #include <ppltasks.h>	// For create_task
 #include <array>
 #include <map>
+#include <queue>
 #include <sodium/include/sodium.h>

@@ -103,11 +103,11 @@ void Server::Server::Update()
     m_now_time = Engine::Time::GetSystemTime();
 
     ReceivePackets();
-    CheckClientTimeouts(); // TODO IMPLEMENT
+    CheckClientTimeouts();
     HandleGamePacketsFromClients(); // TODO IMPLEMENT
     RunGameSimulation(); // TODO IMPLEMENT
     SendGamePacketsToClients(); // TODO IMPLEMENT
-    KeepClientsAlive(); // TODO IMPLEMENT
+    KeepClientsAlive();
 }
 
 void Server::Server::ReceivePackets()
@@ -160,11 +160,11 @@ void Server::Server::ReadAndProcessPacket( uint64_t protocol_id, Engine::Network
     auto packet = Engine::NetworkPacket::ReadPacket( read, allowed, protocol_id, crypto->receive_key, m_now_time );
     if( packet )
     {
-        ProcessPacket( packet, from );
+        ProcessPacket( packet, from, client );
     }
 }
 
-void Server::Server::ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from )
+void Server::Server::ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::NetworkAddressPtr &from, ClientRecordPtr &client )
 {
     switch( packet->packet_type )
     {
@@ -177,10 +177,11 @@ void Server::Server::ProcessPacket( Engine::NetworkPacketPtr &packet, Engine::Ne
             break;
 
         case Engine::PACKET_KEEP_ALIVE:
-            OnReceivedKeepAlive( reinterpret_cast<Engine::NetworkKeepAlivePacket&>(*packet), from );
+            OnReceivedKeepAlive( reinterpret_cast<Engine::NetworkKeepAlivePacket&>(*packet), client );
             break;
                 
         case Engine::PACKET_PAYLOAD:
+            client->endpoint->in_queue.push( packet );
             break;
 
         case Engine::PACKET_DISCONNECT:
@@ -316,34 +317,33 @@ void Server::Server::OnReceivedConnectionChallengeResponse( Engine::NetworkConne
     new_client->last_time_sent_packet = m_now_time;
     new_client->last_time_received_packet = new_client->last_time_sent_packet;
     new_client->timeout_seconds = crypto->timeout_seconds;
+    new_client->endpoint = Engine::NetworkReliableEndpointPtr( new Engine::NetworkReliableEndpoint() );
     m_clients.push_back( new_client );
 
     Engine::Log( Engine::LOG_LEVEL_INFO, L"Server connected Client ID %d", response.token->client_id );
 
     /* let the client know the connection was accepted by sending a keep alive packet */
-    auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( response.token->client_id, m_config.max_num_clients );
+    auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( response.token->client_id );
     (void)SendClientPacket( response.token->client_id, packet );
 }
 
-void Server::Server::OnReceivedKeepAlive( Engine::NetworkKeepAlivePacket &keep_alive, Engine::NetworkAddressPtr &from )
+void Server::Server::OnReceivedKeepAlive( Engine::NetworkKeepAlivePacket &keep_alive, ClientRecordPtr &client )
 {
-    auto crypto = m_networking->FindCryptoMapByClientID( keep_alive.header.client_id, from, m_now_time );
-    if( !crypto )
-    {
-        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Keep Alive ignored.  Could not find client cryptographic credentials." );
-        return;
-    }
-    
-    auto client = FindClientByClientID( keep_alive.header.client_id );
     if( !client )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Keep Alive ignored.  Could not find a matching client." );
         return;
     }
 
+    auto crypto = m_networking->FindCryptoMapByClientID( keep_alive.header.client_id, client->client_address, m_now_time );
+    if( !crypto )
+    {
+        Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Keep Alive ignored.  Could not find client cryptographic credentials." );
+        return;
+    }
+
     client->is_confirmed = true;
     client->last_time_received_packet = m_now_time;
-
 }
 
 void Server::Server::KeepClientsAlive()
@@ -355,7 +355,7 @@ void Server::Server::KeepClientsAlive()
             continue;
         }
 
-        auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( client->client_id, m_config.max_num_clients );
+        auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( client->client_id );
         if( !SendClientPacket( client->client_id, packet ) )
         {
             Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::KeepClientsAlive not able to send client %d keep alive packet.", client->client_id );
@@ -418,16 +418,52 @@ void Server::Server::DisconnectClient( uint64_t client_id, int num_of_disconnect
 
 void Server::Server::HandleGamePacketsFromClients()
 {
+    for( auto client : m_clients )
+    {
+        client->endpoint->ProcessReceivedPackets();
+    }
 }
 
 void Server::Server::RunGameSimulation()
 {
+    // queue all the client input events
+    // TODO <MPA>: Probably want to pass the message queue to the simulation, making the game layer aware of the engine, rather than making the reliable endpoint aware of the game layer
+    for( auto client : m_clients )
+    {
+        //client->endpoint->ProcessReceivedMessages();
+    }
+
+    // TODO <MPA>: update the simulation
 }
 
 void Server::Server::SendGamePacketsToClients()
 {
-    // TODO <MPA>: This needs to send a keep alive packet to each client every frame, before any payload packet is sent - until
-    //             the client's connection is 'confirmed'.
+    for( auto client : m_clients )
+    {
+        /* if the client is not confirmed connected yet, send a keep alive packet to establish the connection, until we received our first packet from them */
+        if( !client->is_confirmed )
+        {
+            auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( client->client_id );
+            (void)SendClientPacket( client->client_id, packet );
+        }
+
+        client->endpoint->PackageOutgoing();
+        while( client->endpoint->out_queue.size() )
+        {
+            auto &outgoing = reinterpret_cast<Engine::NetworkPayloadPacket&>( *client->endpoint->out_queue.front() );
+            if( !SendClientPacket( client->client_id, client->endpoint->out_queue.front() ) )
+            {
+                Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::SendGamePacketsToClients failed to send packet to client %d.", client->client_id );
+            }
+            else
+            {
+                client->endpoint->MarkSent( outgoing, client->client_sequence - 1, m_now_time );
+            }
+
+            client->endpoint->out_queue.pop();
+        }
+        
+    }
 }
 
 bool Server::Server::SendClientPacket( uint64_t client_id, Engine::NetworkPacketPtr &packet )

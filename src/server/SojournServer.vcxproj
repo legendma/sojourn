@@ -167,6 +167,7 @@
     <ClInclude Include="..\common\network\network_buffers.hpp" />
     <ClInclude Include="..\common\network\network_main.hpp" />
     <ClInclude Include="..\common\network\network_platform.hpp" />
+    <ClInclude Include="..\common\network\network_reliable_endpoint.hpp" />
     <ClInclude Include="..\common\network\network_sockets.hpp" />
     <ClInclude Include="..\common\network\network_types.hpp" />
     <ClInclude Include="pch.hpp" />
@@ -186,6 +187,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="..\common\network\network_reliable_endpoint.cpp" />
     <ClCompile Include="..\common\network\network_sockets.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
