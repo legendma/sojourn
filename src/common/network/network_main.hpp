@@ -110,7 +110,6 @@ namespace Engine
         uint16_t packet_ack_recent_sequence;
         uint32_t packet_ack_sequence_bits;
         NetworkMessageDataRaw message_data;
-        int message_bytes;
     };
 #pragma pack(pop)
 
@@ -220,12 +219,14 @@ namespace Engine
         friend class NetworkPacketFactory;
     public:
         NetworkPayloadHeader header;
+        uint16_t sequence_num;
+        int message_bytes;
 
-        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( InputBitStreamPtr &in, uint16_t sequence_num );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
-        NetworkPayloadPacket() { packet_type = PACKET_PAYLOAD; }
+        NetworkPayloadPacket() { packet_type = PACKET_PAYLOAD; message_bytes = 0; sequence_num = 0; }
     };
 
     class NetworkPacketFactory
@@ -238,7 +239,7 @@ namespace Engine
         static NetworkPacketPtr CreateDisconnect();
         static NetworkPacketPtr CreateKeepAlive( NetworkKeepAliveHeader &header );
         static NetworkPacketPtr CreateKeepAlive( uint64_t client_id );
-        static NetworkPacketPtr CreatePayload( NetworkPayloadHeader &header );
+        static NetworkPacketPtr CreatePayload( NetworkPayloadHeader &header, uint16_t sequence_num, int message_bytes );
     };
 
     class NetworkCryptoMap

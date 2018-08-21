@@ -147,7 +147,7 @@ void Server::Server::ReadAndProcessPacket( uint64_t protocol_id, Engine::Network
 
     auto marker = read->SaveCurrentLocation();
     Engine::NetworkPacketPrefix prefix;
-    read->Read( prefix.b );
+    read->Write( prefix.b );
     read->SeekToLocation( marker );
 
     if( prefix.packet_type != Engine::PACKET_CONNECT_REQUEST
@@ -427,10 +427,9 @@ void Server::Server::HandleGamePacketsFromClients()
 void Server::Server::RunGameSimulation()
 {
     // queue all the client input events
-    // TODO <MPA>: Probably want to pass the message queue to the simulation, making the game layer aware of the engine, rather than making the reliable endpoint aware of the game layer
     for( auto client : m_clients )
     {
-        //client->endpoint->ProcessReceivedMessages();
+        // TODO <MPA>: Probably want to pass the message queue to the simulation, making the game layer aware of the engine, rather than making the reliable endpoint aware of the game layer
     }
 
     // TODO <MPA>: update the simulation
@@ -447,11 +446,11 @@ void Server::Server::SendGamePacketsToClients()
             (void)SendClientPacket( client->client_id, packet );
         }
 
-        client->endpoint->PackageOutgoing();
+        client->endpoint->PackageOutgoing( m_now_time );
         while( client->endpoint->out_queue.size() )
         {
-            auto &outgoing = reinterpret_cast<Engine::NetworkPayloadPacket&>( *client->endpoint->out_queue.front() );
-            if( !SendClientPacket( client->client_id, client->endpoint->out_queue.front() ) )
+            auto &outgoing = client->endpoint->out_queue.front();
+            if( !SendClientPacket( client->client_id, outgoing.packet ) )
             {
                 Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::SendGamePacketsToClients failed to send packet to client %d.", client->client_id );
             }

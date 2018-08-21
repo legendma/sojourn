@@ -73,7 +73,7 @@ Engine::InputBitStream::InputBitStream( byte *input, const size_t size, bool own
     std::memcpy( m_buffer, input, size );
 }
 
-void Engine::InputBitStream::ReadBits( byte &out, uint32_t bit_cnt )
+void Engine::InputBitStream::WriteBits( byte &out, uint32_t bit_cnt )
 {
     uint32_t byte_offset = m_bit_head / 8;
     uint32_t bit_offset = m_bit_head % 8;
@@ -91,18 +91,18 @@ void Engine::InputBitStream::ReadBits( byte &out, uint32_t bit_cnt )
     m_bit_head += bit_cnt;
 }
 
-void Engine::InputBitStream::Read( NetworkKey & out )
+void Engine::InputBitStream::Write( NetworkKey & out )
 {
     for( size_t i = 0; i < out.size(); i++ )
     {
-        Read( out[i] );
+        Write( out[i] );
     }
 }
 
-void Engine::InputBitStream::Read( sockaddr &out )
+void Engine::InputBitStream::Write( sockaddr &out )
 {
-    Read( out.sa_family );
-    ReadBytes( &out.sa_data, sizeof( out.sa_data ) );
+    Write( out.sa_family );
+    WriteBytes( &out.sa_data, sizeof( out.sa_data ) );
 }
 
 byte * Engine::InputBitStream::GetBufferAtCurrent()
@@ -112,14 +112,14 @@ byte * Engine::InputBitStream::GetBufferAtCurrent()
     return m_buffer + byte_offset;
 }
 
-void Engine::InputBitStream::ReadBits( void *out, uint32_t bit_cnt )
+void Engine::InputBitStream::WriteBits( void *out, uint32_t bit_cnt )
 {
     auto destination = reinterpret_cast<byte*>(out);
 
     /* read the whole bytes */
     while( bit_cnt > 8 )
     {
-        ReadBits( *destination, 8 );
+        WriteBits( *destination, 8 );
         ++destination;
         bit_cnt -= 8;
     }
@@ -127,7 +127,7 @@ void Engine::InputBitStream::ReadBits( void *out, uint32_t bit_cnt )
     /* read any left over bits */
     if( bit_cnt > 0 )
     {
-        ReadBits( *destination, bit_cnt );
+        WriteBits( *destination, bit_cnt );
     }
 }
 

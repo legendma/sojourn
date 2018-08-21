@@ -37,6 +37,9 @@
     <ClCompile Include="..\common\network\network_reliable_endpoint.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\network\network_message.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp">
@@ -70,6 +73,9 @@
       <Filter>Source Files\common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\network\network_reliable_endpoint.hpp">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\network\network_message.hpp">
       <Filter>Source Files\common</Filter>
     </ClInclude>
   </ItemGroup>
