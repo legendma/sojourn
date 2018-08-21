@@ -163,7 +163,6 @@ void Client::App<T>::ReceivePackets()
             break;
 
         auto read = Engine::InputBitStreamFactory::CreateInputBitStream( data, byte_cnt, false );
-        //ReadAndProcessPacket( m_network_config.protocol_id, allowed, from, now, read );
         auto packet = m_networking->ReadPacket( m_network_config.protocol_id, m_crypto, m_network_config.private_key, allowed, now, read );
         if( packet )
         {

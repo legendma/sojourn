@@ -32,13 +32,13 @@ bool Engine::NetworkConnectionPassport::Read( NetworkConnectionPassportRaw &raw 
 {
     auto in = Engine::BitStreamFactory::CreateInputBitStream( reinterpret_cast<byte*>(&raw), raw.size(), false );
 
-    in->ReadBytes( version.data(), NETWORK_PROTOCOL_VERSION_LEN );
-    in->Read( protocol_id );
-    in->Read( token_create_time );
-    in->Read( token_expire_time );
-    in->Read( token_sequence );
-    in->Read( timeout_seconds );
-    in->Read( server_address_cnt );
+    in->WriteBytes( version.data(), NETWORK_PROTOCOL_VERSION_LEN );
+    in->Write( protocol_id );
+    in->Write( token_create_time );
+    in->Write( token_expire_time );
+    in->Write( token_sequence );
+    in->Write( timeout_seconds );
+    in->Write( server_address_cnt );
 
     if( server_address_cnt <= 0
      || server_address_cnt > (int)server_addresses.size() )
@@ -48,13 +48,13 @@ bool Engine::NetworkConnectionPassport::Read( NetworkConnectionPassportRaw &raw 
 
     for( auto i = 0; i < server_address_cnt; i++ )
     {
-        in->Read( server_addresses[i] );
+        in->Write( server_addresses[i] );
     }
 
-    in->Read( client_to_server_key );
-    in->Read( server_to_client_key );
+    in->Write( client_to_server_key );
+    in->Write( server_to_client_key );
 
-    in->ReadBytes( raw_token.data(), raw_token.size() );
+    in->WriteBytes( raw_token.data(), raw_token.size() );
 
     return true;
 }

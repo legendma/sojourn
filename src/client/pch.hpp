@@ -30,6 +30,7 @@
 #include <iostream>
 #include <map>
 #include <array>
+#include <queue>
 
 #undef max
 /* registry base path */

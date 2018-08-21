@@ -100,6 +100,12 @@
     <ClCompile Include="..\common\network\network_buffers.cpp">
       <Filter>src\engine\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\network\network_message.cpp">
+      <Filter>src\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\network\network_reliable_endpoint.cpp">
+      <Filter>src\engine\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game\shaders\shaders_structures.hpp">
@@ -170,6 +176,12 @@
       <Filter>src\engine\common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\network\network_types.hpp">
+      <Filter>src\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\network\network_message.hpp">
+      <Filter>src\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\network\network_reliable_endpoint.hpp">
       <Filter>src\engine\common</Filter>
     </ClInclude>
   </ItemGroup>
