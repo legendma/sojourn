@@ -26,4 +26,5 @@
 #include <array>
 #include <map>
 #include <queue>
+#include <deque>
 #include <sodium/include/sodium.h>

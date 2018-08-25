@@ -420,7 +420,10 @@ void Server::Server::HandleGamePacketsFromClients()
 {
     for( auto client : m_clients )
     {
-        client->endpoint->ProcessReceivedPackets();
+        if( !client->endpoint->ProcessReceivedPackets( m_now_time ) )
+        {
+            DisconnectClient( client->client_id );
+        }
     }
 }
 
@@ -429,7 +432,12 @@ void Server::Server::RunGameSimulation()
     // queue all the client input events
     for( auto client : m_clients )
     {
-        // TODO <MPA>: Probably want to pass the message queue to the simulation, making the game layer aware of the engine, rather than making the reliable endpoint aware of the game layer
+        auto message = client->endpoint->PopIncomingMessage();
+        while( message )
+        {
+            // TODO <MPA>: Pass the message to the simulation's game object system for processing
+            message = client->endpoint->PopIncomingMessage();
+        }
     }
 
     // TODO <MPA>: update the simulation
@@ -446,7 +454,7 @@ void Server::Server::SendGamePacketsToClients()
             (void)SendClientPacket( client->client_id, packet );
         }
 
-        client->endpoint->PackageOutgoing( m_now_time );
+        client->endpoint->PackageOutgoingPackets( client->client_id, m_now_time );
         while( client->endpoint->out_queue.size() )
         {
             auto &outgoing = client->endpoint->out_queue.front();
@@ -456,10 +464,10 @@ void Server::Server::SendGamePacketsToClients()
             }
             else
             {
-                client->endpoint->MarkSent( outgoing, client->client_sequence - 1, m_now_time );
+                client->endpoint->MarkSent( outgoing, m_now_time );
             }
 
-            client->endpoint->out_queue.pop();
+            client->endpoint->out_queue.pop_front();
         }
         
     }

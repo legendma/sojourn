@@ -35,9 +35,9 @@ bool Engine::Networking::SendPacket( Engine::NetworkSocketUDPPtr &socket, Networ
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Networking::SendPacket unable to write packet." );
         return false;
     }
-    assert( buffer->GetSize() < NETWORK_MAX_PACKET_SIZE );
+    assert( buffer->GetCurrentByteCount() < NETWORK_MAX_PACKET_SIZE );
 
-    if( socket->SendTo( buffer->GetBuffer(), buffer->GetSize(), to ) < 0 )
+    if( socket->SendTo( buffer->GetBuffer(), buffer->GetCurrentByteCount(), to ) < 0 )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Networking::SendPacket unable to send packet to destination." );
         return false;
@@ -255,11 +255,10 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( uint64_t
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreatePayload( NetworkPayloadHeader &header, uint16_t sequence_num, int message_bytes )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreatePayload( NetworkPayloadHeader &header, int message_bytes )
 {
     auto packet = std::shared_ptr<NetworkPayloadPacket>( new NetworkPayloadPacket() );
     packet->header = header;
-    packet->sequence_num = sequence_num;
     packet->message_bytes = message_bytes;
 
     return packet;
@@ -339,12 +338,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacket::ReadPacket( InputBitStreamPtr &r
         return NetworkKeepAlivePacket::Read( read );
 
     case PACKET_PAYLOAD:
-        if( prefix.sequence_byte_cnt != 2 )
-        {
-            return nullptr;
-        }
-
-        return NetworkPayloadPacket::Read( read, (uint16_t)sequence_number );
+        return NetworkPayloadPacket::Read( read );
 
     case PACKET_DISCONNECT:
         return NetworkDisconnectPacket::Read( read );
@@ -710,22 +704,28 @@ Engine::NetworkPacketPtr Engine::NetworkDisconnectPacket::Read( InputBitStreamPt
     return NetworkPacketFactory::CreateDisconnect();
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPayloadPacket::Read( InputBitStreamPtr &in, uint16_t sequence_num )
+Engine::NetworkPacketPtr Engine::NetworkPayloadPacket::Read( InputBitStreamPtr &in )
 {
     NetworkPayloadHeader header;
     in->Write( header.client_id );
+    in->Write( header.sequence );
     in->Write( header.packet_ack_recent_sequence );
     in->Write( header.packet_ack_sequence_bits );
+    in->Write( header.start_message );
 
     auto message_bytes = in->GetRemainingByteCount();
     in->WriteBytes( header.message_data.data(), message_bytes );
 
-    return NetworkPacketFactory::CreatePayload( header, sequence_num, message_bytes );
+    auto packet = NetworkPacketFactory::CreatePayload( header, message_bytes );
+    auto payload = reinterpret_cast<NetworkPayloadPacket&>( *packet );
+
+    return packet;
 }
 
 void Engine::NetworkPayloadPacket::Write( OutputBitStreamPtr &out )
 {
     out->Write( header.client_id );
+    out->Write( header.sequence );
     out->Write( header.packet_ack_recent_sequence );
     out->Write( header.packet_ack_sequence_bits );
 

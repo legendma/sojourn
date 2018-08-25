@@ -33,3 +33,16 @@ Engine::NetworkMessagePtr Engine::NetworkMessageFactory::CreateMessage( NetworkM
 
     return nullptr;
 }
+
+Engine::NetworkMessagePtr Engine::NetworkMessageFactory::CreateMessage( InputBitStreamPtr &read )
+{
+    auto marker = read->SaveCurrentLocation();
+    NetworkMessageTypeId message_type;
+    read->Write( message_type, read->BitsRequired( Engine::MESSAGE_TYPE_CNT ) );
+    read->SeekToLocation( marker );
+
+    auto message = Engine::NetworkMessageFactory::CreateMessage( message_type );
+    message->Serialize( read );
+
+    return message;
+}

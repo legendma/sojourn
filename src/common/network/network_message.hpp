@@ -2,30 +2,34 @@
 
 #include "network_buffers.hpp"
 
-#define SERIALIZE_MAPPING()                                        \
-    virtual void Serialize( Engine::MeasureBitStreamPtr &measure ) \
-    {                                                              \
-        __Serialize( measure );                                    \
-    }                                                              \
-                                                                   \
-    virtual void Serialize( Engine::InputBitStreamPtr &read )      \
-    {                                                              \
-        __Serialize( read );                                       \
-    }                                                              \
-                                                                   \
-    virtual void Serialize( Engine::OutputBitStreamPtr &write )    \
-    {                                                              \
-        __Serialize( write );                                      \
-    }                                                              \
-                                                                   \
-    template <typename T>                                          \
+#define SERIALIZE_MAPPING()                                                                \
+    virtual void Serialize( Engine::MeasureBitStreamPtr &measure )                         \
+    {                                                                                      \
+        measure->Write( message_type, measure->BitsRequired( Engine::MESSAGE_TYPE_CNT ) ); \
+        __Serialize( measure );                                                            \
+    }                                                                                      \
+                                                                                           \
+    virtual void Serialize( Engine::InputBitStreamPtr &read )                              \
+    {                                                                                      \
+        read->Write( message_type, read->BitsRequired( Engine::MESSAGE_TYPE_CNT ) );       \
+        __Serialize( read );                                                               \
+    }                                                                                      \
+                                                                                           \
+    virtual void Serialize( Engine::OutputBitStreamPtr &write )                            \
+    {                                                                                      \
+        write->Write( message_type, write->BitsRequired( Engine::MESSAGE_TYPE_CNT ) );     \
+        __Serialize( write );                                                              \
+    }                                                                                      \
+                                                                                           \
+    template <typename T>                                                                  \
     void __Serialize( T &stream )
 
 namespace Engine
 {
     typedef enum
     {
-        MESSAGE_TEST
+        MESSAGE_TEST,
+        MESSAGE_TYPE_CNT
     } NetworkMessageTypeId;
 
     class NetworkMessage
@@ -45,6 +49,7 @@ namespace Engine
     {
     public:
         static NetworkMessagePtr CreateMessage( NetworkMessageTypeId id );
+        static NetworkMessagePtr CreateMessage( InputBitStreamPtr &read );
     };
 }
 

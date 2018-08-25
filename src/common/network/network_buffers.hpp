@@ -15,9 +15,10 @@ namespace Engine
         static int BitsRequired( uint64_t value );
         static int BytesRequired( uint64_t value );
         virtual size_t GetSize() = 0;
+        void Reset() { m_bit_head = 0; }
 
     protected:
-        byte * m_buffer;
+        byte     *m_buffer;
         uint32_t  m_bit_head;
         uint32_t  m_bit_capacity;
         bool      m_owned;
@@ -49,7 +50,7 @@ namespace Engine
                 || std::is_enum<T>::value,
                 "Generic Read only supports primitive data types");
             T read;
-            WriteBits( &read, size * 8 );
+            WriteBits( &read, bit_cnt );
             data = ByteSwap( read );
         }
 

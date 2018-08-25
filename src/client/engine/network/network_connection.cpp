@@ -245,6 +245,7 @@ public:
             Engine::Log( Engine::LOG_LEVEL_INFO, L"Received connection accepted from %s.", m_fsm.m_server_address->Print().c_str() );
             m_fsm.m_keep_alive_packet = packet;
             m_fsm.m_last_recieved_packet_time = m_fsm.m_current_time;
+
             m_fsm.ChangeState( Engine::NetworkConnection::CONNECTED );
             break;
         }
@@ -260,6 +261,10 @@ public:
 
     virtual void EnterState()
     {
+        auto keep_alive = reinterpret_cast<Engine::NetworkKeepAlivePacket&>(*m_fsm.m_keep_alive_packet);
+        m_fsm.m_client_id = keep_alive.header.client_id;
+        m_fsm.m_send_packet_sequence = 0;
+
         m_fsm.m_allowed.Reset();
         m_fsm.m_allowed.SetAllowed( PACKET_KEEP_ALIVE );
         m_fsm.m_allowed.SetAllowed( PACKET_PAYLOAD );
@@ -267,26 +272,31 @@ public:
 
         m_fsm.ResetSendTimer();
 
+        m_fsm.m_endpoint = Engine::NetworkReliableEndpointPtr( new Engine::NetworkReliableEndpoint() );
+
         Engine::Log( Engine::LOG_LEVEL_INFO, L"Connected to %s!", m_fsm.m_server_address->Print().c_str() );
     }
 
     virtual void ExitState()
     {
+        m_fsm.m_client_id = 0;
         m_fsm.m_keep_alive_packet.reset();
+        m_fsm.m_endpoint.reset();
     }
 
     virtual void Update()
     {
         if( !m_fsm.m_keep_alive_packet )
         {
-            m_fsm.m_connect_error = Engine::NetworkConnection::NO_CONNECTION_ERROR;
+            m_fsm.m_connect_error = Engine::NetworkConnection::SYSTEM_ERROR;
             m_fsm.ChangeState( Engine::NetworkConnection::DISCONNECTING );
             return;
         }
 
+        /* send keep alive */
         m_fsm.m_send_timer.Tick( [&]()
         {
-            if( !m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, m_fsm.m_keep_alive_packet, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )
+            if( !m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, m_fsm.m_keep_alive_packet, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_send_packet_sequence++ ) )
             {
                 Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::ConnectedState unable to send a keep alive to %s...", m_fsm.m_server_address->Print().c_str() );
                 return;
@@ -295,6 +305,32 @@ public:
             m_fsm.m_last_sent_packet_time = m_fsm.m_current_time;
 
         } );
+
+        /* process packets received from server */
+        if( !m_fsm.m_endpoint->ProcessReceivedPackets( m_fsm.m_current_time ) )
+        {
+            m_fsm.m_connect_error = Engine::NetworkConnection::SYSTEM_ERROR;
+            m_fsm.ChangeState( Engine::NetworkConnection::DISCONNECTING );
+            return;
+        }
+
+        /* send our packets to the server */
+        m_fsm.m_endpoint->PackageOutgoingPackets( m_fsm.m_client_id, m_fsm.m_current_time );
+        while( m_fsm.m_endpoint->out_queue.size() )
+        {
+            auto &outgoing = m_fsm.m_endpoint->out_queue.front();
+            if( !m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, outgoing.packet, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_send_packet_sequence++ ) )
+            {
+                Engine::Log( Engine::LOG_LEVEL_WARNING, L"NetworkConnection::ConnectedState failed to send payload packet to server." );
+            }
+            else
+            {
+                m_fsm.m_endpoint->MarkSent( outgoing, m_fsm.m_current_time );
+            }
+
+            m_fsm.m_endpoint->out_queue.pop_front();
+        }
+
     }
 
     virtual void ProcessPacket( Engine::NetworkPacketPtr &packet )
@@ -316,6 +352,7 @@ public:
         }
 
     }
+
 };
 
 class DisconnectingState : public Engine::NetworkConnection::State
@@ -350,7 +387,7 @@ public:
         m_fsm.m_send_timer.Tick( [&]()
         {
             remaining_disconnects--;
-            if( m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, m_fsm.m_keep_alive_packet, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )
+            if( m_fsm.m_networking->SendPacket( m_fsm.m_socket, m_fsm.m_server_address, disconnect, m_fsm.m_passport->protocol_id, m_fsm.m_passport->client_to_server_key, m_fsm.m_passport->token_sequence ) )
             {
                 Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::DisconnectingState unable to send a disconnect to %s...", m_fsm.m_server_address->Print().c_str() );
                 m_fsm.ChangeState( Engine::NetworkConnection::DISCONNECTED );
@@ -373,7 +410,9 @@ public:
 Engine::NetworkConnection::NetworkConnection( const NetworkClientConfig &config, NetworkingPtr &networking ) :
     m_connect_error( NO_CONNECTION_ERROR ),
     m_config( config ),
-    m_networking( networking )
+    m_networking( networking ),
+    m_client_id( 0 ),
+    m_send_packet_sequence( 0 )
 {
     /* create our address and the socket bound to it */
     m_our_address = Engine::NetworkAddressFactory::CreateAddressFromStringAsync( config.our_address ).get();
@@ -480,6 +519,16 @@ bool Engine::NetworkConnection::NeedsMoreServers()
     }
 
     return m_current_state->Id() == DISCONNECTED;
+}
+
+Engine::NetworkMessagePtr Engine::NetworkConnection::PopIncomingMessage()
+{
+    if( !m_endpoint )
+    {
+        return nullptr;
+    }
+
+    return m_endpoint->PopIncomingMessage();
 }
 
 void Engine::NetworkConnection::ChangeState( StateID to_state )

@@ -27,7 +27,7 @@ namespace Server
         double last_time_received_packet;
         double last_time_sent_packet;
         int timeout_seconds;
-        uint16_t client_sequence;
+        uint64_t client_sequence;
         Engine::NetworkReliableEndpointPtr endpoint;
 
         ClientRecord() :

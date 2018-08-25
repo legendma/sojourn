@@ -2,6 +2,7 @@
 
 #include "common/engine/engine_step_timer.hpp"
 #include "common/network/network_main.hpp"
+#include "common/network/network_reliable_endpoint.hpp"
 #include "common/network/network_matchmaking.hpp"
 #include "engine/network/network_client_config.hpp"
 
@@ -34,7 +35,8 @@ namespace Engine
             SERVER_NOT_RESPONDING,
             CANT_REACH_SERVER,
             SERVER_IS_FULL,
-            SERVER_DISCONNECTED
+            SERVER_DISCONNECTED,
+            SYSTEM_ERROR
         } ConnectionError;
 
         struct State
@@ -55,6 +57,7 @@ namespace Engine
         bool IsConnected() { return m_current_state->Id() == CONNECTED; }
         ConnectionError GetConnectionError() { return m_connect_error; }
         bool NeedsMoreServers();
+        NetworkMessagePtr PopIncomingMessage();
 
     protected:
         std::map<StateID, StatePtr> m_states;
@@ -62,18 +65,21 @@ namespace Engine
         ConnectionError m_connect_error;
         NetworkSocketUDPPtr m_socket;
         NetworkingPtr m_networking;
+        NetworkReliableEndpointPtr m_endpoint;
         NetworkAddressPtr m_server_address;
         NetworkAddressPtr m_our_address;
         NetworkConnectionPassportPtr m_passport;
         NetworkPacketTypesAllowed m_allowed;
         const NetworkClientConfig &m_config;
         StepTimer m_send_timer;
+        uint64_t m_send_packet_sequence;
         double m_connect_start_time;
         double m_current_time;
         double m_last_recieved_packet_time;
         double m_last_sent_packet_time;
         NetworkConnectionChallengeHeader m_challenge;
         NetworkPacketPtr m_keep_alive_packet;
+        uint64_t m_client_id;
         
         NetworkConnection( const NetworkClientConfig &config, NetworkingPtr &networking );
         void ChangeState( StateID to_state );
