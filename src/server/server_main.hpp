@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/engine/engine_step_timer.hpp"
+#include "common/game/game_simulation.hpp"
 #include "common/network/network_main.hpp"
 #include "common/network/network_sockets.hpp"
 #include "common/network/network_address.hpp"
@@ -87,6 +88,7 @@ namespace Server
         void Run();
 
     private:
+        Game::GameSimulationPtr m_simulation;
         Engine::NetworkingPtr m_networking;
         Engine::NetworkAddressPtr m_server_address;
         Engine::NetworkSocketUDPPtr m_socket;

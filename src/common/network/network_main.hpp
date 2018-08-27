@@ -131,7 +131,7 @@ namespace Engine
     public:
         NetworkPacketType packet_type;
 
-        static NetworkPacketPtr ReadPacket( IMemoryAllocator *allocator, InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time );
+        static NetworkPacketPtr ReadPacket( MemoryAllocatorPtr allocator, InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time );
         OutputBitStreamPtr WritePacket( uint64_t sequence_number, uint64_t protocol_id, NetworkKey &key );
 
     private:
@@ -145,7 +145,7 @@ namespace Engine
         NetworkConnectionRequestHeader header;
         NetworkConnectionTokenPtr token;
 
-        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in, uint64_t &protocol_id, double now_time );
+        static NetworkPacketPtr Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in, uint64_t &protocol_id, double now_time );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -159,7 +159,7 @@ namespace Engine
         NetworkConnectionRequestHeader header;
         NetworkConnectionTokenPtr token;
 
-        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out ) {};
@@ -173,7 +173,7 @@ namespace Engine
         NetworkConnectionChallengeHeader header;
         NetworkChallengeTokenPtr token;
 
-        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -187,7 +187,7 @@ namespace Engine
         NetworkConnectionChallengeResponseHeader header;
         NetworkChallengeTokenPtr token;
 
-        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -200,7 +200,7 @@ namespace Engine
     public:
         NetworkKeepAliveHeader header;
 
-        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -211,7 +211,7 @@ namespace Engine
     {
         friend class NetworkPacketFactory;
     public:
-        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out ) {};
@@ -225,7 +225,7 @@ namespace Engine
         NetworkPayloadHeader header;
         int message_bytes;
 
-        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -235,14 +235,14 @@ namespace Engine
     class NetworkPacketFactory
     {
     public:
-        static NetworkPacketPtr CreateConnectionRequest( IMemoryAllocator *allocator, NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token = nullptr );
-        static NetworkPacketPtr CreateConnectionDenied( IMemoryAllocator *allocator );
-        static NetworkPacketPtr CreateConnectionChallenge( IMemoryAllocator *allocator, NetworkConnectionChallengeHeader &header );
-        static NetworkPacketPtr CreateConnectionChallengeResponse( IMemoryAllocator *allocator, NetworkConnectionChallengeResponseHeader &header );
-        static NetworkPacketPtr CreateDisconnect( IMemoryAllocator *allocator );
-        static NetworkPacketPtr CreateKeepAlive( IMemoryAllocator *allocator, NetworkKeepAliveHeader &header );
-        static NetworkPacketPtr CreateKeepAlive( IMemoryAllocator *allocator, uint64_t client_id );
-        static NetworkPacketPtr CreatePayload( IMemoryAllocator *allocator, NetworkPayloadHeader &header, int message_bytes );
+        static NetworkPacketPtr CreateConnectionRequest( MemoryAllocatorPtr allocator, NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token = nullptr );
+        static NetworkPacketPtr CreateConnectionDenied( MemoryAllocatorPtr allocator );
+        static NetworkPacketPtr CreateConnectionChallenge( MemoryAllocatorPtr allocator, NetworkConnectionChallengeHeader &header );
+        static NetworkPacketPtr CreateConnectionChallengeResponse( MemoryAllocatorPtr allocator, NetworkConnectionChallengeResponseHeader &header );
+        static NetworkPacketPtr CreateDisconnect( MemoryAllocatorPtr allocator );
+        static NetworkPacketPtr CreateKeepAlive( MemoryAllocatorPtr allocator, NetworkKeepAliveHeader &header );
+        static NetworkPacketPtr CreateKeepAlive( MemoryAllocatorPtr allocator, uint64_t client_id );
+        static NetworkPacketPtr CreatePayload( MemoryAllocatorPtr allocator, NetworkPayloadHeader &header, int message_bytes );
     };
 
     class NetworkCryptoMap
@@ -276,7 +276,8 @@ namespace Engine
 
     }; typedef std::shared_ptr<NetworkCryptoMap> NetworkCryptoMapPtr;
 
-    class Networking : public MemorySystem
+    class Networking : public MemorySystem,
+                       public std::enable_shared_from_this<IMemoryAllocator>
     {
         friend class NetworkingFactory;
     public:
@@ -287,6 +288,7 @@ namespace Engine
         bool DeleteCryptoMapsFromAddress( NetworkAddressPtr &address );
         NetworkCryptoMapPtr FindCryptoMapByAddress( NetworkAddressPtr &search_address, double time );
         NetworkCryptoMapPtr FindCryptoMapByClientID( uint64_t search_id, NetworkAddressPtr &expected_address, double time );
+        MemoryAllocatorPtr AsAllocator();
 
         static bool Encrypt( void *data_to_encrypt, size_t data_length, byte* salt, size_t salt_length, NetworkNonce &nonce, const NetworkKey &key );
         static bool Decrypt( void *data_to_decrypt, size_t data_length, byte *salt, size_t salt_length, NetworkNonce &nonce, const NetworkKey &key );

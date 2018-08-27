@@ -9,7 +9,13 @@ class TestEntityType : public Game::GameEntity<TestEntityType, Game::TEST_ENTITY
 
 void test()
 {
-    Game::GameEntityManager manager;
+    Game::GameEntityManagerPtr manager;
 
-    auto entity = manager.CreateEntity<TestEntityType>();
+    auto entity = manager->CreateEntity<TestEntityType>();
+}
+
+Game::GameEntityManager::GameEntityManager( Engine::MemoryAllocatorPtr &allocator ) :
+    m_allocator( allocator )
+{
+    auto container = GetEntityContainer<TestEntityType>();
 }

@@ -126,7 +126,7 @@ namespace Engine
         NetworkReliableEndpoint();
 
         bool ProcessReceivedPackets( double now_time );
-        void PackageOutgoingPackets( IMemoryAllocator *allocator, uint64_t client_id, double now_time );
+        void PackageOutgoingPackets( MemoryAllocatorPtr allocator, uint64_t client_id, double now_time );
         void MarkSent( OutgoingPacket &packet, double now_time );
         void PushOutgoingMessage( NetworkMessagePtr message );
         NetworkMessagePtr PopIncomingMessage();

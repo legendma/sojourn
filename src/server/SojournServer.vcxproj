@@ -165,6 +165,7 @@
     <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
     <ClInclude Include="..\common\engine\engine_utilities.hpp" />
     <ClInclude Include="..\common\game\game_entity.hpp" />
+    <ClInclude Include="..\common\game\game_simulation.hpp" />
     <ClInclude Include="..\common\game\game_system.hpp" />
     <ClInclude Include="..\common\network\network_address.hpp" />
     <ClInclude Include="..\common\network\network_buffers.hpp" />
@@ -184,6 +185,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="..\common\game\game_entity.cpp" />
+    <ClCompile Include="..\common\game\game_simulation.cpp" />
     <ClCompile Include="..\common\game\game_system.cpp" />
     <ClCompile Include="..\common\network\network_address.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>

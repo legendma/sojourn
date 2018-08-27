@@ -49,6 +49,9 @@
     <ClCompile Include="..\common\engine\engine_memory.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\game\game_simulation.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp">
@@ -94,6 +97,9 @@
       <Filter>Source Files\common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\engine\engine_memory.hpp">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\game\game_simulation.hpp">
       <Filter>Source Files\common</Filter>
     </ClInclude>
   </ItemGroup>

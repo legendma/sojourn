@@ -39,7 +39,7 @@ bool Engine::NetworkReliableEndpoint::ProcessReceivedPackets( double now_time )
     return true;
 }
 
-void Engine::NetworkReliableEndpoint::PackageOutgoingPackets( IMemoryAllocator *allocator, uint64_t client_id, double now_time )
+void Engine::NetworkReliableEndpoint::PackageOutgoingPackets( MemoryAllocatorPtr allocator, uint64_t client_id, double now_time )
 {
     if( !out_messages.size() )
     {

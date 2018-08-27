@@ -28,4 +28,5 @@
 #include <queue>
 #include <deque>
 #include <list>
+#include <unordered_map>
 #include <sodium/include/sodium.h>

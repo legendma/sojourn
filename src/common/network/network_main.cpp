@@ -145,6 +145,11 @@ Engine::NetworkCryptoMapPtr Engine::Networking::FindCryptoMapByClientID( uint64_
     return mapping;
 }
 
+Engine::MemoryAllocatorPtr Engine::Networking::AsAllocator()
+{
+    return MemoryAllocatorPtr( this );
+}
+
 bool Engine::Networking::Encrypt( void *data_to_encrypt, size_t data_length, byte *salt, size_t salt_length, NetworkNonce &nonce, const NetworkKey &key )
 {
     unsigned long long encrypted_length;
@@ -197,7 +202,7 @@ Engine::NetworkingPtr Engine::NetworkingFactory::StartNetworking()
     return( nullptr );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionRequest( IMemoryAllocator *allocator, NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionRequest( MemoryAllocatorPtr allocator, NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkConnectionRequestPacket ), L"NetworkPacketFactory::CreateConnectionRequest" );
     auto packet = std::shared_ptr<NetworkConnectionRequestPacket>( new( ptr ) NetworkConnectionRequestPacket(), [allocator]( NetworkConnectionRequestPacket *p )
@@ -223,7 +228,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionRequest( 
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionDenied( IMemoryAllocator *allocator )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionDenied( MemoryAllocatorPtr allocator )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkConnectionDeniedPacket ), L"NetworkPacketFactory::CreateConnectionDenied" );
     auto packet = std::shared_ptr<NetworkConnectionDeniedPacket>( new(ptr) NetworkConnectionDeniedPacket(), [allocator]( NetworkConnectionDeniedPacket *p )
@@ -234,7 +239,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionDenied( I
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallenge( IMemoryAllocator *allocator, NetworkConnectionChallengeHeader &header )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallenge( MemoryAllocatorPtr allocator, NetworkConnectionChallengeHeader &header )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkConnectionChallengePacket ), L"NetworkPacketFactory::CreateConnectionChallenge" );
     auto packet = std::shared_ptr<NetworkConnectionChallengePacket>( new(ptr) NetworkConnectionChallengePacket(), [allocator]( NetworkConnectionChallengePacket *p )
@@ -247,7 +252,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallenge
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallengeResponse( IMemoryAllocator *allocator, NetworkConnectionChallengeResponseHeader &header )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallengeResponse( MemoryAllocatorPtr allocator, NetworkConnectionChallengeResponseHeader &header )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkConnectionChallengeResponsePacket ), L"NetworkPacketFactory::CreateConnectionChallengeResponse" );
     auto packet = std::shared_ptr<NetworkConnectionChallengeResponsePacket>( new(ptr) NetworkConnectionChallengeResponsePacket(), [allocator]( NetworkConnectionChallengeResponsePacket *p )
@@ -261,7 +266,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateConnectionChallenge
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateDisconnect( IMemoryAllocator *allocator )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateDisconnect( MemoryAllocatorPtr allocator )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkDisconnectPacket ), L"NetworkPacketFactory::CreateDisconnect" );
     auto packet = std::shared_ptr<NetworkDisconnectPacket>( new(ptr) NetworkDisconnectPacket(), [allocator]( NetworkDisconnectPacket *p )
@@ -272,7 +277,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateDisconnect( IMemory
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( IMemoryAllocator *allocator, NetworkKeepAliveHeader &header )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( MemoryAllocatorPtr allocator, NetworkKeepAliveHeader &header )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkKeepAlivePacket ), L"NetworkPacketFactory::CreateKeepAlive" );
     auto packet = std::shared_ptr<NetworkKeepAlivePacket>( new(ptr) NetworkKeepAlivePacket(), [allocator]( NetworkKeepAlivePacket *p )
@@ -285,7 +290,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( IMemoryA
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( IMemoryAllocator *allocator, uint64_t client_id )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( MemoryAllocatorPtr allocator, uint64_t client_id )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkKeepAlivePacket ), L"NetworkPacketFactory::CreateKeepAlive" );
     auto packet = std::shared_ptr<NetworkKeepAlivePacket>( new(ptr) NetworkKeepAlivePacket(), [allocator]( NetworkKeepAlivePacket *p )
@@ -298,7 +303,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( IMemoryA
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreatePayload( IMemoryAllocator *allocator, NetworkPayloadHeader &header, int message_bytes )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreatePayload( MemoryAllocatorPtr allocator, NetworkPayloadHeader &header, int message_bytes )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkPayloadPacket ), L"NetworkPacketFactory::CreatePayload" );
     auto packet = std::shared_ptr<NetworkPayloadPacket>( new(ptr) NetworkPayloadPacket(), [allocator]( NetworkPayloadPacket *p )
@@ -312,7 +317,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreatePayload( IMemoryAll
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacket::ReadPacket( IMemoryAllocator *allocator, InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time )
+Engine::NetworkPacketPtr Engine::NetworkPacket::ReadPacket( MemoryAllocatorPtr allocator, InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time )
 {
     Engine::NetworkPacketPrefix prefix;
     read->Write( prefix.b );
@@ -469,7 +474,7 @@ void Engine::NetworkConnectionRequestPacket::Write( OutputBitStreamPtr &out )
     out->WriteBytes( reinterpret_cast<byte*>(&header.raw_token), sizeof( NetworkConnectionTokenRaw ) );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkConnectionRequestPacket::Read( IMemoryAllocator *allocator, InputBitStreamPtr &in, uint64_t &protocol_id, double now_time )
+Engine::NetworkPacketPtr Engine::NetworkConnectionRequestPacket::Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in, uint64_t &protocol_id, double now_time )
 {
     if( in->GetRemainingByteCount() != sizeof( Engine::NetworkConnectionRequestHeader ) )
     {
@@ -620,7 +625,7 @@ bool Engine::NetworkConnectionToken::Decrypt( NetworkConnectionTokenRaw &raw, ui
     return Networking::Decrypt( &raw, raw.size(), salt_alias->GetBuffer(), salt_alias->GetCurrentByteCount(), nonce, key );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkConnectionChallengePacket::Read( IMemoryAllocator *allocator, InputBitStreamPtr &in )
+Engine::NetworkPacketPtr Engine::NetworkConnectionChallengePacket::Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in )
 {
     if( in->GetRemainingByteCount() != sizeof( NetworkConnectionChallengeHeader ) + sizeof( NetworkAuthentication ) )
     {
@@ -686,7 +691,7 @@ bool Engine::NetworkChallengeToken::Encrypt( NetworkChallengeTokenRaw &raw, uint
     return Networking::Encrypt( &raw, raw.size(), nullptr, 0, nonce, key );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkConnectionChallengeResponsePacket::Read( IMemoryAllocator *allocator, InputBitStreamPtr &in )
+Engine::NetworkPacketPtr Engine::NetworkConnectionChallengeResponsePacket::Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in )
 {
     if( in->GetRemainingByteCount() != sizeof( NetworkConnectionChallengeResponseHeader ) + sizeof( NetworkAuthentication ) )
     {
@@ -709,7 +714,7 @@ void Engine::NetworkConnectionChallengeResponsePacket::Write( OutputBitStreamPtr
     out->WriteBytes( header.raw_challenge_token.data(), header.raw_challenge_token.size() );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkConnectionDeniedPacket::Read( IMemoryAllocator *allocator, InputBitStreamPtr &in )
+Engine::NetworkPacketPtr Engine::NetworkConnectionDeniedPacket::Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in )
 {
     if( in->GetRemainingByteCount() != sizeof( NetworkAuthentication ) )
     {
@@ -720,7 +725,7 @@ Engine::NetworkPacketPtr Engine::NetworkConnectionDeniedPacket::Read( IMemoryAll
     return NetworkPacketFactory::CreateConnectionDenied( allocator );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkKeepAlivePacket::Read( IMemoryAllocator *allocator, InputBitStreamPtr & in )
+Engine::NetworkPacketPtr Engine::NetworkKeepAlivePacket::Read( MemoryAllocatorPtr allocator, InputBitStreamPtr & in )
 {
     if( in->GetRemainingByteCount() != sizeof( NetworkKeepAliveHeader ) + sizeof( NetworkAuthentication ) )
     {
@@ -741,7 +746,7 @@ void Engine::NetworkKeepAlivePacket::Write( OutputBitStreamPtr &out )
     out->Write( header.client_id );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkDisconnectPacket::Read( IMemoryAllocator *allocator, InputBitStreamPtr & in )
+Engine::NetworkPacketPtr Engine::NetworkDisconnectPacket::Read( MemoryAllocatorPtr allocator, InputBitStreamPtr & in )
 {
     if( in->GetRemainingByteCount() != sizeof( NetworkAuthentication ) )
     {
@@ -752,7 +757,7 @@ Engine::NetworkPacketPtr Engine::NetworkDisconnectPacket::Read( IMemoryAllocator
     return NetworkPacketFactory::CreateDisconnect( allocator );
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPayloadPacket::Read( IMemoryAllocator *allocator, InputBitStreamPtr &in )
+Engine::NetworkPacketPtr Engine::NetworkPayloadPacket::Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in )
 {
     NetworkPayloadHeader header;
     in->Write( header.client_id );

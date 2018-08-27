@@ -107,7 +107,7 @@ public:
         request.token_sequence = m_fsm.m_passport->token_sequence;
         request.raw_token = m_fsm.m_passport->raw_token;
 
-        connect_request = Engine::NetworkPacketFactory::CreateConnectionRequest( &(*m_fsm.m_networking), request );
+        connect_request = Engine::NetworkPacketFactory::CreateConnectionRequest( m_fsm.m_networking->AsAllocator(), request );
 
         m_fsm.ResetSendTimer();
     }
@@ -191,7 +191,7 @@ public:
         reply.token_sequence = m_fsm.m_challenge.token_sequence;
         reply.raw_challenge_token = m_fsm.m_challenge.raw_challenge_token;
 
-        connect_reply = Engine::NetworkPacketFactory::CreateConnectionChallengeResponse( &(*m_fsm.m_networking), reply );
+        connect_reply = Engine::NetworkPacketFactory::CreateConnectionChallengeResponse( m_fsm.m_networking->AsAllocator(), reply );
 
         m_fsm.ResetSendTimer();
     }
@@ -310,7 +310,7 @@ public:
         }
 
         /* send our packets to the server */
-        m_fsm.m_endpoint->PackageOutgoingPackets( &(*m_fsm.m_networking), m_fsm.m_client_id, m_fsm.m_current_time );
+        m_fsm.m_endpoint->PackageOutgoingPackets( m_fsm.m_networking->AsAllocator(), m_fsm.m_client_id, m_fsm.m_current_time );
         while( m_fsm.m_endpoint->out_queue.size() )
         {
             auto &outgoing = m_fsm.m_endpoint->out_queue.front();
@@ -366,7 +366,7 @@ public:
     {
         m_fsm.m_allowed.Reset();
 
-        disconnect = Engine::NetworkPacketFactory::CreateDisconnect( &(*m_fsm.m_networking) );
+        disconnect = Engine::NetworkPacketFactory::CreateDisconnect( m_fsm.m_networking->AsAllocator() );
         remaining_disconnects = NUMBER_OF_DISCONNECT_PACKETS;
     }
 
@@ -475,7 +475,7 @@ void Engine::NetworkConnection::ReceiveAndProcessPackets()
         }
 
         auto read = Engine::BitStreamFactory::CreateInputBitStream( data, byte_cnt, false );
-        auto packet = Engine::NetworkPacket::ReadPacket( &(*m_networking), read, m_allowed, m_passport->protocol_id, m_passport->server_to_client_key, 0 );
+        auto packet = Engine::NetworkPacket::ReadPacket( m_networking->AsAllocator(), read, m_allowed, m_passport->protocol_id, m_passport->server_to_client_key, 0 );
         if( packet )
         {
             m_current_state->ProcessPacket( packet );

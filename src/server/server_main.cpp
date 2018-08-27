@@ -81,6 +81,9 @@ void Server::Server::Initialize()
     // setup the server timer
     m_timer.SetFixedTimeStep( true );
     m_timer.SetTargetElapsedSeconds( 1.0 / m_config.server_fps );
+
+    // create the game simulation
+    m_simulation = Game::GameSimulationPtr( new Game::GameSimulation() );
 }
 
 void Server::Server::Run()
@@ -154,7 +157,7 @@ void Server::Server::ReadAndProcessPacket( uint64_t protocol_id, Engine::Network
         return;
     }
 
-    auto packet = Engine::NetworkPacket::ReadPacket( &(*m_networking), read, allowed, protocol_id, crypto->receive_key, m_now_time );
+    auto packet = Engine::NetworkPacket::ReadPacket( m_networking->AsAllocator(), read, allowed, protocol_id, crypto->receive_key, m_now_time );
     if( packet )
     {
         ProcessPacket( packet, from, client );
@@ -226,7 +229,7 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkConnectionReque
     if( m_clients.size() == m_config.max_num_clients )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Request denied.  Server is full. Sending denied response..." );
-        auto refusal = Engine::NetworkPacketFactory::CreateConnectionDenied( &(*m_networking) );
+        auto refusal = Engine::NetworkPacketFactory::CreateConnectionDenied( m_networking->AsAllocator() );
         (void)m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, connect_token->server_to_client_key, m_next_sequence++ );
         return;
     }
@@ -249,7 +252,7 @@ void Server::Server::OnReceivedConnectionRequest( Engine::NetworkConnectionReque
     challenge_token.Write( challenge.raw_challenge_token );
     Engine::NetworkChallengeToken::Encrypt( challenge.raw_challenge_token, challenge.token_sequence, m_config.challenge_key );
 
-    auto challenge_packet = Engine::NetworkPacketFactory::CreateConnectionChallenge( &(*m_networking), challenge );
+    auto challenge_packet = Engine::NetworkPacketFactory::CreateConnectionChallenge( m_networking->AsAllocator(), challenge );
     if( !m_networking->SendPacket( m_socket, from, challenge_packet, m_config.protocol_id, connect_token->server_to_client_key, challenge.token_sequence ) )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server unable to send a connection challenge to %s.", from->Print().c_str() );
@@ -302,7 +305,7 @@ void Server::Server::OnReceivedConnectionChallengeResponse( Engine::NetworkConne
     if( m_clients.size() == m_config.max_num_clients )
     {
         Engine::Log( Engine::LOG_LEVEL_DEBUG, L"Server Connection Challenge response denied.  Server is full. Sending denied response..." );
-        auto refusal = Engine::NetworkPacketFactory::CreateConnectionDenied( &(*m_networking) );
+        auto refusal = Engine::NetworkPacketFactory::CreateConnectionDenied( m_networking->AsAllocator() );
         (void)m_networking->SendPacket( m_socket, from, refusal, m_config.protocol_id, crypto->send_key, m_next_sequence++ );
         return;
     }
@@ -320,7 +323,7 @@ void Server::Server::OnReceivedConnectionChallengeResponse( Engine::NetworkConne
     Engine::Log( Engine::LOG_LEVEL_INFO, L"Server connected Client ID %d", response.token->client_id );
 
     /* let the client know the connection was accepted by sending a keep alive packet */
-    auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( &(*m_networking), response.token->client_id );
+    auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( m_networking->AsAllocator(), response.token->client_id );
     (void)SendClientPacket( response.token->client_id, packet );
 }
 
@@ -352,7 +355,7 @@ void Server::Server::KeepClientsAlive()
             continue;
         }
 
-        auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( &(*m_networking), client->client_id );
+        auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( m_networking->AsAllocator(), client->client_id );
         if( !SendClientPacket( client->client_id, packet ) )
         {
             Engine::Log( Engine::LOG_LEVEL_WARNING, L"Server::KeepClientsAlive not able to send client %d keep alive packet.", client->client_id );
@@ -398,7 +401,7 @@ void Server::Server::DisconnectClient( uint64_t client_id, int num_of_disconnect
     if( num_of_disconnect_packets > 0 )
     {
         auto crypto = m_networking->FindCryptoMapByClientID( client_id, client->client_address, m_now_time );
-        auto packet = Engine::NetworkPacketFactory::CreateDisconnect( &(*m_networking) );
+        auto packet = Engine::NetworkPacketFactory::CreateDisconnect( m_networking->AsAllocator() );
         for( auto i = 0; i < num_of_disconnect_packets; i++ )
         {
             m_networking->SendPacket( m_socket, client->client_address, packet, m_config.protocol_id, crypto->send_key, client->client_sequence++ );
@@ -447,11 +450,11 @@ void Server::Server::SendGamePacketsToClients()
         /* if the client is not confirmed connected yet, send a keep alive packet to establish the connection, until we received our first packet from them */
         if( !client->is_confirmed )
         {
-            auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( &(*m_networking), client->client_id );
+            auto packet = Engine::NetworkPacketFactory::CreateKeepAlive( m_networking->AsAllocator(), client->client_id );
             (void)SendClientPacket( client->client_id, packet );
         }
 
-        client->endpoint->PackageOutgoingPackets( &(*m_networking), client->client_id, m_now_time );
+        client->endpoint->PackageOutgoingPackets( m_networking->AsAllocator(), client->client_id, m_now_time );
         while( client->endpoint->out_queue.size() )
         {
             auto &outgoing = client->endpoint->out_queue.front();
