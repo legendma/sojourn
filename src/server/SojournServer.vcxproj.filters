@@ -40,6 +40,15 @@
     <ClCompile Include="..\common\network\network_message.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\game\game_entity.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\game\game_system.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\engine_memory.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp">
@@ -76,6 +85,15 @@
       <Filter>Source Files\common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\network\network_message.hpp">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\game\game_entity.hpp">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\game\game_system.hpp">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_memory.hpp">
       <Filter>Source Files\common</Filter>
     </ClInclude>
   </ItemGroup>

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\engine\engine_memory.cpp" />
     <ClCompile Include="..\common\engine\engine_resources.cpp" />
     <ClCompile Include="..\common\engine\engine_scripts.cpp" />
     <ClCompile Include="..\common\engine\engine_utilities.cpp" />
@@ -47,6 +48,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\engine\engine_memory.hpp" />
     <ClInclude Include="..\common\engine\engine_resources.hpp" />
     <ClInclude Include="..\common\engine\engine_scripts.hpp" />
     <ClInclude Include="..\common\engine\engine_step_timer.hpp" />

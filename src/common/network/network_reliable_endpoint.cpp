@@ -39,7 +39,7 @@ bool Engine::NetworkReliableEndpoint::ProcessReceivedPackets( double now_time )
     return true;
 }
 
-void Engine::NetworkReliableEndpoint::PackageOutgoingPackets( uint64_t client_id, double now_time )
+void Engine::NetworkReliableEndpoint::PackageOutgoingPackets( IMemoryAllocator *allocator, uint64_t client_id, double now_time )
 {
     if( !out_messages.size() )
     {
@@ -72,7 +72,7 @@ void Engine::NetworkReliableEndpoint::PackageOutgoingPackets( uint64_t client_id
         if( write->GetCurrentByteCount() + measure->GetCurrentByteCount() > header.message_data.size()
          || out_queue.back().messages.cnt == out_queue.back().messages.sequences.size() )
         {
-            out_queue.back().packet = Engine::NetworkPacketFactory::CreatePayload( header, write->GetCurrentByteCount() );
+            out_queue.back().packet = Engine::NetworkPacketFactory::CreatePayload( allocator, header, write->GetCurrentByteCount() );
             sent_packet_buffer.next_sequence++;
             header.sequence = sent_packet_buffer.next_sequence;
             out_queue.emplace_back();
@@ -87,7 +87,7 @@ void Engine::NetworkReliableEndpoint::PackageOutgoingPackets( uint64_t client_id
 
     if( out_queue.back().messages.cnt > 0 )
     {
-        out_queue.back().packet = Engine::NetworkPacketFactory::CreatePayload( header, write->GetCurrentByteCount() );
+        out_queue.back().packet = Engine::NetworkPacketFactory::CreatePayload( allocator, header, write->GetCurrentByteCount() );
         sent_packet_buffer.next_sequence++;
     }
     else

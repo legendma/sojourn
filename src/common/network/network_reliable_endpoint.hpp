@@ -20,7 +20,7 @@ namespace Engine
         SequenceBuffer() : 
             next_sequence( 0 )
         { 
-            ::memset( &entries, 0xffffffff, sizeof( entries ) );
+            std::memset( &entries, 0xffffffff, sizeof( entries ) );
         }
 
         inline bool SequenceLessThan( uint16_t a, uint16_t b )
@@ -126,7 +126,7 @@ namespace Engine
         NetworkReliableEndpoint();
 
         bool ProcessReceivedPackets( double now_time );
-        void PackageOutgoingPackets( uint64_t client_id, double now_time );
+        void PackageOutgoingPackets( IMemoryAllocator *allocator, uint64_t client_id, double now_time );
         void MarkSent( OutgoingPacket &packet, double now_time );
         void PushOutgoingMessage( NetworkMessagePtr message );
         NetworkMessagePtr PopIncomingMessage();

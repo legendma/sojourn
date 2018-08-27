@@ -5,6 +5,8 @@
 #include "network_address.hpp"
 #include "network_types.hpp"
 #include "network_buffers.hpp"
+
+#include "common/engine/engine_memory.hpp"
                                              
 #define NETWORK_PRIVATE_KEY_BYTE_CNT         ( 32 )
 #define NETWORK_SOJOURN_PROTOCOL_ID          ( 0xda47091958c38397 )
@@ -129,7 +131,7 @@ namespace Engine
     public:
         NetworkPacketType packet_type;
 
-        static NetworkPacketPtr ReadPacket( InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time );
+        static NetworkPacketPtr ReadPacket( IMemoryAllocator *allocator, InputBitStreamPtr &read, NetworkPacketTypesAllowed &allowed, uint64_t protocol_id, NetworkKey &read_key, double now_time );
         OutputBitStreamPtr WritePacket( uint64_t sequence_number, uint64_t protocol_id, NetworkKey &key );
 
     private:
@@ -143,7 +145,7 @@ namespace Engine
         NetworkConnectionRequestHeader header;
         NetworkConnectionTokenPtr token;
 
-        static NetworkPacketPtr Read( InputBitStreamPtr &in, uint64_t &protocol_id, double now_time );
+        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in, uint64_t &protocol_id, double now_time );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -157,7 +159,7 @@ namespace Engine
         NetworkConnectionRequestHeader header;
         NetworkConnectionTokenPtr token;
 
-        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out ) {};
@@ -171,7 +173,7 @@ namespace Engine
         NetworkConnectionChallengeHeader header;
         NetworkChallengeTokenPtr token;
 
-        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -185,7 +187,7 @@ namespace Engine
         NetworkConnectionChallengeResponseHeader header;
         NetworkChallengeTokenPtr token;
 
-        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -198,7 +200,7 @@ namespace Engine
     public:
         NetworkKeepAliveHeader header;
 
-        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -209,7 +211,7 @@ namespace Engine
     {
         friend class NetworkPacketFactory;
     public:
-        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out ) {};
@@ -223,7 +225,7 @@ namespace Engine
         NetworkPayloadHeader header;
         int message_bytes;
 
-        static NetworkPacketPtr Read( InputBitStreamPtr &in );
+        static NetworkPacketPtr Read( IMemoryAllocator *allocator, InputBitStreamPtr &in );
 
     private:
         virtual void Write( OutputBitStreamPtr &out );
@@ -233,14 +235,14 @@ namespace Engine
     class NetworkPacketFactory
     {
     public:
-        static NetworkPacketPtr CreateConnectionRequest( NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token = nullptr );
-        static NetworkPacketPtr CreateConnectionDenied();
-        static NetworkPacketPtr CreateConnectionChallenge( NetworkConnectionChallengeHeader &header );
-        static NetworkPacketPtr CreateConnectionChallengeResponse( NetworkConnectionChallengeResponseHeader &header );
-        static NetworkPacketPtr CreateDisconnect();
-        static NetworkPacketPtr CreateKeepAlive( NetworkKeepAliveHeader &header );
-        static NetworkPacketPtr CreateKeepAlive( uint64_t client_id );
-        static NetworkPacketPtr CreatePayload( NetworkPayloadHeader &header, int message_bytes );
+        static NetworkPacketPtr CreateConnectionRequest( IMemoryAllocator *allocator, NetworkConnectionRequestHeader &header, NetworkConnectionTokenPtr token = nullptr );
+        static NetworkPacketPtr CreateConnectionDenied( IMemoryAllocator *allocator );
+        static NetworkPacketPtr CreateConnectionChallenge( IMemoryAllocator *allocator, NetworkConnectionChallengeHeader &header );
+        static NetworkPacketPtr CreateConnectionChallengeResponse( IMemoryAllocator *allocator, NetworkConnectionChallengeResponseHeader &header );
+        static NetworkPacketPtr CreateDisconnect( IMemoryAllocator *allocator );
+        static NetworkPacketPtr CreateKeepAlive( IMemoryAllocator *allocator, NetworkKeepAliveHeader &header );
+        static NetworkPacketPtr CreateKeepAlive( IMemoryAllocator *allocator, uint64_t client_id );
+        static NetworkPacketPtr CreatePayload( IMemoryAllocator *allocator, NetworkPayloadHeader &header, int message_bytes );
     };
 
     class NetworkCryptoMap
@@ -274,7 +276,7 @@ namespace Engine
 
     }; typedef std::shared_ptr<NetworkCryptoMap> NetworkCryptoMapPtr;
 
-    class Networking
+    class Networking : public MemorySystem
     {
         friend class NetworkingFactory;
     public:

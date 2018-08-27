@@ -31,6 +31,7 @@
 #include <map>
 #include <array>
 #include <queue>
+#include <list>
 
 #undef max
 /* registry base path */

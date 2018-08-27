@@ -5,13 +5,12 @@
 
 namespace Engine
 {
-class DisconnectedState : public Engine::NetworkConnection::State
+class DisconnectedState : public Engine::NetworkConnection::State<Engine::NetworkConnection::DISCONNECTED>
 {
 public:
     DisconnectedState( Engine::NetworkConnection &fsm ) :
-        Engine::NetworkConnection::State( fsm ){}
+        Engine::NetworkConnection::State<Engine::NetworkConnection::DISCONNECTED>( fsm ){}
 
-    virtual Engine::NetworkConnection::StateID Id() { return Engine::NetworkConnection::DISCONNECTED; }
     virtual void ProcessPacket( Engine::NetworkPacketPtr &packet ){};
 
     virtual void EnterState()
@@ -38,13 +37,12 @@ public:
 
 };
 
-class TryNextServerState : public Engine::NetworkConnection::State
+class TryNextServerState : public Engine::NetworkConnection::State<Engine::NetworkConnection::TRY_NEXT_SERVER>
 {
 public:
     TryNextServerState( Engine::NetworkConnection &fsm ) :
-        Engine::NetworkConnection::State( fsm ){}
+        Engine::NetworkConnection::State<Engine::NetworkConnection::TRY_NEXT_SERVER>( fsm ){}
 
-    virtual Engine::NetworkConnection::StateID Id() { return Engine::NetworkConnection::TRY_NEXT_SERVER; }
     virtual void ExitState(){};
     virtual void ProcessPacket( Engine::NetworkPacketPtr &packet ){};
 
@@ -83,13 +81,13 @@ public:
 
 };
 
-class SendingConnectRequestsState : public Engine::NetworkConnection::State
+class SendingConnectRequestsState : public Engine::NetworkConnection::State<Engine::NetworkConnection::SENDING_CONNECT_REQUESTS>
 {
     NetworkPacketPtr connect_request;
 
 public:
     SendingConnectRequestsState( Engine::NetworkConnection &fsm ) :
-        Engine::NetworkConnection::State( fsm ){}
+        Engine::NetworkConnection::State<Engine::NetworkConnection::SENDING_CONNECT_REQUESTS>( fsm ){}
 
     virtual Engine::NetworkConnection::StateID Id() { return Engine::NetworkConnection::SENDING_CONNECT_REQUESTS; }
 
@@ -109,7 +107,7 @@ public:
         request.token_sequence = m_fsm.m_passport->token_sequence;
         request.raw_token = m_fsm.m_passport->raw_token;
 
-        connect_request = Engine::NetworkPacketFactory::CreateConnectionRequest( request );
+        connect_request = Engine::NetworkPacketFactory::CreateConnectionRequest( &(*m_fsm.m_networking), request );
 
         m_fsm.ResetSendTimer();
     }
@@ -175,15 +173,13 @@ public:
     }
 };
 
-class SendingConnectRepliesState : public Engine::NetworkConnection::State
+class SendingConnectRepliesState : public Engine::NetworkConnection::State<Engine::NetworkConnection::SENDING_CONNECT_REPLIES>
 {
     NetworkPacketPtr connect_reply;
 
 public:
     SendingConnectRepliesState( Engine::NetworkConnection &fsm ) :
-        Engine::NetworkConnection::State( fsm ){}
-
-    virtual Engine::NetworkConnection::StateID Id() { return Engine::NetworkConnection::SENDING_CONNECT_REPLIES; }
+        Engine::NetworkConnection::State<Engine::NetworkConnection::SENDING_CONNECT_REPLIES>( fsm ){}
 
     virtual void EnterState()
     {
@@ -195,7 +191,7 @@ public:
         reply.token_sequence = m_fsm.m_challenge.token_sequence;
         reply.raw_challenge_token = m_fsm.m_challenge.raw_challenge_token;
 
-        connect_reply = Engine::NetworkPacketFactory::CreateConnectionChallengeResponse( reply );
+        connect_reply = Engine::NetworkPacketFactory::CreateConnectionChallengeResponse( &(*m_fsm.m_networking), reply );
 
         m_fsm.ResetSendTimer();
     }
@@ -252,12 +248,11 @@ public:
     }
 };
 
-class ConnectedState : public Engine::NetworkConnection::State
+class ConnectedState : public Engine::NetworkConnection::State<Engine::NetworkConnection::CONNECTED>
 {
 public:
     ConnectedState( Engine::NetworkConnection &fsm ) :
-        Engine::NetworkConnection::State( fsm ){}
-    virtual Engine::NetworkConnection::StateID Id() { return Engine::NetworkConnection::CONNECTED; }
+        Engine::NetworkConnection::State<Engine::NetworkConnection::CONNECTED>( fsm ){}
 
     virtual void EnterState()
     {
@@ -315,7 +310,7 @@ public:
         }
 
         /* send our packets to the server */
-        m_fsm.m_endpoint->PackageOutgoingPackets( m_fsm.m_client_id, m_fsm.m_current_time );
+        m_fsm.m_endpoint->PackageOutgoingPackets( &(*m_fsm.m_networking), m_fsm.m_client_id, m_fsm.m_current_time );
         while( m_fsm.m_endpoint->out_queue.size() )
         {
             auto &outgoing = m_fsm.m_endpoint->out_queue.front();
@@ -355,24 +350,23 @@ public:
 
 };
 
-class DisconnectingState : public Engine::NetworkConnection::State
+class DisconnectingState : public Engine::NetworkConnection::State<Engine::NetworkConnection::DISCONNECTING>
 {
     NetworkPacketPtr disconnect;
     int remaining_disconnects;
 
 public:
     DisconnectingState( Engine::NetworkConnection &fsm ) :
-        Engine::NetworkConnection::State( fsm ),
+        Engine::NetworkConnection::State<Engine::NetworkConnection::DISCONNECTING>( fsm ),
         remaining_disconnects( 0 ){}
 
-    virtual Engine::NetworkConnection::StateID Id() { return Engine::NetworkConnection::DISCONNECTING; }
     virtual void ProcessPacket( Engine::NetworkPacketPtr &packet ) {};
 
     virtual void EnterState()
     {
         m_fsm.m_allowed.Reset();
 
-        disconnect = Engine::NetworkPacketFactory::CreateDisconnect();
+        disconnect = Engine::NetworkPacketFactory::CreateDisconnect( &(*m_fsm.m_networking) );
         remaining_disconnects = NUMBER_OF_DISCONNECT_PACKETS;
     }
 
@@ -432,22 +426,22 @@ Engine::NetworkConnection::NetworkConnection( const NetworkClientConfig &config,
     /* create the discrete states */
     auto disconnected = Engine::NetworkConnection::StatePtr( new DisconnectedState( *this ) );
     m_current_state = disconnected;
-    m_states.insert( std::make_pair( disconnected->Id(), disconnected ) );
+    m_states.insert( std::make_pair( DisconnectedState::id, disconnected ) );
 
     auto try_next_server = Engine::NetworkConnection::StatePtr( new TryNextServerState( *this ) );
-    m_states.insert( std::make_pair( try_next_server->Id(), try_next_server ) );
+    m_states.insert( std::make_pair( TryNextServerState::id, try_next_server ) );
 
     auto requests = Engine::NetworkConnection::StatePtr( new SendingConnectRequestsState( *this ) );
-    m_states.insert( std::make_pair( requests->Id(), requests ) );
+    m_states.insert( std::make_pair( SendingConnectRequestsState::id, requests ) );
 
     auto replies = Engine::NetworkConnection::StatePtr( new SendingConnectRepliesState( *this ) );
-    m_states.insert( std::make_pair( replies->Id(), replies ) );
+    m_states.insert( std::make_pair( SendingConnectRepliesState::id, replies ) );
 
     auto connected = Engine::NetworkConnection::StatePtr( new ConnectedState( *this ) );
-    m_states.insert( std::make_pair( connected->Id(), connected ) );
+    m_states.insert( std::make_pair( ConnectedState::id, connected ) );
 
     auto disconnecting = Engine::NetworkConnection::StatePtr( new DisconnectingState( *this ) );
-    m_states.insert( std::make_pair( disconnecting->Id(), disconnecting ) );
+    m_states.insert( std::make_pair( DisconnectingState::id, disconnecting ) );
 
     /* create the send timer */
     m_send_timer.SetFixedTimeStep( true );
@@ -481,7 +475,7 @@ void Engine::NetworkConnection::ReceiveAndProcessPackets()
         }
 
         auto read = Engine::BitStreamFactory::CreateInputBitStream( data, byte_cnt, false );
-        auto packet = Engine::NetworkPacket::ReadPacket( read, m_allowed, m_passport->protocol_id, m_passport->server_to_client_key, 0 );
+        auto packet = Engine::NetworkPacket::ReadPacket( &(*m_networking), read, m_allowed, m_passport->protocol_id, m_passport->server_to_client_key, 0 );
         if( packet )
         {
             m_current_state->ProcessPacket( packet );
@@ -496,7 +490,7 @@ void Engine::NetworkConnection::ReceiveAndProcessPackets()
 void Engine::NetworkConnection::Connect( Engine::NetworkConnectionPassportPtr &offer )
 {
     /* if we are connecting already, then ignore the offer */
-    if( m_current_state->Id() != DISCONNECTED )
+    if( m_current_state->GetId() != DISCONNECTED )
     {
         Engine::Log( Engine::LOG_LEVEL_INFO, L"NetworkConnection::Connect ignored passport offer.  Either connecting or connected." );
         return;
@@ -518,7 +512,7 @@ bool Engine::NetworkConnection::NeedsMoreServers()
         return true;
     }
 
-    return m_current_state->Id() == DISCONNECTED;
+    return m_current_state->GetId() == DISCONNECTED;
 }
 
 Engine::NetworkMessagePtr Engine::NetworkConnection::PopIncomingMessage()

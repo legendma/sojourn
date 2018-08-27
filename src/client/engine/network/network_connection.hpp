@@ -39,22 +39,30 @@ namespace Engine
             SYSTEM_ERROR
         } ConnectionError;
 
-        struct State
+        interface IState
         {
-            State( NetworkConnection &fsm ) : m_fsm( fsm ) {};
+        public:
             virtual void EnterState() = 0;
             virtual void ExitState() = 0;
             virtual void Update() = 0;
-            virtual StateID Id() = 0;
             virtual void ProcessPacket( Engine::NetworkPacketPtr &packet ) = 0;
+            virtual StateID GetId() = 0;
+        }; typedef std::shared_ptr<IState> StatePtr;
 
+        template<StateID _type_id>
+        struct State : public IState
+        {
+            State( NetworkConnection &fsm ) : m_fsm( fsm ) {};
+            StateID GetId() { return id; }
+
+            static const StateID id = _type_id;
             NetworkConnection &m_fsm;
-        }; typedef std::shared_ptr<State> StatePtr;
+        };
 
         void SendAndReceivePackets();
         void Connect( NetworkConnectionPassportPtr &offer );
 
-        bool IsConnected() { return m_current_state->Id() == CONNECTED; }
+        bool IsConnected() { return m_current_state->GetId() == CONNECTED; }
         ConnectionError GetConnectionError() { return m_connect_error; }
         bool NeedsMoreServers();
         NetworkMessagePtr PopIncomingMessage();

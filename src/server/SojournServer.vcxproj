@@ -161,8 +161,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\engine\engine_memory.hpp" />
     <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
     <ClInclude Include="..\common\engine\engine_utilities.hpp" />
+    <ClInclude Include="..\common\game\game_entity.hpp" />
+    <ClInclude Include="..\common\game\game_system.hpp" />
     <ClInclude Include="..\common\network\network_address.hpp" />
     <ClInclude Include="..\common\network\network_buffers.hpp" />
     <ClInclude Include="..\common\network\network_main.hpp" />
@@ -175,10 +178,13 @@
     <ClInclude Include="server_main.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\engine\engine_memory.cpp" />
     <ClCompile Include="..\common\engine\engine_utilities.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="..\common\game\game_entity.cpp" />
+    <ClCompile Include="..\common\game\game_system.cpp" />
     <ClCompile Include="..\common\network\network_address.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
