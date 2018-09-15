@@ -62,29 +62,66 @@ namespace Engine
         std::list<void*> m_frees;
     };
 
-    template <typename T, size_t chunk_cnt>
+    template <typename T, size_t objects_per_chunk>
     class MemoryChunkAllocator
     {
         typedef struct
         {
             MemoryAllocatorPtr allocator;
+            std::list<T*> objects;
         } Chunk;
 
     public:
         MemoryChunkAllocator( MemoryAllocatorPtr allocator, const wchar_t *user_name = nullptr ) :
-            m_allocator( allocator )
+            m_allocator( allocator ),
+            m_user_name( user_name )
         {
-            size_t object_size = sizeof( T );
-            size_t pool_size = chunk_cnt * object_size;
-            auto pool = reinterpret_cast<byte*>( m_allocator->Allocate( pool_size, user_name ) );
+            CreateNewChunk();
+        }
 
-            Chunk first_chunk;
-            first_chunk.allocator = MemoryAllocatorPtr( new MemoryPoolAllocator( pool, pool_size, object_size ) );
-            m_chunks.push_back( first_chunk );
+        void * Allocate()
+        {
+            Chunk *chunk = nullptr;
+            for( auto &search : m_chunks )
+            {
+                if( search.objects.size() < objects_per_chunk )
+                {
+                    chunk = &search;
+                    break;
+                }
+            }
+
+            if( !chunk )
+            {
+                chunk = CreateNewChunk();
+            }
+
+            auto new_object = chunk->allocator->Allocate( sizeof( T ), m_user_name );
+
+            return new_object;
+        }
+
+        void Free( void *address )
+        {
+
         }
 
     private:
         MemoryAllocatorPtr m_allocator;
         std::vector<Chunk> m_chunks;
+        const wchar_t *m_user_name;
+
+        Chunk * CreateNewChunk()
+        {
+            size_t object_size = sizeof( T );
+            size_t chunk_size = objects_per_chunk * object_size;
+            auto pool = reinterpret_cast<byte*>(m_allocator->Allocate( chunk_size, m_user_name ));
+
+            m_chunks.emplace_back();
+            auto *new_chunk = &m_chunks.back();
+            new_chunk->allocator = MemoryAllocatorPtr( new MemoryPoolAllocator( pool, chunk_size, object_size ) );
+
+            return new_chunk;
+        }
     };
 }

@@ -7,8 +7,7 @@
 
 #define NETWORK_SYSTEM_MEMORY_SIZE ( 1024 * 1014 / 2 )
 
-Engine::Networking::Networking() :
-    MemorySystem( NETWORK_SYSTEM_MEMORY_SIZE )
+Engine::Networking::Networking()
 {
     Initialize();
 }
@@ -20,6 +19,8 @@ Engine::Networking::~Networking()
 
 void Engine::Networking::Initialize()
 {
+    m_allocator = std::shared_ptr<IMemoryAllocator>( new MemorySystem( NETWORK_SYSTEM_MEMORY_SIZE ) );
+
     /* start WinSock */
     auto result = WSAStartup( MAKEWORD( 2, 2 ), &m_wsa_data );
     if( result != NO_ERROR )
@@ -147,7 +148,7 @@ Engine::NetworkCryptoMapPtr Engine::Networking::FindCryptoMapByClientID( uint64_
 
 Engine::MemoryAllocatorPtr Engine::Networking::AsAllocator()
 {
-    return MemoryAllocatorPtr( this );
+    return m_allocator;
 }
 
 bool Engine::Networking::Encrypt( void *data_to_encrypt, size_t data_length, byte *salt, size_t salt_length, NetworkNonce &nonce, const NetworkKey &key )

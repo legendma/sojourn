@@ -80,7 +80,7 @@ void * Engine::MemoryPoolAllocator::Allocate( size_t size, const wchar_t *user_n
 
     m_allocations.push_back( address );
 
-    return nullptr;
+    return address;
 }
 
 void Engine::MemoryPoolAllocator::Free( void *allocation )

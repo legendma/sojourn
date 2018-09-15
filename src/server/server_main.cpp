@@ -104,9 +104,9 @@ void Server::Server::Update()
 
     ReceivePackets();
     CheckClientTimeouts();
-    HandleGamePacketsFromClients(); // TODO IMPLEMENT
-    RunGameSimulation(); // TODO IMPLEMENT
-    SendGamePacketsToClients(); // TODO IMPLEMENT
+    HandleGamePacketsFromClients();
+    RunGameSimulation();
+    SendGamePacketsToClients();
     KeepClientsAlive();
 }
 
@@ -318,6 +318,8 @@ void Server::Server::OnReceivedConnectionChallengeResponse( Engine::NetworkConne
     new_client->last_time_received_packet = new_client->last_time_sent_packet;
     new_client->timeout_seconds = crypto->timeout_seconds;
     new_client->endpoint = Engine::NetworkReliableEndpointPtr( new Engine::NetworkReliableEndpoint() );
+
+    m_simulation->AddPlayer( new_client->endpoint );
     m_clients.push_back( new_client );
 
     Engine::Log( Engine::LOG_LEVEL_INFO, L"Server connected Client ID %d", response.token->client_id );
@@ -429,18 +431,8 @@ void Server::Server::HandleGamePacketsFromClients()
 
 void Server::Server::RunGameSimulation()
 {
-    // queue all the client input events
-    for( auto client : m_clients )
-    {
-        auto message = client->endpoint->PopIncomingMessage();
-        while( message )
-        {
-            // TODO <MPA>: Pass the message to the simulation's game object system for processing
-            message = client->endpoint->PopIncomingMessage();
-        }
-    }
-
-    // TODO <MPA>: update the simulation
+    // update the simulation
+    m_simulation->RunFrame( (float)m_timer.GetElapsedSeconds() );
 }
 
 void Server::Server::SendGamePacketsToClients()

@@ -276,8 +276,7 @@ namespace Engine
 
     }; typedef std::shared_ptr<NetworkCryptoMap> NetworkCryptoMapPtr;
 
-    class Networking : public MemorySystem,
-                       public std::enable_shared_from_this<IMemoryAllocator>
+    class Networking
     {
         friend class NetworkingFactory;
     public:
@@ -298,6 +297,7 @@ namespace Engine
     private:
         WSADATA m_wsa_data;
         std::map<uint64_t, NetworkCryptoMapPtr> m_crypto_map;
+        MemoryAllocatorPtr m_allocator;
 
         Networking();
         void Initialize();
