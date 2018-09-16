@@ -166,6 +166,7 @@
     <ClInclude Include="..\common\engine\engine_utilities.hpp" />
     <ClInclude Include="..\common\game\game_component.hpp" />
     <ClInclude Include="..\common\game\game_entity.hpp" />
+    <ClInclude Include="..\common\game\game_main.hpp" />
     <ClInclude Include="..\common\game\game_player.hpp" />
     <ClInclude Include="..\common\game\game_simulation.hpp" />
     <ClInclude Include="..\common\game\game_system.hpp" />

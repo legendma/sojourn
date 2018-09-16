@@ -120,5 +120,8 @@
     <ClInclude Include="..\common\game\game_player.hpp">
       <Filter>Source Files\common\game</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\game\game_main.hpp">
+      <Filter>Source Files\common\game</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

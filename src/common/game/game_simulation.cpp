@@ -9,7 +9,7 @@ Game::GameSimulation::GameSimulation()
 {
     m_ecs_memory = Engine::MemoryAllocatorPtr( new Engine::MemorySystem( GAME_ECS_MEMORY_SIZE ) );
 
-    m_component_manager = GameComponentManagerPtr( new GameComponentManager() );
+    m_component_manager = GameComponentManagerPtr( new GameComponentManager( m_ecs_memory ) );
     m_entity_manager = GameEntityManagerPtr( new GameEntityManager( m_ecs_memory, m_component_manager ) );
 }
 

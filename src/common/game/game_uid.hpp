@@ -1,5 +1,7 @@
 #pragma once
 
+#define GAME_UID_GROW_SIZE ( 1024 )
+
 namespace Game
 {
     template<typename T, size_t MAX_SIMULTANEOUS>
@@ -23,7 +25,7 @@ namespace Game
         T m_uid;
     };
 
-    template<typename T, typename uid_type, size_t grow_size = 1024>
+    template<typename T, typename uid_type, size_t grow_size = GAME_UID_GROW_SIZE>
     class GameUIDTable
     {
     private:

@@ -103,12 +103,102 @@ namespace Engine
 
         void Free( void *address )
         {
+            auto freed = false;
+            for( auto &chunk : m_chunks )
+            {
+                for( auto it = chunk.objects.begin(); it != chunk.objects.end(); it++ )
+                {
+                    if( *it == address )
+                    {
+                        chunk.allocator->Free( address );
+                        chunk.objects.erase( it );
+                        freed = true;
+                        break;
+                    }
+                }
 
+                if( freed )
+                {
+                    break;
+                }
+            }
+
+            assert( freed );
+        }
+
+        class iterator : public std::iterator<std::forward_iterator_tag, T>
+        {
+            typename std::list<Chunk>::iterator m_current_chunk;
+            typename std::list<Chunk>::iterator m_end_chunk;
+
+            typename std::list<T*>::iterator m_current_object;
+
+        public:
+            iterator( typename std::list<Chunk>::iterator begin, typename std::list<Chunk>::iterator end ) :
+                m_current_chunk( begin ),
+                m_end_chunk( end )
+            {
+                if( begin == end )
+                {
+                    m_current_object = std::prev( m_end_chunk )->objects.end();
+                    return;
+                }
+
+                m_current_object = m_current_chunk->objects.begin();
+            }
+
+            inline iterator & operator++( int )
+            {
+                if( m_current_chunk != m_end_chunk )
+                {
+                    m_current_object++;
+                    if( m_current_object == m_current_chunk->objects.end() )
+                    {
+                        m_current_chunk++;
+                        if( m_current_chunk != m_end_chunk )
+                        {
+                            m_current_object = m_current_chunk->objects.begin();
+                        }
+                    }
+                }
+
+                return *this;
+            }
+
+            inline bool operator==( const iterator &other )
+            {
+                return m_current_chunk == other.m_current_chunk && m_current_object == other.m_current_object;
+            }
+
+            inline bool operator!=( const iterator &other )
+            {
+                return !operator==( other );
+            }
+
+            inline T & operator*()
+            {
+                return *m_current_object;
+            }
+
+            inline T * operator->()
+            {
+                return *m_current_object;
+            }
+        };
+
+        inline iterator begin()
+        {
+            return iterator( m_chunks.begin(), m_chunks.end() );
+        }
+
+        inline iterator end()
+        {
+            return iterator( m_chunks.end(), m_chunks.end() );
         }
 
     private:
         MemoryAllocatorPtr m_allocator;
-        std::vector<Chunk> m_chunks;
+        std::list<Chunk> m_chunks;
         const wchar_t *m_user_name;
 
         Chunk * CreateNewChunk()
