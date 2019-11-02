@@ -5,12 +5,34 @@
 
 #define GAME_ECS_MEMORY_SIZE ( 128 * 1024 * 1024 )
 
+class IGameState
+{
+public:
+    virtual void EnterState() = 0;
+    virtual void ExitState() = 0;
+
+};
+
+class PreGameSystem : public Game::GameSystem<PreGameSystem, Game::PREGAME_SYSTEM>,
+                      public IGameState
+{
+public:
+    virtual void EnterState() {};
+    virtual void ExitState() {};
+};
+
 Game::GameSimulation::GameSimulation()
 {
     m_ecs_memory = Engine::MemoryAllocatorPtr( new Engine::MemorySystem( GAME_ECS_MEMORY_SIZE ) );
 
     m_component_manager = GameComponentManagerPtr( new GameComponentManager( m_ecs_memory ) );
     m_entity_manager = GameEntityManagerPtr( new GameEntityManager( m_ecs_memory, m_component_manager ) );
+    m_system_manager = GameSystemManagerPtr( new GameSystemManager( m_ecs_memory, m_entity_manager, m_component_manager ) );
+
+    // Start the pregame system
+    m_system_manager->CreateSystem<PreGameSystem>();
+    auto pregame = m_system_manager->GetSystem<PreGameSystem>();
+    pregame->EnterState();
 }
 
 void Game::GameSimulation::RunFrame( float dt )
@@ -26,7 +48,8 @@ void Game::GameSimulation::RunFrame( float dt )
         }
     }
 
-    // TODO <MPA>: Run the systems
+    m_system_manager->RunSystems( dt );
+    m_entity_manager->FreeGarbage();
 }
 
 void Game::GameSimulation::AddPlayer( Engine::NetworkReliableEndpointPtr &channel )

@@ -147,9 +147,6 @@
     <ClInclude Include="engine\gui\gui_renderer.hpp">
       <Filter>src\engine\gui</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\simulation\world_game_object.hpp">
-      <Filter>src\game\common</Filter>
-    </ClInclude>
     <ClInclude Include="game\explorer\explorer_main.hpp">
       <Filter>src\game\explorer</Filter>
     </ClInclude>

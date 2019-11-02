@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "dep\lua\lua.vcxproj"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium", "dep\sodium\sodium.vcxproj", "{A1C4CB48-C014-4671-B33F-20B228FA0F0D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite3", "dep\sqlite3\sqlite3\sqlite3.vcxproj", "{8E344CB6-D787-4176-954A-947969B86C46}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -45,6 +47,14 @@ Global
 		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x64.Build.0 = Release|x64
 		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x86.ActiveCfg = Release|Win32
 		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x86.Build.0 = Release|Win32
+		{8E344CB6-D787-4176-954A-947969B86C46}.Debug|x64.ActiveCfg = Debug|x64
+		{8E344CB6-D787-4176-954A-947969B86C46}.Debug|x64.Build.0 = Debug|x64
+		{8E344CB6-D787-4176-954A-947969B86C46}.Debug|x86.ActiveCfg = Debug|Win32
+		{8E344CB6-D787-4176-954A-947969B86C46}.Debug|x86.Build.0 = Debug|Win32
+		{8E344CB6-D787-4176-954A-947969B86C46}.Release|x64.ActiveCfg = Release|x64
+		{8E344CB6-D787-4176-954A-947969B86C46}.Release|x64.Build.0 = Release|x64
+		{8E344CB6-D787-4176-954A-947969B86C46}.Release|x86.ActiveCfg = Release|Win32
+		{8E344CB6-D787-4176-954A-947969B86C46}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

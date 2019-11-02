@@ -87,6 +87,11 @@ namespace Game
             return entity_id;
         }
 
+        inline IGameEntity * GetEntityByID( GameEntityId entity_id )
+        {
+            return m_uids.GetObjectByUID( entity_id );
+        }
+
     private:
         Engine::MemoryAllocatorPtr m_allocator;
         std::unordered_map<GameEntityType, GameEntityContainerPtr> m_entity_containers;

@@ -60,7 +60,6 @@
     <ClInclude Include="..\common\network\network_reliable_endpoint.hpp" />
     <ClInclude Include="..\common\network\network_sockets.hpp" />
     <ClInclude Include="..\common\network\network_types.hpp" />
-    <ClInclude Include="..\common\simulation\world_game_object.hpp" />
     <ClInclude Include="client_main.hpp" />
     <ClInclude Include="client_window.hpp" />
     <ClInclude Include="engine\graphics\graphics_adapter.hpp" />
