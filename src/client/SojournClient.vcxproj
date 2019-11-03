@@ -23,45 +23,46 @@
     <ClCompile Include="..\common\engine\engine_resources.cpp" />
     <ClCompile Include="..\common\engine\engine_scripts.cpp" />
     <ClCompile Include="..\common\engine\engine_utilities.cpp" />
-    <ClCompile Include="..\common\network\network_address.cpp" />
-    <ClCompile Include="..\common\network\network_buffers.cpp" />
-    <ClCompile Include="..\common\network\network_main.cpp" />
-    <ClCompile Include="..\common\network\network_matchmaking.cpp" />
-    <ClCompile Include="..\common\network\network_message.cpp" />
-    <ClCompile Include="..\common\network\network_reliable_endpoint.cpp" />
-    <ClCompile Include="..\common\network\network_sockets.cpp" />
+    <ClCompile Include="..\common\engine\network\network_address.cpp" />
+    <ClCompile Include="..\common\engine\network\network_buffers.cpp" />
+    <ClCompile Include="..\common\engine\network\network_main.cpp" />
+    <ClCompile Include="..\common\engine\network\network_matchmaking.cpp" />
+    <ClCompile Include="..\common\engine\network\network_message.cpp" />
+    <ClCompile Include="..\common\engine\network\network_reliable_endpoint.cpp" />
+    <ClCompile Include="..\common\engine\network\network_sockets.cpp" />
+    <ClCompile Include="app\app_client.cpp" />
+    <ClCompile Include="app\app_window.cpp" />
     <ClCompile Include="client_main.cpp" />
-    <ClCompile Include="client_window.cpp" />
     <ClCompile Include="engine\graphics\graphics_adapter.cpp" />
     <ClCompile Include="engine\graphics\graphics_camera.cpp" />
     <ClCompile Include="engine\graphics\graphics_shaders.cpp" />
     <ClCompile Include="engine\gui\gui_renderer.cpp" />
     <ClCompile Include="engine\network\network_connection.cpp" />
-    <ClCompile Include="game\explorer\explorer_main.cpp" />
-    <ClCompile Include="game\game_main.cpp" />
-    <ClCompile Include="game\world\world_renderer.cpp" />
     <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\app\app_sojourn.hpp" />
     <ClInclude Include="..\common\engine\engine_memory.hpp" />
     <ClInclude Include="..\common\engine\engine_resources.hpp" />
     <ClInclude Include="..\common\engine\engine_scripts.hpp" />
     <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
     <ClInclude Include="..\common\engine\engine_utilities.hpp" />
-    <ClInclude Include="..\common\network\network_buffers.hpp" />
-    <ClInclude Include="..\common\network\network_main.hpp" />
-    <ClInclude Include="..\common\network\network_matchmaking.hpp" />
-    <ClInclude Include="..\common\network\network_message.hpp" />
-    <ClInclude Include="..\common\network\network_reliable_endpoint.hpp" />
-    <ClInclude Include="..\common\network\network_sockets.hpp" />
-    <ClInclude Include="..\common\network\network_types.hpp" />
-    <ClInclude Include="client_main.hpp" />
-    <ClInclude Include="client_window.hpp" />
+    <ClInclude Include="..\common\engine\network\network_address.hpp" />
+    <ClInclude Include="..\common\engine\network\network_buffers.hpp" />
+    <ClInclude Include="..\common\engine\network\network_main.hpp" />
+    <ClInclude Include="..\common\engine\network\network_matchmaking.hpp" />
+    <ClInclude Include="..\common\engine\network\network_message.hpp" />
+    <ClInclude Include="..\common\engine\network\network_platform.hpp" />
+    <ClInclude Include="..\common\engine\network\network_reliable_endpoint.hpp" />
+    <ClInclude Include="..\common\engine\network\network_sockets.hpp" />
+    <ClInclude Include="..\common\engine\network\network_types.hpp" />
+    <ClInclude Include="app\app_client.hpp" />
+    <ClInclude Include="app\app_window.hpp" />
     <ClInclude Include="engine\graphics\graphics_adapter.hpp" />
     <ClInclude Include="engine\graphics\graphics_camera.hpp" />
     <ClInclude Include="engine\graphics\graphics_shaders.hpp" />
@@ -69,25 +70,7 @@
     <ClInclude Include="engine\gui\gui_renderer.hpp" />
     <ClInclude Include="engine\network\network_client_config.hpp" />
     <ClInclude Include="engine\network\network_connection.hpp" />
-    <ClInclude Include="game\explorer\explorer_main.hpp" />
-    <ClInclude Include="game\game_main.h" />
-    <ClInclude Include="game\shaders\shaders_structures.hpp" />
-    <ClInclude Include="game\world\world_renderer.hpp" />
     <ClInclude Include="pch.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="game\shaders\color_position_ps.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="game\shaders\color_position_vs.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-    </FxCompile>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -146,12 +129,12 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\..\build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)dep;$(ProjectDir);$(SolutionDir)src</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(SolutionDir)dep;$(SolutionDir)\src</IncludePath>
     <LibraryPath>$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\sodium;$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\lua;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)src;$(SolutionDir)src/client;$(SolutionDir)dep;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(SolutionDir)dep;$(SolutionDir)\src</IncludePath>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)build\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -159,12 +142,12 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\..\build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)dep;$(ProjectDir);$(SolutionDir)src</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(SolutionDir)dep;$(SolutionDir)\src</IncludePath>
     <LibraryPath>$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\sodium;$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\lua;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)src;$(SolutionDir)src/client;$(SolutionDir)dep;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir);$(SolutionDir)dep;$(SolutionDir)\src</IncludePath>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)build\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>

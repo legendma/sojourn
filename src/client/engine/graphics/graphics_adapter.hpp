@@ -1,26 +1,12 @@
 ﻿#pragma once
 
-namespace Client
-{
-    class Window;
-}
+#include "common/engine/engine_math.hpp"
 
 namespace Engine
 {
     // Forward declarations
 	class VertexShader;
 	class PixelShader;
-
-    struct Size
-    {
-        float Width;
-        float Height;
-        Size() : Width( 0.0f ), Height( 0.0f ) {};
-        Size( float width, float height ) : Width( width ), Height( height ) {};
-        bool operator == ( Size &other ) const { return( ( Width == other.Width ) && ( Height == other.Height ) ) ; }
-        bool operator != ( Size &other ) const { return( !( *this == other ) ); }
-
-    };
 
 	// Provides an interface for an application that owns DeviceResources to be notified of the device being lost or created.
 	interface IDeviceNotify
@@ -29,15 +15,20 @@ namespace Engine
 		virtual void OnDeviceRestored() = 0;
 	};
 
+    interface IGraphicsWindow
+    {
+        virtual HWND GetHwnd() = 0;
+    };
+
 	// Controls all the DirectX device resources.
 	class GraphicsAdapter : public std::enable_shared_from_this<GraphicsAdapter>
 	{
 	public:
-        GraphicsAdapter();
-		void SetWindow( std::shared_ptr<Client::Window> &window);
-		void SetLogicalSize( Engine::Size logicalSize);
+        GraphicsAdapter( IGraphicsWindow &window );
+		//void SetWindow( std::shared_ptr<Client::Window> &window);
+		void SetLogicalSize( vec2 logicalSize);
 		//void SetCurrentOrientation(Windows::Graphics::Display::DisplayOrientations currentOrientation);
-		void SetDpi(float dpi);
+		//void SetDpi(float dpi);
 		void ValidateDevice();
 		void HandleDeviceLost();
 		void RegisterDeviceNotify(IDeviceNotify* deviceNotify);
@@ -45,10 +36,10 @@ namespace Engine
 		void Present();
 
 		// The size of the render target, in pixels.
-        Engine::Size	            GetOutputSize() const					{ return m_outputSize; }
+        vec2	            GetOutputSize() const					{ return m_outputSize; }
 
 		// The size of the render target, in dips.
-        Engine::Size	            GetLogicalSize() const					{ return m_logicalSize; }
+        vec2	            GetLogicalSize() const					{ return m_logicalSize; }
 		float						GetDpi() const							{ return m_effectiveDpi; }
 
 		// D3D Accessors.
@@ -102,16 +93,16 @@ namespace Engine
 		//CComPtr<IWICImagingFactory2>	m_wicFactory;
 
 		// Cached reference to the Window.
-        std::shared_ptr<Client::Window> m_window;
+        IGraphicsWindow &m_window;
 
 		// Cached device properties.
-		D3D_FEATURE_LEVEL								m_d3dFeatureLevel;
-		Engine::Size			              			m_d3dRenderTargetSize;
-		Engine::Size			              			m_outputSize;
-		Engine::Size			              			m_logicalSize;
+		D3D_FEATURE_LEVEL m_d3dFeatureLevel;
+		vec2 m_d3dRenderTargetSize;
+		vec2 m_outputSize;
+		vec2 m_logicalSize;
 		/*Windows::Graphics::Display::DisplayOrientations	m_nativeOrientation;
 		Windows::Graphics::Display::DisplayOrientations	m_currentOrientation;*/
-		float											m_dpi;
+		float m_dpi;
 
 		// This is the DPI that will be reported back to the app. It takes into account whether the app supports high resolution screens or not.
 		float m_effectiveDpi;

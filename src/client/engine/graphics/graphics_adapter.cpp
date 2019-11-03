@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-#include "client_window.hpp"
 
 #include "common/engine/engine_utilities.hpp"
 #include "graphics_adapter.hpp"
@@ -73,7 +72,8 @@ namespace ScreenRotation
 };
 
 // Constructor for DeviceResources.
-GraphicsAdapter::GraphicsAdapter() :
+GraphicsAdapter::GraphicsAdapter( IGraphicsWindow &window ) :
+    m_window( window ),
 	m_screenViewport(),
 	m_d3dFeatureLevel(D3D_FEATURE_LEVEL_9_1),
 	m_d3dRenderTargetSize(),
@@ -247,16 +247,16 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 	DXGI_MODE_ROTATION displayRotation = ComputeDisplayRotation();
 
 	bool swapDimensions = displayRotation == DXGI_MODE_ROTATION_ROTATE90 || displayRotation == DXGI_MODE_ROTATION_ROTATE270;
-	m_d3dRenderTargetSize.Width = swapDimensions ? m_outputSize.Height : m_outputSize.Width;
-	m_d3dRenderTargetSize.Height = swapDimensions ? m_outputSize.Width : m_outputSize.Height;
+	m_d3dRenderTargetSize.x = swapDimensions ? m_outputSize.y : m_outputSize.x;
+	m_d3dRenderTargetSize.y = swapDimensions ? m_outputSize.x : m_outputSize.y;
 
 	if (m_swapChain != nullptr)
 	{
 		// If the swap chain already exists, resize it.
 		HRESULT hr = m_swapChain->ResizeBuffers(
 			2, // Double-buffered swap chain.
-			lround(m_d3dRenderTargetSize.Width),
-			lround(m_d3dRenderTargetSize.Height),
+			lround(m_d3dRenderTargetSize.x),
+			lround(m_d3dRenderTargetSize.y),
 			DXGI_FORMAT_B8G8R8A8_UNORM,
 			0
 			);
@@ -281,8 +281,8 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 		//DXGI_SCALING scaling = DisplayMetrics::SupportHighResolutions ? DXGI_SCALING_NONE : DXGI_SCALING_STRETCH;
 		DXGI_SWAP_CHAIN_DESC swapChainDesc = {0}; 
 
-		swapChainDesc.BufferDesc.Width = lround(m_d3dRenderTargetSize.Width);		// Match the size of the window.
-		swapChainDesc.BufferDesc.Height = lround(m_d3dRenderTargetSize.Height);
+		swapChainDesc.BufferDesc.Width = lround(m_d3dRenderTargetSize.x);		// Match the size of the window.
+		swapChainDesc.BufferDesc.Height = lround(m_d3dRenderTargetSize.y);
 		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;				// This is the most common swap chain format.
 		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
         swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -292,7 +292,7 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 		swapChainDesc.BufferCount = 2;									// Use double-buffering to minimize latency.
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 		swapChainDesc.Flags = 0;
-        swapChainDesc.OutputWindow = m_window->GetHwnd();
+        swapChainDesc.OutputWindow = m_window.GetHwnd();
         swapChainDesc.Windowed = true;
 		//swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
@@ -351,21 +351,21 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 	case DXGI_MODE_ROTATION_ROTATE90:
 		m_orientationTransform2D = 
 			Matrix3x2F::Rotation(90.0f) *
-			Matrix3x2F::Translation(m_logicalSize.Height, 0.0f);
+			Matrix3x2F::Translation(m_logicalSize.y, 0.0f);
 		m_orientationTransform3D = ScreenRotation::Rotation270;
 		break;
 
 	case DXGI_MODE_ROTATION_ROTATE180:
 		m_orientationTransform2D = 
 			Matrix3x2F::Rotation(180.0f) *
-			Matrix3x2F::Translation(m_logicalSize.Width, m_logicalSize.Height);
+			Matrix3x2F::Translation(m_logicalSize.x, m_logicalSize.y);
 		m_orientationTransform3D = ScreenRotation::Rotation180;
 		break;
 
 	case DXGI_MODE_ROTATION_ROTATE270:
 		m_orientationTransform2D = 
 			Matrix3x2F::Rotation(270.0f) *
-			Matrix3x2F::Translation(0.0f, m_logicalSize.Width);
+			Matrix3x2F::Translation(0.0f, m_logicalSize.x);
 		m_orientationTransform3D = ScreenRotation::Rotation90;
 		break;
 
@@ -394,8 +394,8 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 	// Create a depth stencil view for use with 3D rendering if needed.
 	CD3D11_TEXTURE2D_DESC1 depthStencilDesc(
 		DXGI_FORMAT_D24_UNORM_S8_UINT, 
-		lround(m_d3dRenderTargetSize.Width),
-		lround(m_d3dRenderTargetSize.Height),
+		lround(m_d3dRenderTargetSize.x),
+		lround(m_d3dRenderTargetSize.y),
 		1, // This depth stencil view has only one texture.
 		1, // Use a single mipmap level.
 		D3D11_BIND_DEPTH_STENCIL
@@ -423,8 +423,8 @@ void GraphicsAdapter::CreateWindowSizeDependentResources()
 	m_screenViewport = CD3D11_VIEWPORT(
 		0.0f,
 		0.0f,
-		m_d3dRenderTargetSize.Width,
-		m_d3dRenderTargetSize.Height
+		m_d3dRenderTargetSize.x,
+		m_d3dRenderTargetSize.y
 		);
 
 	m_d3dContext->RSSetViewports(1, &m_screenViewport);
@@ -468,8 +468,8 @@ void GraphicsAdapter::UpdateRenderTargetSize()
 	// and allow the GPU to scale the output when it is presented.
 	if (!DisplayMetrics::SupportHighResolutions && m_dpi > DisplayMetrics::DpiThreshold)
 	{
-		float width = DX::ConvertDipsToPixels(m_logicalSize.Width, m_dpi);
-		float height = DX::ConvertDipsToPixels(m_logicalSize.Height, m_dpi);
+		float width = DX::ConvertDipsToPixels(m_logicalSize.x, m_dpi);
+		float height = DX::ConvertDipsToPixels(m_logicalSize.y, m_dpi);
 
 		// When the device is in portrait orientation, height > width. Compare the
 		// larger dimension against the width threshold and the smaller dimension
@@ -482,31 +482,31 @@ void GraphicsAdapter::UpdateRenderTargetSize()
 	}
 
 	// Calculate the necessary render target size in pixels.
-	m_outputSize.Width = DX::ConvertDipsToPixels(m_logicalSize.Width, m_effectiveDpi);
-	m_outputSize.Height = DX::ConvertDipsToPixels(m_logicalSize.Height, m_effectiveDpi);
+	m_outputSize.x = DX::ConvertDipsToPixels(m_logicalSize.x, m_effectiveDpi);
+	m_outputSize.y = DX::ConvertDipsToPixels(m_logicalSize.y, m_effectiveDpi);
 
 	// Prevent zero size DirectX content from being created.
-	m_outputSize.Width  = std::max( m_outputSize.Width, 1.0f );
-	m_outputSize.Height = std::max( m_outputSize.Height, 1.0f );
+	m_outputSize.x  = std::max( m_outputSize.x, 1.0f );
+	m_outputSize.y = std::max( m_outputSize.y, 1.0f );
 }
 
 // This method is called when the CoreWindow is created (or re-created).
-void GraphicsAdapter::SetWindow( std::shared_ptr<Client::Window> &window )
-{
-	//DisplayInformation^ currentDisplayInformation = DisplayInformation::GetForCurrentView();
-
-	m_window = window;
-	m_logicalSize = Engine::Size( (float)window->GetWidth(), (float)window->GetHeight() );
-	//m_nativeOrientation = currentDisplayInformation->NativeOrientation;
-	//m_currentOrientation = currentDisplayInformation->CurrentOrientation;
-	m_dpi = window->GetDPI();
-	m_d2dContext->SetDpi(m_dpi, m_dpi);
-
-	CreateWindowSizeDependentResources();
-}
+//void GraphicsAdapter::SetWindow( std::shared_ptr<Client::Window> &window )
+//{
+//	//DisplayInformation^ currentDisplayInformation = DisplayInformation::GetForCurrentView();
+//
+//	m_window = window;
+//	m_logicalSize = Engine::Size( (float)window->GetWidth(), (float)window->GetHeight() );
+//	//m_nativeOrientation = currentDisplayInformation->NativeOrientation;
+//	//m_currentOrientation = currentDisplayInformation->CurrentOrientation;
+//	m_dpi = window->GetDPI();
+//	m_d2dContext->SetDpi(m_dpi, m_dpi);
+//
+//	CreateWindowSizeDependentResources();
+//}
 
 // This method is called in the event handler for the SizeChanged event.
-void GraphicsAdapter::SetLogicalSize(Engine::Size logicalSize)
+void GraphicsAdapter::SetLogicalSize( vec2 logicalSize)
 {
 	if( m_logicalSize != logicalSize )
 	{
@@ -516,19 +516,19 @@ void GraphicsAdapter::SetLogicalSize(Engine::Size logicalSize)
 }
 
 // This method is called in the event handler for the DpiChanged event.
-void GraphicsAdapter::SetDpi(float dpi)
-{
-	if (dpi != m_dpi)
-	{
-		m_dpi = dpi;
-
-		// When the display DPI changes, the logical size of the window (measured in Dips) also changes and needs to be updated.
-		m_logicalSize = Engine::Size( (float)m_window->GetWidth(), (float)m_window->GetHeight() );
-
-		m_d2dContext->SetDpi(m_dpi, m_dpi);
-		CreateWindowSizeDependentResources();
-	}
-}
+//void GraphicsAdapter::SetDpi(float dpi)
+//{
+//	if (dpi != m_dpi)
+//	{
+//		m_dpi = dpi;
+//
+//		// When the display DPI changes, the logical size of the window (measured in Dips) also changes and needs to be updated.
+//		m_logicalSize = vec2( (float)m_window->GetWidth(), (float)m_window->GetHeight() );
+//
+//		m_d2dContext->SetDpi(m_dpi, m_dpi);
+//		CreateWindowSizeDependentResources();
+//	}
+//}
 
 // This method is called in the event handler for the OrientationChanged event.
 //void GraphicsAdapter::SetCurrentOrientation(DisplayOrientations currentOrientation)

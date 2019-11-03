@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "common/network/network_main.hpp"
+#include "common/engine/network/network_main.hpp"
 
 #define DEFAULT_CLIENT_SOCKET_SNDBUF_SIZE ( 256 * 1024 )
 #define DEFAULT_CLIENT_SOCKET_RCVBUF_SIZE ( 256 * 1024 )

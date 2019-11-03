@@ -18,6 +18,61 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\common\engine\engine_memory.cpp" />
+    <ClCompile Include="..\common\engine\engine_resources.cpp" />
+    <ClCompile Include="..\common\engine\engine_scripts.cpp" />
+    <ClCompile Include="..\common\engine\engine_utilities.cpp" />
+    <ClCompile Include="..\common\engine\network\network_address.cpp" />
+    <ClCompile Include="..\common\engine\network\network_buffers.cpp" />
+    <ClCompile Include="..\common\engine\network\network_main.cpp" />
+    <ClCompile Include="..\common\engine\network\network_matchmaking.cpp" />
+    <ClCompile Include="..\common\engine\network\network_message.cpp" />
+    <ClCompile Include="..\common\engine\network\network_reliable_endpoint.cpp" />
+    <ClCompile Include="..\common\engine\network\network_sockets.cpp" />
+    <ClCompile Include="..\common\game\game_component.cpp" />
+    <ClCompile Include="..\common\game\game_entity.cpp" />
+    <ClCompile Include="..\common\game\game_player.cpp" />
+    <ClCompile Include="..\common\game\game_simulation.cpp" />
+    <ClCompile Include="..\common\game\game_system.cpp" />
+    <ClCompile Include="app\app_server.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="server_main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\Sojourn_old\dev\src\server\engine\network\network_server_config.hpp" />
+    <ClInclude Include="..\common\app\app_sojourn.hpp" />
+    <ClInclude Include="..\common\engine\engine_math.hpp" />
+    <ClInclude Include="..\common\engine\engine_memory.hpp" />
+    <ClInclude Include="..\common\engine\engine_resources.hpp" />
+    <ClInclude Include="..\common\engine\engine_scripts.hpp" />
+    <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
+    <ClInclude Include="..\common\engine\engine_utilities.hpp" />
+    <ClInclude Include="..\common\engine\network\network_address.hpp" />
+    <ClInclude Include="..\common\engine\network\network_buffers.hpp" />
+    <ClInclude Include="..\common\engine\network\network_main.hpp" />
+    <ClInclude Include="..\common\engine\network\network_matchmaking.hpp" />
+    <ClInclude Include="..\common\engine\network\network_message.hpp" />
+    <ClInclude Include="..\common\engine\network\network_platform.hpp" />
+    <ClInclude Include="..\common\engine\network\network_reliable_endpoint.hpp" />
+    <ClInclude Include="..\common\engine\network\network_sockets.hpp" />
+    <ClInclude Include="..\common\engine\network\network_types.hpp" />
+    <ClInclude Include="..\common\game\game_component.hpp" />
+    <ClInclude Include="..\common\game\game_entity.hpp" />
+    <ClInclude Include="..\common\game\game_event.hpp" />
+    <ClInclude Include="..\common\game\game_main.hpp" />
+    <ClInclude Include="..\common\game\game_player.hpp" />
+    <ClInclude Include="..\common\game\game_simulation.hpp" />
+    <ClInclude Include="..\common\game\game_system.hpp" />
+    <ClInclude Include="..\common\game\game_uid.hpp" />
+    <ClInclude Include="app\app_server.hpp" />
+    <ClInclude Include="pch.hpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{1BE3716F-384F-49E7-9B9B-CEC15FA82CB9}</ProjectGuid>
@@ -72,23 +127,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)dep;$(SolutionDir)src;$(SolutionDir)src/server;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)dep;$(SolutionDir)src;$(ProjectDir);$(SolutionDir)src/server;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\..\build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <LibraryPath>$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\lua;$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\sodium;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)dep;$(SolutionDir)src;$(ProjectDir);$(SolutionDir)src/server;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)dep;$(SolutionDir)src;$(SolutionDir)src/server;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)dep;$(SolutionDir)src;$(ProjectDir);$(SolutionDir)src/server;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutDir>
     <IntDir>$(SolutionDir)\..\build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <LibraryPath>$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\lua;$(SolutionDir)\..\bin\$(Platform)\$(Configuration)\sodium;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)dep;$(SolutionDir)src;$(ProjectDir);$(SolutionDir)src/server;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -162,63 +219,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="..\common\engine\engine_memory.hpp" />
-    <ClInclude Include="..\common\engine\engine_step_timer.hpp" />
-    <ClInclude Include="..\common\engine\engine_utilities.hpp" />
-    <ClInclude Include="..\common\game\game_component.hpp" />
-    <ClInclude Include="..\common\game\game_entity.hpp" />
-    <ClInclude Include="..\common\game\game_main.hpp" />
-    <ClInclude Include="..\common\game\game_player.hpp" />
-    <ClInclude Include="..\common\game\game_simulation.hpp" />
-    <ClInclude Include="..\common\game\game_system.hpp" />
-    <ClInclude Include="..\common\network\network_address.hpp" />
-    <ClInclude Include="..\common\network\network_buffers.hpp" />
-    <ClInclude Include="..\common\network\network_main.hpp" />
-    <ClInclude Include="..\common\network\network_message.hpp" />
-    <ClInclude Include="..\common\network\network_platform.hpp" />
-    <ClInclude Include="..\common\network\network_reliable_endpoint.hpp" />
-    <ClInclude Include="..\common\network\network_sockets.hpp" />
-    <ClInclude Include="..\common\network\network_types.hpp" />
-    <ClInclude Include="pch.hpp" />
-    <ClInclude Include="server_main.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\common\engine\engine_memory.cpp" />
-    <ClCompile Include="..\common\engine\engine_utilities.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
-    </ClCompile>
-    <ClCompile Include="..\common\game\game_component.cpp" />
-    <ClCompile Include="..\common\game\game_entity.cpp" />
-    <ClCompile Include="..\common\game\game_player.cpp" />
-    <ClCompile Include="..\common\game\game_simulation.cpp" />
-    <ClCompile Include="..\common\game\game_system.cpp" />
-    <ClCompile Include="..\common\network\network_address.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_buffers.cpp" />
-    <ClCompile Include="..\common\network\network_main.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_message.cpp" />
-    <ClCompile Include="..\common\network\network_reliable_endpoint.cpp" />
-    <ClCompile Include="..\common\network\network_sockets.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
-    </ClCompile>
-    <ClCompile Include="server_main.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.hpp</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.hpp</PrecompiledHeaderFile>
-    </ClCompile>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -83,8 +83,8 @@ void GUIRenderer::Render()
 
 	// Position on the bottom right corner
 	D2D1::Matrix3x2F screenTranslation = D2D1::Matrix3x2F::Translation(
-		logicalSize.Width - m_textMetrics.layoutWidth,
-		logicalSize.Height - m_textMetrics.height
+		logicalSize.x - m_textMetrics.layoutWidth,
+		logicalSize.y - m_textMetrics.height
 		);
 
 	context->SetTransform(screenTranslation * m_graphics->GetOrientationTransform2D());

@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include "common/engine/engine_step_timer.hpp"
-#include "common/network/network_main.hpp"
-#include "common/network/network_reliable_endpoint.hpp"
-#include "common/network/network_matchmaking.hpp"
+#include "common/engine/network/network_main.hpp"
+#include "common/engine/network/network_reliable_endpoint.hpp"
+#include "common/engine/network/network_matchmaking.hpp"
 #include "engine/network/network_client_config.hpp"
 
 namespace Engine

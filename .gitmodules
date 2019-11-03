@@ -4,3 +4,6 @@
 [submodule "doc"]
 	path = doc
 	url = https://github.com/legendma/sojourn-doc.git
+[submodule "assets"]
+	path = assets
+	url = https://github.com/legendma/sojourn-assets.git

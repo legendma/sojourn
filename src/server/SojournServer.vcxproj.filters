@@ -1,127 +1,165 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="app">
+      <UniqueIdentifier>{c29bfbd0-d9ba-4303-9b7c-d69784641cc0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\app">
-      <UniqueIdentifier>{d849dd92-029b-423c-8df2-b379ea42ac6f}</UniqueIdentifier>
+    <Filter Include="common">
+      <UniqueIdentifier>{9112f419-4daa-4aa8-885a-8bed87f68df4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\common">
-      <UniqueIdentifier>{3497fdad-950e-498d-8a3f-4fb25d9a6d6f}</UniqueIdentifier>
+    <Filter Include="engine">
+      <UniqueIdentifier>{71e6c33d-38fa-4365-ab3d-10cb170387aa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\common\network">
-      <UniqueIdentifier>{0cc0e007-0bb5-43fd-91bd-3310501a7a6a}</UniqueIdentifier>
+    <Filter Include="common\engine">
+      <UniqueIdentifier>{03795677-4af1-4d69-aa23-731ffa2785cb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\common\game">
-      <UniqueIdentifier>{fdb359c9-75bb-4de8-beaf-d02180d74fae}</UniqueIdentifier>
+    <Filter Include="common\game">
+      <UniqueIdentifier>{6b279301-3e86-485e-8595-1fba87a87b92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="engine\network">
+      <UniqueIdentifier>{0f869d5a-99cd-4386-b2f3-ce9fb3b121f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\app">
+      <UniqueIdentifier>{07ffaac8-b043-41ff-9d4f-7b01a4de48aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\engine\network">
+      <UniqueIdentifier>{0961db77-855b-419d-ac16-c374481e934c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server_main.cpp">
-      <Filter>Source Files\app</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\engine\engine_utilities.cpp">
-      <Filter>Source Files\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\engine\engine_memory.cpp">
-      <Filter>Source Files\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_address.cpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_buffers.cpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_main.cpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_message.cpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_reliable_endpoint.cpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_sockets.cpp">
-      <Filter>Source Files\common\network</Filter>
+    <ClCompile Include="server_main.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="app\app_server.cpp">
+      <Filter>app</Filter>
     </ClCompile>
     <ClCompile Include="..\common\game\game_component.cpp">
-      <Filter>Source Files\common\game</Filter>
+      <Filter>common\game</Filter>
     </ClCompile>
     <ClCompile Include="..\common\game\game_entity.cpp">
-      <Filter>Source Files\common\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\game\game_simulation.cpp">
-      <Filter>Source Files\common\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\game\game_system.cpp">
-      <Filter>Source Files\common\game</Filter>
+      <Filter>common\game</Filter>
     </ClCompile>
     <ClCompile Include="..\common\game\game_player.cpp">
-      <Filter>Source Files\common\game</Filter>
+      <Filter>common\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\game\game_simulation.cpp">
+      <Filter>common\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\game\game_system.cpp">
+      <Filter>common\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\engine_memory.cpp">
+      <Filter>common\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\engine_resources.cpp">
+      <Filter>common\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\engine_scripts.cpp">
+      <Filter>common\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\engine_utilities.cpp">
+      <Filter>common\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_buffers.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_main.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_matchmaking.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_message.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_reliable_endpoint.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_sockets.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_address.cpp">
+      <Filter>common\engine\network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.hpp">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="pch.hpp" />
+    <ClInclude Include="app\app_server.hpp">
+      <Filter>app</Filter>
     </ClInclude>
-    <ClInclude Include="server_main.hpp">
-      <Filter>Source Files\app</Filter>
+    <ClInclude Include="..\..\..\..\Sojourn_old\dev\src\server\engine\network\network_server_config.hpp">
+      <Filter>engine\network</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\engine\engine_step_timer.hpp">
-      <Filter>Source Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\engine\engine_utilities.hpp">
-      <Filter>Source Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\engine\engine_memory.hpp">
-      <Filter>Source Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_address.hpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_buffers.hpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_main.hpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_message.hpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_platform.hpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_reliable_endpoint.hpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_sockets.hpp">
-      <Filter>Source Files\common\network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_types.hpp">
-      <Filter>Source Files\common\network</Filter>
+    <ClInclude Include="..\common\app\app_sojourn.hpp">
+      <Filter>common\app</Filter>
     </ClInclude>
     <ClInclude Include="..\common\game\game_component.hpp">
-      <Filter>Source Files\common\game</Filter>
+      <Filter>common\game</Filter>
     </ClInclude>
     <ClInclude Include="..\common\game\game_entity.hpp">
-      <Filter>Source Files\common\game</Filter>
+      <Filter>common\game</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\game\game_simulation.hpp">
-      <Filter>Source Files\common\game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\game\game_system.hpp">
-      <Filter>Source Files\common\game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\game\game_player.hpp">
-      <Filter>Source Files\common\game</Filter>
+    <ClInclude Include="..\common\game\game_event.hpp">
+      <Filter>common\game</Filter>
     </ClInclude>
     <ClInclude Include="..\common\game\game_main.hpp">
-      <Filter>Source Files\common\game</Filter>
+      <Filter>common\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\game\game_player.hpp">
+      <Filter>common\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\game\game_simulation.hpp">
+      <Filter>common\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\game\game_system.hpp">
+      <Filter>common\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\game\game_uid.hpp">
+      <Filter>common\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_math.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_memory.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_resources.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_scripts.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_step_timer.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_utilities.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_address.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_buffers.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_main.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_matchmaking.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_message.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_platform.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_reliable_endpoint.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_sockets.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_types.hpp">
+      <Filter>common\engine\network</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -7,6 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SojournServer", "src\server
 	ProjectSection(ProjectDependencies) = postProject
 		{A1C4CB48-C014-4671-B33F-20B228FA0F0D} = {A1C4CB48-C014-4671-B33F-20B228FA0F0D}
 		{2115DD8D-854B-4992-8129-537DA4814C2C} = {2115DD8D-854B-4992-8129-537DA4814C2C}
+		{8E344CB6-D787-4176-954A-947969B86C46} = {8E344CB6-D787-4176-954A-947969B86C46}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "dep\lua\lua.vcxproj", "{2115DD8D-854B-4992-8129-537DA4814C2C}"
@@ -14,6 +15,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium", "dep\sodium\sodium.vcxproj", "{A1C4CB48-C014-4671-B33F-20B228FA0F0D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite3", "dep\sqlite3\sqlite3\sqlite3.vcxproj", "{8E344CB6-D787-4176-954A-947969B86C46}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencies", "{EAB559BA-429F-48CB-B256-9EFE03FE8A0B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,6 +61,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2115DD8D-854B-4992-8129-537DA4814C2C} = {EAB559BA-429F-48CB-B256-9EFE03FE8A0B}
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D} = {EAB559BA-429F-48CB-B256-9EFE03FE8A0B}
+		{8E344CB6-D787-4176-954A-947969B86C46} = {EAB559BA-429F-48CB-B256-9EFE03FE8A0B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8F321991-187F-4A61-88D0-48C07A2C3388}

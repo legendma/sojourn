@@ -1,8 +1,8 @@
 #pragma once
 
 #include "common/engine/engine_memory.hpp"
-#include "common/network/network_message.hpp"
-#include "common/network/network_reliable_endpoint.hpp"
+#include "common/engine/network/network_message.hpp"
+#include "common/engine/network/network_reliable_endpoint.hpp"
 
 #include "game_entity.hpp"
 #include "game_component.hpp"

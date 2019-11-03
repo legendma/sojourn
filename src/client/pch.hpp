@@ -34,5 +34,4 @@
 #include <list>
 
 #undef max
-/* registry base path */
-static const wchar_t *BASE_REGISTRY_PATH = L"SOFTWARE\\WOW6432Node\\Umbrellas Required\\Sojourn\\Main\\";
+

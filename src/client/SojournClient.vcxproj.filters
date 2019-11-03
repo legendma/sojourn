@@ -1,199 +1,165 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="assets">
-      <UniqueIdentifier>{c8298f46-1367-488d-bb73-feb99b2e85bc}</UniqueIdentifier>
+    <Filter Include="app">
+      <UniqueIdentifier>{b8d8360f-a6f8-44a2-b0df-78280f1230ca}</UniqueIdentifier>
     </Filter>
-    <Filter Include="assets\gui">
-      <UniqueIdentifier>{72251037-3f12-43fe-94cd-47836de1a3cc}</UniqueIdentifier>
+    <Filter Include="common">
+      <UniqueIdentifier>{38455fa9-fc71-44fa-851f-a96243a22068}</UniqueIdentifier>
     </Filter>
-    <Filter Include="assets\shaders">
-      <UniqueIdentifier>{18731398-e0d8-43b5-a7d6-a83d5c9a78f1}</UniqueIdentifier>
+    <Filter Include="common\app">
+      <UniqueIdentifier>{8906e1a5-831a-428d-a8b6-4b5904c128c4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src">
-      <UniqueIdentifier>{cfc29a46-6879-4aa5-9d42-32044c20a192}</UniqueIdentifier>
+    <Filter Include="common\engine">
+      <UniqueIdentifier>{bd7bda4c-58a7-480a-8667-4ea844327d59}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\game">
-      <UniqueIdentifier>{7bdc95a9-4b9a-484c-aa96-a8355556623d}</UniqueIdentifier>
+    <Filter Include="common\engine\network">
+      <UniqueIdentifier>{52a875cd-ee8c-48b0-a8c8-0104858e63e0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\app">
-      <UniqueIdentifier>{98d2ee0c-c7f4-4614-9649-57f9e1bba9e8}</UniqueIdentifier>
+    <Filter Include="engine">
+      <UniqueIdentifier>{657a7e98-c084-42f1-b5da-163ef8026491}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\engine">
-      <UniqueIdentifier>{615edeb3-552a-4442-bfbb-b6afb38ce2d6}</UniqueIdentifier>
+    <Filter Include="engine\graphics">
+      <UniqueIdentifier>{2188495a-850e-495e-b677-3761c7c939e9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\engine\graphics">
-      <UniqueIdentifier>{b36e43db-f0b0-4c53-8770-f16e5d15d1bc}</UniqueIdentifier>
+    <Filter Include="engine\gui">
+      <UniqueIdentifier>{0f220f46-50ba-44a8-afed-3a7b5c37cd00}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\engine\gui">
-      <UniqueIdentifier>{ae5b5c4a-c755-43ba-97fd-ea673a96f2ca}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\engine\common">
-      <UniqueIdentifier>{6632042c-06e7-494d-bdef-6ac31a2823b0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\game\common">
-      <UniqueIdentifier>{1ad44eb2-14f5-4b0b-8a2f-ff80ba833a68}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\game\explorer">
-      <UniqueIdentifier>{fc2cb5a6-a3c1-4519-ba3d-88a182dda84d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\game\world">
-      <UniqueIdentifier>{2470bf83-b5f5-43f9-a438-f6d6ebc472e1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\engine\network">
-      <UniqueIdentifier>{3e82d9ec-f1f6-410d-984d-b8d0ab8f5e82}</UniqueIdentifier>
+    <Filter Include="engine\network">
+      <UniqueIdentifier>{92dcc508-3daf-4b56-9cbb-272c9c27ca33}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="client_window.cpp">
-      <Filter>src\app</Filter>
-    </ClCompile>
-    <ClCompile Include="client_main.cpp">
-      <Filter>src\app</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\engine\engine_resources.cpp">
-      <Filter>src\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\engine\engine_scripts.cpp">
-      <Filter>src\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\engine\engine_utilities.cpp">
-      <Filter>src\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\graphics\graphics_adapter.cpp">
-      <Filter>src\engine\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\graphics\graphics_camera.cpp">
-      <Filter>src\engine\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\graphics\graphics_shaders.cpp">
-      <Filter>src\engine\graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\gui\gui_renderer.cpp">
-      <Filter>src\engine\gui</Filter>
-    </ClCompile>
-    <ClCompile Include="game\explorer\explorer_main.cpp">
-      <Filter>src\game\explorer</Filter>
-    </ClCompile>
-    <ClCompile Include="game\world\world_renderer.cpp">
-      <Filter>src\game\world</Filter>
-    </ClCompile>
-    <ClCompile Include="game\game_main.cpp">
-      <Filter>src\game</Filter>
-    </ClCompile>
+    <ClCompile Include="client_main.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="..\common\network\network_main.cpp">
-      <Filter>src\engine\common</Filter>
+    <ClCompile Include="app\app_client.cpp">
+      <Filter>app</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\network\network_address.cpp">
-      <Filter>src\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_sockets.cpp">
-      <Filter>src\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_matchmaking.cpp">
-      <Filter>src\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="engine\network\network_connection.cpp">
-      <Filter>src\engine\network</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_buffers.cpp">
-      <Filter>src\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_message.cpp">
-      <Filter>src\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\network\network_reliable_endpoint.cpp">
-      <Filter>src\engine\common</Filter>
+    <ClCompile Include="app\app_window.cpp">
+      <Filter>app</Filter>
     </ClCompile>
     <ClCompile Include="..\common\engine\engine_memory.cpp">
-      <Filter>src\engine\common</Filter>
+      <Filter>common\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\engine_resources.cpp">
+      <Filter>common\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\engine_scripts.cpp">
+      <Filter>common\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\engine_utilities.cpp">
+      <Filter>common\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_address.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_buffers.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_main.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_matchmaking.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_message.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_reliable_endpoint.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\engine\network\network_sockets.cpp">
+      <Filter>common\engine\network</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\graphics\graphics_adapter.cpp">
+      <Filter>engine\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\graphics\graphics_camera.cpp">
+      <Filter>engine\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\graphics\graphics_shaders.cpp">
+      <Filter>engine\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\gui\gui_renderer.cpp">
+      <Filter>engine\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\network\network_connection.cpp">
+      <Filter>engine\network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="game\shaders\shaders_structures.hpp">
-      <Filter>assets\shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="client_window.hpp">
-      <Filter>src\app</Filter>
-    </ClInclude>
-    <ClInclude Include="client_main.hpp">
-      <Filter>src\app</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\engine\engine_resources.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\engine\engine_scripts.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\engine\engine_step_timer.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\engine\engine_utilities.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\graphics\graphics_adapter.hpp">
-      <Filter>src\engine\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\graphics\graphics_camera.hpp">
-      <Filter>src\engine\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\graphics\graphics_shaders.hpp">
-      <Filter>src\engine\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\graphics\graphics_utilities.hpp">
-      <Filter>src\engine\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\gui\gui_renderer.hpp">
-      <Filter>src\engine\gui</Filter>
-    </ClInclude>
-    <ClInclude Include="game\explorer\explorer_main.hpp">
-      <Filter>src\game\explorer</Filter>
-    </ClInclude>
-    <ClInclude Include="game\world\world_renderer.hpp">
-      <Filter>src\game\world</Filter>
-    </ClInclude>
-    <ClInclude Include="game\game_main.h">
-      <Filter>src\game</Filter>
-    </ClInclude>
     <ClInclude Include="pch.hpp" />
-    <ClInclude Include="engine\network\network_client_config.hpp">
-      <Filter>src\engine\network</Filter>
+    <ClInclude Include="app\app_client.hpp">
+      <Filter>app</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\network\network_main.hpp">
-      <Filter>src\engine\common</Filter>
+    <ClInclude Include="..\common\app\app_sojourn.hpp">
+      <Filter>common\app</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\network\network_matchmaking.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_sockets.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\network\network_connection.hpp">
-      <Filter>src\engine\network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_buffers.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_types.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_message.hpp">
-      <Filter>src\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\network\network_reliable_endpoint.hpp">
-      <Filter>src\engine\common</Filter>
+    <ClInclude Include="app\app_window.hpp">
+      <Filter>app</Filter>
     </ClInclude>
     <ClInclude Include="..\common\engine\engine_memory.hpp">
-      <Filter>src\engine\common</Filter>
+      <Filter>common\engine</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="game\shaders\color_position_ps.hlsl">
-      <Filter>assets\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="game\shaders\color_position_vs.hlsl">
-      <Filter>assets\shaders</Filter>
-    </FxCompile>
+    <ClInclude Include="..\common\engine\engine_resources.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_scripts.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_step_timer.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_utilities.hpp">
+      <Filter>common\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_address.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_buffers.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_main.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_matchmaking.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_message.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_platform.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_reliable_endpoint.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_sockets.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\network\network_types.hpp">
+      <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\graphics\graphics_adapter.hpp">
+      <Filter>engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\graphics\graphics_camera.hpp">
+      <Filter>engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\graphics\graphics_shaders.hpp">
+      <Filter>engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\graphics\graphics_utilities.hpp">
+      <Filter>engine\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\gui\gui_renderer.hpp">
+      <Filter>engine\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\network\network_client_config.hpp">
+      <Filter>engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\network\network_connection.hpp">
+      <Filter>engine\network</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

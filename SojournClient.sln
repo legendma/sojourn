@@ -7,11 +7,16 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SojournClient", "src\client
 	ProjectSection(ProjectDependencies) = postProject
 		{A1C4CB48-C014-4671-B33F-20B228FA0F0D} = {A1C4CB48-C014-4671-B33F-20B228FA0F0D}
 		{2115DD8D-854B-4992-8129-537DA4814C2C} = {2115DD8D-854B-4992-8129-537DA4814C2C}
+		{8E344CB6-D787-4176-954A-947969B86C46} = {8E344CB6-D787-4176-954A-947969B86C46}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "dep\lua\lua.vcxproj", "{2115DD8D-854B-4992-8129-537DA4814C2C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sodium", "dep\sodium\sodium.vcxproj", "{A1C4CB48-C014-4671-B33F-20B228FA0F0D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencies", "{BCEE10CC-2882-4716-92F8-970F5CBDBF18}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sqlite3", "dep\sqlite3\sqlite3.vcxproj", "{8E344CB6-D787-4176-954A-947969B86C46}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,9 +50,22 @@ Global
 		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x64.Build.0 = Release|x64
 		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x86.ActiveCfg = Release|Win32
 		{A1C4CB48-C014-4671-B33F-20B228FA0F0D}.Release|x86.Build.0 = Release|Win32
+		{8E344CB6-D787-4176-954A-947969B86C46}.Debug|x64.ActiveCfg = Debug|x64
+		{8E344CB6-D787-4176-954A-947969B86C46}.Debug|x64.Build.0 = Debug|x64
+		{8E344CB6-D787-4176-954A-947969B86C46}.Debug|x86.ActiveCfg = Debug|Win32
+		{8E344CB6-D787-4176-954A-947969B86C46}.Debug|x86.Build.0 = Debug|Win32
+		{8E344CB6-D787-4176-954A-947969B86C46}.Release|x64.ActiveCfg = Release|x64
+		{8E344CB6-D787-4176-954A-947969B86C46}.Release|x64.Build.0 = Release|x64
+		{8E344CB6-D787-4176-954A-947969B86C46}.Release|x86.ActiveCfg = Release|Win32
+		{8E344CB6-D787-4176-954A-947969B86C46}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2115DD8D-854B-4992-8129-537DA4814C2C} = {BCEE10CC-2882-4716-92F8-970F5CBDBF18}
+		{A1C4CB48-C014-4671-B33F-20B228FA0F0D} = {BCEE10CC-2882-4716-92F8-970F5CBDBF18}
+		{8E344CB6-D787-4176-954A-947969B86C46} = {BCEE10CC-2882-4716-92F8-970F5CBDBF18}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C2BBA13D-2282-4E16-BA0A-F0BBA85E6D83}

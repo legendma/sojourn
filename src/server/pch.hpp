@@ -23,6 +23,7 @@
 #include <codecvt>
 #include <comdef.h>
 #include <ppltasks.h>	// For create_task
+#include <fstream>
 #include <array>
 #include <map>
 #include <queue>

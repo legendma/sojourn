@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "engine_resources.hpp"
 
-static const std::wstring s_assets_location = Engine::Resources::RegGetString( HKEY_LOCAL_MACHINE, BASE_REGISTRY_PATH, L"Installation Directory" ).append( L"\\assets\\" );
+static const std::wstring s_assets_location = Engine::Resources::RegGetString( HKEY_LOCAL_MACHINE, Engine::BASE_REGISTRY_PATH, L"Installation Directory" ).append( L"\\assets\\" );
 
 std::wstring Engine::Resources::RegGetString( HKEY hKey, const std::wstring& subKey, const std::wstring& value )
 {
