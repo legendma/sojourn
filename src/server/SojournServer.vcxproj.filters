@@ -80,6 +80,9 @@
     <ClCompile Include="..\common\engine\network\network_address.cpp">
       <Filter>common\engine\network</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\engine\engine_hex.cpp">
+      <Filter>common\engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.hpp" />
@@ -160,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="..\common\engine\network\network_types.hpp">
       <Filter>common\engine\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\engine\engine_hex.hpp">
+      <Filter>common\engine</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

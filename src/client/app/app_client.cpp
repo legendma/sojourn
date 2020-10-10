@@ -179,7 +179,7 @@ void Client::Application::OnActivate( bool is_active )
 void Client::Application::OnWindowSizeChanged( int width, int height )
 {
     // TODO: send this signal to the render device
-    m_graphics->SetLogicalSize( Engine::vec2( (float)width, (float)height ) );
+    m_graphics->SetLogicalSize( Engine::Vec2( (float)width, (float)height ) );
 }
 
 void Client::Application::OnVisibilityChanged( bool visible )

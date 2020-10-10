@@ -26,7 +26,7 @@ namespace Engine
 	public:
         GraphicsAdapter( IGraphicsWindow &window );
 		//void SetWindow( std::shared_ptr<Client::Window> &window);
-		void SetLogicalSize( vec2 logicalSize);
+		void SetLogicalSize( Vec2 logicalSize);
 		//void SetCurrentOrientation(Windows::Graphics::Display::DisplayOrientations currentOrientation);
 		//void SetDpi(float dpi);
 		void ValidateDevice();
@@ -36,10 +36,10 @@ namespace Engine
 		void Present();
 
 		// The size of the render target, in pixels.
-        vec2	            GetOutputSize() const					{ return m_outputSize; }
+        Vec2	            GetOutputSize() const					{ return m_outputSize; }
 
 		// The size of the render target, in dips.
-        vec2	            GetLogicalSize() const					{ return m_logicalSize; }
+        Vec2	            GetLogicalSize() const					{ return m_logicalSize; }
 		float						GetDpi() const							{ return m_effectiveDpi; }
 
 		// D3D Accessors.
@@ -97,9 +97,9 @@ namespace Engine
 
 		// Cached device properties.
 		D3D_FEATURE_LEVEL m_d3dFeatureLevel;
-		vec2 m_d3dRenderTargetSize;
-		vec2 m_outputSize;
-		vec2 m_logicalSize;
+		Vec2 m_d3dRenderTargetSize;
+		Vec2 m_outputSize;
+		Vec2 m_logicalSize;
 		/*Windows::Graphics::Display::DisplayOrientations	m_nativeOrientation;
 		Windows::Graphics::Display::DisplayOrientations	m_currentOrientation;*/
 		float m_dpi;

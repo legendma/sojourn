@@ -506,7 +506,7 @@ void GraphicsAdapter::UpdateRenderTargetSize()
 //}
 
 // This method is called in the event handler for the SizeChanged event.
-void GraphicsAdapter::SetLogicalSize( vec2 logicalSize)
+void GraphicsAdapter::SetLogicalSize( Vec2 logicalSize)
 {
 	if( m_logicalSize != logicalSize )
 	{
