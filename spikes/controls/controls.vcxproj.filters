@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Application">
+      <UniqueIdentifier>{861d82f7-02de-4691-a81b-cb1aeb353ec6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Controls">
+      <UniqueIdentifier>{98b7bae3-e9f9-4d55-9359-7467a32c70e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{df3b3c0a-0f92-4ae9-9f0d-7e1b8d1803cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{d93c6587-e3fa-4f1d-b2b1-957d8288fc24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{b50fd81e-d7d0-4b6c-b93a-0502b0ffee45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\States">
+      <UniqueIdentifier>{10b1b085-db5e-4795-b380-235c0a0779de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\States\Intro">
+      <UniqueIdentifier>{36c112f0-0529-44ca-a473-1bbdde7a83f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\States\MainMenu">
+      <UniqueIdentifier>{1d8947d0-76a3-48ac-9d27-400678b42670}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\States\InGame">
+      <UniqueIdentifier>{1f161cbc-fb75-479e-bd52-1301b86ac14f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{987cd0b6-b005-4b1f-9cb0-6765b68382dc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Application\Resource.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Application\Window.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Application\Main.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Engine.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Utils.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Keyboard.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\KeyboardEvent.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Mouse.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\MouseEvent.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Application\pch.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Graphics.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GraphicsAdapters.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="World\EntityWorld.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Entity.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\SystemsManager.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\States\GameState.h">
+      <Filter>Engine\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\States\GameStates.h">
+      <Filter>Engine\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\States\Intro\GameStateIntro.h">
+      <Filter>Engine\States\Intro</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\States\MainMenu\GameStateMainMenu.h">
+      <Filter>Engine\States\MainMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\States\InGame\GameStateInGame.h">
+      <Filter>Engine\States\InGame</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\IEngine.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIFrame.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIWindow.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUITypes.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RenderTarget.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Application\Window.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="Application\Main.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Engine.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Utils.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Keyboard.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\KeyboardEvent.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Mouse.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\MouseEvent.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Application\pch.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Graphics.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\GraphicsAdapters.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="World\EntityWorld.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\Entity.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\SystemsManager.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\States\GameState.cpp">
+      <Filter>Engine\States</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\States\Intro\GameStateIntro.cpp">
+      <Filter>Engine\States\Intro</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\States\MainMenu\GameStateMainMenu.cpp">
+      <Filter>Engine\States\MainMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\States\InGame\GameStateInGame.cpp">
+      <Filter>Engine\States\InGame</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUIFrame.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUIWindow.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUITypes.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\RenderTarget.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Application\small.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Application\controls.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Application\controls.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

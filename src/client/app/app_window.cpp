@@ -162,7 +162,6 @@ LRESULT Client::Window::WindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
     {
         UINT bufferSize = 40;
         BYTE *buffer = new BYTE[ 40 ]; // mouse = 40, keyboard = 32
-
         GetRawInputData( (HRAWINPUT)lParam, RID_INPUT, (LPVOID)buffer, &bufferSize, sizeof( RAWINPUTHEADER ) );
         RAWINPUT *raw = (RAWINPUT*)buffer;
 
