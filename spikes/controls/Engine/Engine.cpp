@@ -3,6 +3,53 @@
 #include "Engine.h"
 #include "Window.h"
 
+EngineTimer::EngineTimer()
+{
+    if( !QueryPerformanceFrequency( &frequency ) )
+    {
+        throw new std::runtime_error( "Unable to query engine timer frequency." );
+    }
+
+    if( !QueryPerformanceCounter( &last_time ) )
+    {
+        throw new std::runtime_error( "Unable to query engine timer time." );
+    }
+
+    max_delta = frequency.QuadPart / 10;
+}
+
+float EngineTimer::GetElapsedMillis()
+{
+    LARGE_INTEGER current_time;
+    if( !QueryPerformanceCounter( &current_time ) )
+    {
+        throw new std::runtime_error( "Unable to query engine timer time." );
+    }
+
+    uint64_t delta = current_time.QuadPart - last_time.QuadPart;
+    last_time = current_time;
+    second_counter += delta;
+
+    if( delta > max_delta )
+    {
+        delta = max_delta;
+    }
+
+    delta *= ticks_per_second;
+    delta /= frequency.QuadPart;
+
+    frame_count++;
+    frames_this_second++;
+    if( second_counter >= static_cast<uint64_t>( frequency.QuadPart ) )
+    {
+        frames_per_second = frames_this_second;
+        frames_this_second = 0;
+        second_counter %= frequency.QuadPart;
+    }
+
+    return static_cast<float>( delta ) / 1000.0f;
+}
+
 Engine::Engine( HINSTANCE instance ) :
     window( instance, 1024, 768, keyboard, mouse, graphics )
 {
@@ -11,10 +58,12 @@ Engine::Engine( HINSTANCE instance ) :
 void Engine::Run()
 {
     // Initialize the graphics driver
-    if( !graphics.Initialize( window.GetHwnd(), window.GetWidth(), window.GetHeight() ) )
+    if( !graphics.Initialize( window.GetHwnd() ) )
     {
         return;
     }
+
+    graphics.OnWindowResized( window.GetWidth(), window.GetHeight() );
 
     if( show_intro )
     {
@@ -34,9 +83,8 @@ void Engine::Run()
 
 void Engine::Tick()
 {
-    // TODO <MPA>: Add timers here
-    float timestep = 0.0f;
-
+    float timestep = timer.GetElapsedMillis();
+    state.Tick( timestep );
     for( auto &world : worlds )
     {
         systems.Tick( timestep, *world );
@@ -50,7 +98,7 @@ void Engine::Tick()
         out += "\n";
         OutputDebugStringA( out.c_str() );
     }
-
+     
     while( !keyboard.IsEventBufferEmpty() )
     {
         std::string out = "";

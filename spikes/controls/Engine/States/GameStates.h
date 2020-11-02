@@ -17,7 +17,9 @@ public:
     GameStateBase( GameStateType state_name, IEngine &engine ) : engine( engine ), state_name( state_name ), keyboard( engine.GetKeyboard() ), mouse( engine.GetMouse() ), graphics( engine.GetGraphics() ) {}
     virtual void OnEnterState() {}
     virtual void OnExitState() {}
-    virtual void Tick( float timestep ) {}
+    virtual void Tick( float millisec ) { Update( millisec ); Render( millisec ); }
+    virtual void Update( float millisec ) {}
+    virtual void Render( float millisec ) {}
 
     GameStateType state_name;
     Keyboard &keyboard;

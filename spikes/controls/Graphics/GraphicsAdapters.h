@@ -18,7 +18,9 @@ public:
         ComPtr<IDXGIAdapter> adapter;
         DXGI_ADAPTER_DESC description = { 0 };
         bool supports_msaa4x = false;
+        unsigned int quality_4x = 0;
         bool supports_msaa8x = false;
+        unsigned int quality_8x = 0;
         std::vector<AdapterOutput> outputs;
         Adapter( IDXGIAdapter *adapter );
     };

@@ -10,7 +10,9 @@ public:
 
     virtual void OnEnterState() override;
     virtual void OnExitState() override;
-    virtual void Tick( float timestep ) override;
+    //virtual void Tick( float timestep ) override;
+    virtual void Update( float millisec ) override;
+    virtual void Render( float millisec ) override;
 
 private:
     EntityWorld world;

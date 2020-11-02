@@ -5,15 +5,16 @@
 #include "Utils.h"
 
 Window::Window( HINSTANCE instance, uint16_t width, uint16_t height, Keyboard &keyboard, Mouse &mouse, Graphics &graphics ) :
-    hinstance( instance ),
-    window_title( L"Control Spike" ),
-    window_class( L"Control Spike Window" ),
-    window_width( width ),
-    window_height( height ),
     keyboard( keyboard ),
     mouse( mouse ),
     graphics( graphics )
 {
+    this->hinstance = instance;
+    this->window_title = L"Control Spike";
+    this->window_class = L"Control Spike Window";
+    this->window_width = width;
+    this->window_height = height;
+
     hAccelTable = LoadAccelerators( hinstance, MAKEINTRESOURCE( IDC_CONTROLS ) );
 
     RegisterWindowClass();
@@ -294,6 +295,15 @@ LRESULT CALLBACK Window::WindowProc( HWND hWnd, UINT message, WPARAM wParam, LPA
             //}
         }
         break;
+
+    case WM_SIZE:
+    {
+        UINT width = LOWORD( lParam );
+        UINT height = HIWORD( lParam );
+        graphics.OnWindowResized( (int)width, (int)height );
+        break;
+    }
+
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
@@ -302,9 +312,11 @@ LRESULT CALLBACK Window::WindowProc( HWND hWnd, UINT message, WPARAM wParam, LPA
             EndPaint(hWnd, &ps);
         }
         break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }

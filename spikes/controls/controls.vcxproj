@@ -73,22 +73,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib\Release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib\Release;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -99,10 +99,12 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>DirectXTK_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -114,10 +116,12 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>DirectXTK_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -131,12 +135,14 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>DirectXTK_release.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -150,15 +156,23 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>DirectXTK_release.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="World\ComponentPool.h" />
+    <ClInclude Include="World\ComponentView.h" />
+    <ClInclude Include="World\TypeSequence.h" />
+    <ClInclude Include="World\Systems\PlayerConnectionSystem.h" />
+    <ClInclude Include="World\System.h" />
+    <ClInclude Include="World\Component.h" />
     <ClInclude Include="Engine\Engine.h" />
     <ClInclude Include="Controls\Keyboard.h" />
     <ClInclude Include="Application\Main.h" />
@@ -179,6 +193,7 @@
     <ClInclude Include="GUI\GUITypes.h" />
     <ClInclude Include="GUI\GUIWindow.h" />
     <ClInclude Include="GUI\GUIFrame.h" />
+    <ClInclude Include="Graphics\Shader.h" />
     <ClInclude Include="World\Entity.h" />
     <ClInclude Include="Engine\SystemsManager.h" />
     <ClInclude Include="World\EntityWorld.h" />
@@ -186,6 +201,9 @@
     <ClInclude Include="Graphics\Graphics.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="World\Systems\PlayerConnectionSystem.cpp" />
+    <ClCompile Include="World\System.cpp" />
+    <ClCompile Include="World\Component.cpp" />
     <ClCompile Include="Engine\Engine.cpp" />
     <ClCompile Include="Controls\Keyboard.cpp" />
     <ClCompile Include="Application\Main.cpp" />
@@ -212,6 +230,7 @@
     <ClCompile Include="GUI\GUITypes.cpp" />
     <ClCompile Include="GUI\GUIWindow.cpp" />
     <ClCompile Include="GUI\GUIFrame.cpp" />
+    <ClCompile Include="Graphics\Shader.cpp" />
     <ClCompile Include="World\Entity.cpp" />
     <ClCompile Include="Engine\SystemsManager.cpp" />
     <ClCompile Include="World\EntityWorld.cpp" />

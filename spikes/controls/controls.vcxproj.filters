@@ -35,6 +35,15 @@
     <Filter Include="GUI">
       <UniqueIdentifier>{987cd0b6-b005-4b1f-9cb0-6765b68382dc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Shaders">
+      <UniqueIdentifier>{e8fd7392-d2aa-4706-8d6b-b32e8a71fc20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\Systems">
+      <UniqueIdentifier>{318785bd-5bc2-4ed1-8a6e-9bf1705ae2a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\Components">
+      <UniqueIdentifier>{ed0847b2-cc99-4cf9-8939-f7b45b416974}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Resource.h">
@@ -112,6 +121,27 @@
     <ClInclude Include="Graphics\RenderTarget.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Shader.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Component.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\System.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Systems\PlayerConnectionSystem.h">
+      <Filter>World\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="World\TypeSequence.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ComponentView.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\ComponentPool.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application\Window.cpp">
@@ -179,6 +209,18 @@
     </ClCompile>
     <ClCompile Include="Graphics\RenderTarget.cpp">
       <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Shader.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="World\Component.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\System.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="World\Systems\PlayerConnectionSystem.cpp">
+      <Filter>World\Systems</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -17,7 +17,7 @@ public:
     void SetCharAutoRepeat( bool set ) { is_auto_repeat_chars = set; }
     bool IsEventAutoRepeat() { return is_auto_repeat_events; }
     void SetEventAutoRepeat( bool set ) { is_auto_repeat_events = set; }
-    bool IsKeyPressed( uint8_t key ) { key_states.test( key ); }
+    bool IsKeyPressed( uint8_t key ) { return key_states.test( key ); }
 
 private:
     std::bitset<256> key_states;

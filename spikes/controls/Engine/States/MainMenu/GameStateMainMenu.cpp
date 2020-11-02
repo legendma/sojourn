@@ -17,6 +17,17 @@ void GameStateMainMenu::OnExitState()
     engine.RemoveWorld( &world );
 }
 
-void GameStateMainMenu::Tick( float timestep )
+void GameStateMainMenu::Update( float millisec )
 {
 }
+
+void GameStateMainMenu::Render( float millisec )
+{
+    graphics.Clear( 0.0f, 0.0f, 0.0f, 1.0f );
+    gui_target->Set();
+    graphics.Present();
+}
+
+//void GameStateMainMenu::Tick( float timestep )
+//{
+//}

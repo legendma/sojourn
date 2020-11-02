@@ -9,8 +9,8 @@ std::vector<GraphicsAdapters::Adapter> GraphicsAdapters::GetAdapters()
         return adapters;
     }
 
-    ComPtr<IDXGIFactory> factory;
-    Utils::ComThrow( CreateDXGIFactory( __uuidof(IDXGIFactory), reinterpret_cast<void**>( factory.GetAddressOf() ) ) );
+    ComPtr<IDXGIFactory4> factory;
+    Utils::ComThrow( CreateDXGIFactory1( IID_PPV_ARGS( &factory ) ) );
 
     IDXGIAdapter *adapter = nullptr;
     UINT i = 0;

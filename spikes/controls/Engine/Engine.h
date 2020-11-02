@@ -9,6 +9,27 @@
 #include "SystemsManager.h"
 #include "GameState.h"
 
+class EngineTimer
+{
+public:
+    EngineTimer();
+    float GetElapsedMillis();
+
+    inline uint32_t GetFPS() { return frames_per_second; }
+
+private:
+    LARGE_INTEGER frequency = {0};
+    LARGE_INTEGER last_time = {0};
+    uint64_t max_delta = 0;
+    uint32_t frame_count = 0;
+    uint32_t frames_per_second = 0;
+    uint32_t frames_this_second = 0;
+    uint64_t second_counter = 0;
+
+    // Integer format represents time using 10,000,000 ticks per second.
+    static const uint64_t ticks_per_second = 10000000;
+};
+
 class Engine : public IEngine
 {
 public:
@@ -30,6 +51,7 @@ protected:
     Keyboard keyboard;
     Mouse mouse;
     Graphics graphics;
+    EngineTimer timer;
     SystemsManager systems;
     std::vector<std::shared_ptr<EntityWorld>> worlds;
     GameState state;
