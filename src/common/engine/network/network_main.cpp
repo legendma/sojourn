@@ -304,7 +304,7 @@ Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreateKeepAlive( MemoryAl
     return packet;
 }
 
-Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreatePayload( MemoryAllocatorPtr allocator, NetworkPayloadHeader &header, int message_bytes )
+Engine::NetworkPacketPtr Engine::NetworkPacketFactory::CreatePayload( MemoryAllocatorPtr allocator, NetworkPayloadHeader &header, size_t message_bytes )
 {
     auto ptr = allocator->Allocate( sizeof( NetworkPayloadPacket ), L"NetworkPacketFactory::CreatePayload" );
     auto packet = std::shared_ptr<NetworkPayloadPacket>( new(ptr) NetworkPayloadPacket(), [allocator]( NetworkPayloadPacket *p )

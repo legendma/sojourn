@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Application">
       <UniqueIdentifier>{861d82f7-02de-4691-a81b-cb1aeb353ec6}</UniqueIdentifier>
     </Filter>
@@ -44,12 +40,19 @@
     <Filter Include="World\Components">
       <UniqueIdentifier>{ed0847b2-cc99-4cf9-8939-f7b45b416974}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Application\Platform">
+      <UniqueIdentifier>{38731346-d04b-4095-a61a-b7fd2f2bdbb6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application\Platform\Windows">
+      <UniqueIdentifier>{a9abc97d-6c47-4a14-a96b-bc10fb51193e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application\Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Resource.h">
-      <Filter>Application</Filter>
-    </ClInclude>
-    <ClInclude Include="Application\Window.h">
       <Filter>Application</Filter>
     </ClInclude>
     <ClInclude Include="Application\Main.h">
@@ -133,20 +136,35 @@
     <ClInclude Include="World\Systems\PlayerConnectionSystem.h">
       <Filter>World\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="World\TypeSequence.h">
-      <Filter>World</Filter>
-    </ClInclude>
     <ClInclude Include="World\ComponentView.h">
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="World\ComponentPool.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="World\SparseSet.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Device.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Application\Platform\Platform.h">
+      <Filter>Application\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\TypeSequence.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Application\Platform\Windows\WindowsWindow.h">
+      <Filter>Application\Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="Application\Window.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\PlatformFactory.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application\Window.cpp">
-      <Filter>Application</Filter>
-    </ClCompile>
     <ClCompile Include="Application\Main.cpp">
       <Filter>Application</Filter>
     </ClCompile>
@@ -222,18 +240,30 @@
     <ClCompile Include="World\Systems\PlayerConnectionSystem.cpp">
       <Filter>World\Systems</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Device.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Application\Platform\Platform.cpp">
+      <Filter>Application\Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Application\Platform\Windows\WindowsWindow.cpp">
+      <Filter>Application\Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Application\Window.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Application\small.ico">
-      <Filter>Resource Files</Filter>
+      <Filter>Application\Resource Files</Filter>
     </Image>
     <Image Include="Application\controls.ico">
-      <Filter>Resource Files</Filter>
+      <Filter>Application\Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Application\controls.rc">
-      <Filter>Resource Files</Filter>
+      <Filter>Application\Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -11,7 +11,8 @@ namespace Game
 {
     typedef enum
     {
-        PLAYER_COMPONENT,
+        TEST_COMPONENT,
+        ANOTHER_TEST_COMPONENT,
         COMPONENT_TYPE_CNT
     } GameComponentType;
 

@@ -8,6 +8,8 @@
 #include "EntityWorld.h"
 #include "SystemsManager.h"
 #include "GameState.h"
+#include "PlatformFactory.h"
+#include "TypeSequence.h"
 
 class EngineTimer
 {
@@ -46,8 +48,31 @@ public:
     virtual void AddWorld( EntityWorld *world );
     virtual void RemoveWorld( EntityWorld *world );
 
+    template <typename T>
+    void RegisterPlatform( typename T::Factory &&factory )
+    {
+        auto sequence = PlatformTypeSequence::Id<T>();
+        platform[ sequence ] = std::any( factory );
+    }
+
+    template <typename T, typename ...ARGS>
+    std::unique_ptr<T> CreatePlatform( ARGS&&... args )
+    {
+        return GetPlatformFactory<T>()( std::forward<ARGS>( args )... );
+    }
+
+    template <typename T>
+    decltype( auto ) GetPlatformFactory()
+    {
+        auto sequence = PlatformTypeSequence::Id<T>();
+        return std::any_cast<typename T::Factory>( platform[ sequence ] );
+    }
+
+    std::vector<std::any> platform;
+
 protected:
-    Window window;
+    //Window window;
+    std::unique_ptr<Window> window;
     Keyboard keyboard;
     Mouse mouse;
     Graphics graphics;

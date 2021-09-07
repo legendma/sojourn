@@ -1,12 +1,13 @@
 #pragma once
 
-template <typename... Component>
+template <typename... ComponentType>
 class ComponentView
 {
 public:
-    template <typename... Component>
+    template <typename... ComponentType>
     class Iterator
     {
 
     };
+
 };

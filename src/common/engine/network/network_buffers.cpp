@@ -73,10 +73,10 @@ Engine::InputBitStream::InputBitStream( byte *input, const size_t size, bool own
     std::memcpy( m_buffer, input, size );
 }
 
-void Engine::InputBitStream::WriteBits( byte &out, uint32_t bit_cnt )
+void Engine::InputBitStream::WriteBits( byte &out, size_t bit_cnt )
 {
-    uint32_t byte_offset = m_bit_head / 8;
-    uint32_t bit_offset = m_bit_head % 8;
+    size_t byte_offset = m_bit_head / 8;
+    size_t bit_offset = m_bit_head % 8;
 
     out = m_buffer[byte_offset] >> bit_offset;
 
@@ -107,12 +107,12 @@ void Engine::InputBitStream::Write( sockaddr &out )
 
 byte * Engine::InputBitStream::GetBufferAtCurrent()
 {
-    uint32_t byte_offset = m_bit_head / 8;
+    size_t byte_offset = m_bit_head / 8;
     assert( m_bit_head % 8 == 0 );
     return m_buffer + byte_offset;
 }
 
-void Engine::InputBitStream::WriteBits( void *out, uint32_t bit_cnt )
+void Engine::InputBitStream::WriteBits( void *out, size_t bit_cnt )
 {
     auto destination = reinterpret_cast<byte*>(out);
 
@@ -148,7 +148,7 @@ Engine::OutputBitStream::OutputBitStream( byte *input, const size_t size, bool o
     }
 }
 
-void Engine::OutputBitStream::WriteBits( byte &out, uint32_t bit_cnt )
+void Engine::OutputBitStream::WriteBits( byte &out, size_t bit_cnt )
 {
     auto next_bit_head = m_bit_head + bit_cnt;
 
@@ -157,8 +157,8 @@ void Engine::OutputBitStream::WriteBits( byte &out, uint32_t bit_cnt )
         ReallocateBuffer( std::max( m_bit_capacity * 2, next_bit_head ) );
     }
 
-    uint32_t byte_offset = m_bit_head / 8;
-    uint32_t bit_offset = m_bit_head % 8;
+    size_t byte_offset = m_bit_head / 8;
+    size_t bit_offset = m_bit_head % 8;
 
     auto mask = ~(0xff << bit_offset);
     m_buffer[byte_offset] = (m_buffer[byte_offset] & mask) | (out << bit_offset);
@@ -203,7 +203,7 @@ size_t Engine::OutputBitStream::Collapse()
     return(size);
 }
 
-void Engine::OutputBitStream::WriteBits( void *out, uint32_t bit_cnt )
+void Engine::OutputBitStream::WriteBits( void *out, size_t bit_cnt )
 {
     auto source = reinterpret_cast<byte*>(out);
 

@@ -80,7 +80,7 @@
     <ProjectGuid>{0BBC79B4-B4FF-43FF-8C1C-90F13BC99EB6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SojournClient</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
     <ProjectName>SojournClient</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

@@ -25,6 +25,9 @@
 #include <queue>
 #include <bitset>
 #include <list>
+#include <utility>
+#include <functional>
+#include <any>
 
 using Microsoft::WRL::ComPtr;
 

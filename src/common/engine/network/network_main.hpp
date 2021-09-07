@@ -223,7 +223,7 @@ namespace Engine
         friend class NetworkPacketFactory;
     public:
         NetworkPayloadHeader header;
-        int message_bytes;
+        size_t message_bytes;
 
         static NetworkPacketPtr Read( MemoryAllocatorPtr allocator, InputBitStreamPtr &in );
 
@@ -242,7 +242,7 @@ namespace Engine
         static NetworkPacketPtr CreateDisconnect( MemoryAllocatorPtr allocator );
         static NetworkPacketPtr CreateKeepAlive( MemoryAllocatorPtr allocator, NetworkKeepAliveHeader &header );
         static NetworkPacketPtr CreateKeepAlive( MemoryAllocatorPtr allocator, uint64_t client_id );
-        static NetworkPacketPtr CreatePayload( MemoryAllocatorPtr allocator, NetworkPayloadHeader &header, int message_bytes );
+        static NetworkPacketPtr CreatePayload( MemoryAllocatorPtr allocator, NetworkPayloadHeader &header, size_t message_bytes );
     };
 
     class NetworkCryptoMap

@@ -50,20 +50,20 @@ float EngineTimer::GetElapsedMillis()
     return static_cast<float>( delta ) / 1000.0f;
 }
 
-Engine::Engine( HINSTANCE instance ) :
-    window( instance, 1024, 768, keyboard, mouse, graphics )
+Engine::Engine( HINSTANCE instance )
 {
 }
 
 void Engine::Run()
 {
+    window = CreatePlatform<Window>( 1024, 768 );
     // Initialize the graphics driver
-    if( !graphics.Initialize( window.GetHwnd() ) )
-    {
-        return;
-    }
+    //if( !graphics.Initialize( window->GetHwnd() ) )
+    //{
+    //    return;
+    //}
 
-    graphics.OnWindowResized( window.GetWidth(), window.GetHeight() );
+    graphics.OnWindowResized( window->GetWidth(), window->GetHeight() );
 
     if( show_intro )
     {
@@ -75,7 +75,7 @@ void Engine::Run()
     }
     
     // Run the engine
-    while( window.ProcessMessages() )
+    while( window->ProcessMessages() )
     {
         Tick();
     }

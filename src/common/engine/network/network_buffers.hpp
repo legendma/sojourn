@@ -19,8 +19,8 @@ namespace Engine
 
     protected:
         byte     *m_buffer;
-        uint32_t  m_bit_head;
-        uint32_t  m_bit_capacity;
+        size_t    m_bit_head;
+        size_t    m_bit_capacity;
         bool      m_owned;
 
         void ReallocateBuffer( const size_t size );
@@ -37,13 +37,13 @@ namespace Engine
         size_t GetRemainingByteCount() { return (GetRemainingBitCount() + 7) / 8; }
         byte * GetBufferAtCurrent();
         size_t GetSize() { return (7 + m_bit_capacity) / 8; }
-        uint32_t SaveCurrentLocation() { return m_bit_head; }
-        void SeekToLocation( uint32_t location ) { m_bit_head = location; }
+        size_t SaveCurrentLocation() { return m_bit_head; }
+        void SeekToLocation( size_t location ) { m_bit_head = location; }
 
         void Advance( uint32_t bit_cnt ) { m_bit_head += bit_cnt; }
 
-        void WriteBits( void *out, uint32_t bit_cnt );
-        void WriteBits( byte &out, uint32_t bit_cnt );
+        void WriteBits( void *out, size_t bit_cnt );
+        void WriteBits( byte &out, size_t bit_cnt );
         template <typename T> void Write( T &data, uint32_t bit_cnt = sizeof( T ) * 8 )
         {
             static_assert(std::is_arithmetic<T>::value
@@ -89,8 +89,8 @@ namespace Engine
         size_t GetSize() { return GetCurrentByteCount(); }
         size_t Collapse();
 
-        void WriteBits( void *out, uint32_t bit_cnt );
-        void WriteBits( byte &out, uint32_t bit_cnt );
+        void WriteBits( void *out, size_t bit_cnt );
+        void WriteBits( byte &out, size_t bit_cnt );
 
         template< typename T >
         void Write( T &data, uint32_t bit_cnt = sizeof( T ) * 8 )
@@ -138,8 +138,8 @@ namespace Engine
         size_t GetCurrentByteCount() { return (GetCurrentBitCount() + 7) / 8; }
         size_t GetSize() { return GetCurrentByteCount(); }
 
-        void WriteBits( void *out, uint32_t bit_cnt ) { m_bit_head += bit_cnt; }
-        void WriteBits( byte &out, uint32_t bit_cnt ) { m_bit_head += bit_cnt; }
+        void WriteBits( void *out, size_t bit_cnt ) { m_bit_head += bit_cnt; }
+        void WriteBits( byte &out, size_t bit_cnt ) { m_bit_head += bit_cnt; }
 
         template< typename T >
         void Write( T &data, uint32_t bit_cnt = sizeof( T ) * 8 )

@@ -72,22 +72,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(SolutionDir)Application/Platform;$(SolutionDir)Application/Platform/DirectX;$(SolutionDir)Application/Platform/Windows;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(SolutionDir)Application/Platform;$(SolutionDir)Application/Platform/DirectX;$(SolutionDir)Application/Platform/Windows;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(SolutionDir)Application/Platform;$(SolutionDir)Application/Platform/DirectX;$(SolutionDir)Application/Platform/Windows;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\dep\dxtk\include;$(SolutionDir)World;$(SolutionDir)Controls;$(SolutionDir)Engine;$(SolutionDir)Engine\States;$(SolutionDir)Engine\States\Intro;$(SolutionDir)Engine\States\MainMenu;$(SolutionDir)Engine\States\InGame;$(SolutionDir)Graphics;$(SolutionDir)GUI;$(SolutionDir)Application;$(SolutionDir)Application/Platform;$(SolutionDir)Application/Platform/DirectX;$(SolutionDir)Application/Platform/Windows;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\dep\dxtk\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -167,9 +167,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Application\Platform\Platform.h" />
+    <ClInclude Include="Engine\PlatformFactory.h" />
+    <ClInclude Include="Graphics\Device.h" />
+    <ClInclude Include="Application\Window.h" />
+    <ClInclude Include="World\SparseSet.h" />
     <ClInclude Include="World\ComponentPool.h" />
     <ClInclude Include="World\ComponentView.h" />
-    <ClInclude Include="World\TypeSequence.h" />
+    <ClInclude Include="Engine\TypeSequence.h" />
     <ClInclude Include="World\Systems\PlayerConnectionSystem.h" />
     <ClInclude Include="World\System.h" />
     <ClInclude Include="World\Component.h" />
@@ -183,7 +188,7 @@
     <ClInclude Include="Application\Resource.h" />
     <ClInclude Include="Engine\States\GameStates.h" />
     <ClInclude Include="Engine\Utils.h" />
-    <ClInclude Include="Application\Window.h" />
+    <ClInclude Include="Application\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="Engine\States\GameState.h" />
     <ClInclude Include="Engine\States\Intro\GameStateIntro.h" />
     <ClInclude Include="Engine\States\InGame\GameStateInGame.h" />
@@ -201,6 +206,9 @@
     <ClInclude Include="Graphics\Graphics.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Application\Platform\Platform.cpp" />
+    <ClCompile Include="Graphics\Device.cpp" />
+    <ClCompile Include="Application\Window.cpp" />
     <ClCompile Include="World\Systems\PlayerConnectionSystem.cpp" />
     <ClCompile Include="World\System.cpp" />
     <ClCompile Include="World\Component.cpp" />
@@ -221,7 +229,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Engine\Utils.cpp" />
-    <ClCompile Include="Application\Window.cpp" />
+    <ClCompile Include="Application\Platform\Windows\WindowsWindow.cpp" />
     <ClCompile Include="Engine\States\GameState.cpp" />
     <ClCompile Include="Engine\States\Intro\GameStateIntro.cpp" />
     <ClCompile Include="Engine\States\InGame\GameStateInGame.cpp" />

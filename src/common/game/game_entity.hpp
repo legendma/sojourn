@@ -82,7 +82,7 @@ namespace Game
 
             reinterpret_cast<IGameEntity*>( memory )->m_entity_id = entity_id;
             reinterpret_cast<IGameEntity*>( memory )->m_component_manager = &*m_component_manager;
-            new(memory) GameEntity<T, T::ENTITY_TYPE>( std::forward<ARGS>( args )... );
+            new(memory) T( std::forward<ARGS>( args )... );
 
             return entity_id;
         }
