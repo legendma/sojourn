@@ -7,8 +7,11 @@ set( SOURCE_ROOT_DIR
    )
 
 set( SOURCE_FILES
-     ${SOURCE_ROOT_DIR}/main.cpp
      ${SOURCE_ROOT_DIR}/pch.cpp
+     ${SOURCE_ROOT_DIR}/main.cpp
+     ${SOURCE_ROOT_DIR}/app.cpp
+     ${SOURCE_ROOT_DIR}/directx12.cpp
+     ${SOURCE_ROOT_DIR}/msw.cpp
    )
 
 set( INCLUDE_ROOT_DIR
@@ -17,8 +20,9 @@ set( INCLUDE_ROOT_DIR
 
 set( LIB_DIR ${CMAKE_SOURCE_DIR}/lib )
 set( IMGUI_DIR ${LIB_DIR}/imgui )
+set( IMGUI_FILE_DLG_EXT ${LIB_DIR}/imgui_filedialog )
 
-set( IMGUI_INCLUDE ${IMGUI_DIR} ${IMGUI_DIR}/backends )
+set( IMGUI_INCLUDE ${IMGUI_DIR} ${IMGUI_DIR}/backends ${IMGUI_FILE_DLG_EXT} )
 
 set( IMGUI_LIB_FILES
      ${IMGUI_DIR}/imgui.cpp
@@ -28,6 +32,7 @@ set( IMGUI_LIB_FILES
      ${IMGUI_DIR}/imgui_widgets.cpp
      ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
      ${IMGUI_DIR}/backends/imgui_impl_dx12.cpp
+     ${IMGUI_FILE_DLG_EXT}/ImGuiFileDialog.cpp
    )
 
 add_library( imgui STATIC ${IMGUI_LIB_FILES} )
