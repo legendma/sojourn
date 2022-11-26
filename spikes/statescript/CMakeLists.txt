@@ -12,6 +12,7 @@ set( SOURCE_FILES
      ${SOURCE_ROOT_DIR}/app.cpp
      ${SOURCE_ROOT_DIR}/directx12.cpp
      ${SOURCE_ROOT_DIR}/msw.cpp
+     ${SOURCE_ROOT_DIR}/statescript.cpp
    )
 
 set( INCLUDE_ROOT_DIR
