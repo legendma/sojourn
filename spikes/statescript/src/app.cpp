@@ -32,6 +32,7 @@ node_render.display_name = assets::StateScriptFactory::NodeDisplayNames[ (int)th
 node_render.position = Pos2( 0.0f, 0.0f );
 node_render.extent   = Vec2( 100.0f, 200.0f );
 
+program.node_draw_order.push_back( node_render.asset );
 }
 
 void App::CloseProgram( StateScriptProgramId program_id, StateScriptProgramIds &pending )
@@ -139,9 +140,15 @@ for( auto &it : open_programs )
 
     CloseProgram( program.id, pending_close );
 
+    int new_node_classify = 0;
 
-    gui::BeginChild( "Details Pane", ImVec2( 200, 0 ), true );
-    gui::Text( "Graph:" );
+    gui::BeginChild( "Details Pane", ImVec2( 250, 0 ), true );
+
+    gui::Combo( "##", &new_node_classify, "New Conditional\0" );
+    gui::Separator();
+    gui::NewLine();
+
+    gui::Text( "Program Graph:" );
 
     if( gui::BeginTable( "program_table", 2, /*ImGuiTableFlags_BordersOuter |*/ ImGuiTableFlags_Resizable ) )
         {
@@ -149,10 +156,9 @@ for( auto &it : open_programs )
         gui::TableSetColumnIndex( 0 );
         if( gui::TreeNode( "Nodes" ) )
             {
-            auto &nodes = program.asset.nodes;
-            for( auto i = 0; i < nodes.size(); i++ )
+            for( auto node_id : program.node_draw_order )
                 {
-                auto &node = nodes[ i ];
+                auto &node = assets::StateScriptFactory::GetNodeById( node_id, program.asset );
                 gui::TableNextRow();
                 gui::TableSetColumnIndex( 0 );
                 auto node_name = assets::StateScriptFactory::NodeDisplayNames[(int)node.name].c_str();
@@ -165,7 +171,6 @@ for( auto &it : open_programs )
                         {
                         auto &plug = assets::StateScriptFactory::GetPlugById( plug_id, program.asset );
 
-
                         gui::TableNextRow();
                         gui::TableSetColumnIndex( 0 );
                         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
@@ -173,7 +178,8 @@ for( auto &it : open_programs )
                         gui::TreeNodeEx( plug_name, flags, "%s_%d", plug_name, plug.plug_id );
 
                         gui::TableNextRow();
-                        gui::Text( "Connections" );
+                        gui::TableSetColumnIndex( 0 );
+                        gui::TreeNodeEx( "plug_connections", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Connections:" );
                         gui::TableSetColumnIndex( 1 );
 
                         gui::NextColumn();
@@ -204,7 +210,7 @@ for( auto &it : open_programs )
     gui::BeginChild( "Build View", ImVec2( 0, 0 ), true );
     for( auto node_render : program.nodes )
         {
-        DrawStateScriptNode( node_render );
+        DrawStateScriptNode( node_render, program.asset );
         }
 
     gui::EndChild();
@@ -271,17 +277,81 @@ if( gui::BeginMainMenuBar() )
 }
 
 
-void App::DrawStateScriptNode( const StateScriptNodeRenderable &node )
+void App::DrawStateScriptNode( const StateScriptNodeRenderable &node, const assets::StateScriptProgram &program )
 {
 auto draw_list = gui::GetWindowDrawList();
 auto p = gui::GetCursorScreenPos();
 p.x += node.position.v.x;
 p.y += node.position.v.y;
+auto node_color = ImColor( node.color.v.x, node.color.v.y, node.color.v.z, node.color.v.w );
 
-draw_list->AddRectFilled( ImVec2( p.x, p.y ), ImVec2( p.x + node.extent.v.x, p.y + node.extent.v.y ),
-                          ImColor( node.color.v.x, node.color.v.y, node.color.v.z, node.color.v.z ) );
+/* background */
+draw_list->AddRectFilled( ImVec2( p.x, p.y ), ImVec2( p.x + node.extent.v.x, p.y + node.extent.v.y ), node_color );
 
+/* name */
 auto text_extent = gui::CalcTextSize( node.display_name.c_str() );
 draw_list->AddText( ImVec2( p.x + 0.5f * node.extent.v.x - 0.5f * text_extent.x, p.y + 0.5f * text_extent.y ),
                     ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), node.display_name.c_str() );
+
+/* plugs */
+auto &asset = assets::StateScriptFactory::GetNodeById( node.asset, program );
+std::vector<assets::StateScriptPlugId> plugs;
+assets::StateScriptFactory::GetPlugsForNode( asset.node_id, program, plugs );
+int in_count = 0, out_count = 0;
+for( auto plug_id : plugs )
+    {
+    auto &plug = assets::StateScriptFactory::GetPlugById( plug_id, program );
+    if( assets::StateScriptFactory::IsInputPlug(  plug.name ) ) { in_count++;  }
+    if( assets::StateScriptFactory::IsOutputPlug( plug.name ) ) { out_count++; }
+    }
+
+auto between_in_plugs  = node.extent.v.x / ( in_count  + 1 );
+auto between_out_plugs = node.extent.v.y / ( out_count + 1 );
+const float PLUG_RADIUS = gui::CalcTextSize( "O" ).x;
+
+in_count = out_count = 0;
+for( auto plug_id : plugs )
+    {
+    auto plug_pos = p;
+    auto &plug = assets::StateScriptFactory::GetPlugById( plug_id, program );
+    float text_h_just = 0.0f;
+
+    auto plug_name = assets::StateScriptFactory::NodePlugDisplayNames[(int)plug.name].c_str();
+    auto plug_name_size = gui::CalcTextSize( plug_name );
+    if( assets::StateScriptFactory::IsInputPlug( plug.name ) )
+        {
+        plug_pos.y += between_in_plugs * (float)++in_count;
+        text_h_just = gui::CalcTextSize( "WW" ).x;
+        }
+
+    if( assets::StateScriptFactory::IsOutputPlug( plug.name ) )
+        {
+        plug_pos.x += node.extent.v.x;
+        plug_pos.y += between_out_plugs * (float)++out_count;
+        text_h_just = -gui::CalcTextSize( "WW" ).x - plug_name_size.x;
+        }
+
+    draw_list->AddCircleFilled( plug_pos, PLUG_RADIUS, node_color );
+    draw_list->AddCircle( plug_pos, PLUG_RADIUS, ImColor( 1.0f, 1.0f, 1.0f, 0.8f ) );
+    draw_list->AddText( ImVec2( plug_pos.x + text_h_just, plug_pos.y - 0.5f * plug_name_size.y ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), plug_name );
+    }
+
+}
+
+void App::BringNodeToFront( const assets::StateScriptNodeId node, StateScriptProgramRecord &program )
+{
+auto found = std::find_if( program.node_draw_order.begin(), program.node_draw_order.end(), [node]( assets::StateScriptNodeId search ) { return search == node; } );
+if( found == program.node_draw_order.end() ) return;
+
+program.node_draw_order.erase( found );
+program.node_draw_order.push_back( node );
+}
+
+void App::SendNodeToBack( const assets::StateScriptNodeId node, StateScriptProgramRecord &program )
+{
+auto found = std::find_if( program.node_draw_order.begin(), program.node_draw_order.end(), [node]( assets::StateScriptNodeId search ) { return search == node; } );
+if( found == program.node_draw_order.end() ) return;
+
+program.node_draw_order.erase( found );
+program.node_draw_order.insert( program.node_draw_order.begin(), 1, node );
 }

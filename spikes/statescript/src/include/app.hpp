@@ -30,6 +30,9 @@ class App
         assets::StateScriptProgram  asset;
         std::vector<StateScriptNodeRenderable>
                                     nodes;
+        std::vector<assets::StateScriptNodeId>
+                                    node_draw_order; /* front() == back-most */
+        //Vec2                        canvas_scroll;
         };
     using StateScriptProgramMap = std::unordered_map< StateScriptProgramId, StateScriptProgramRecord >;
 
@@ -45,7 +48,9 @@ class App
     void CloseProgram( StateScriptProgramId program_id, StateScriptProgramIds &pending );
     bool AskUserToSaveProgram( StateScriptProgramId program_id );
     void SaveProgram( StateScriptProgramId program_id );
-    void DrawStateScriptNode( const StateScriptNodeRenderable &node );
+    void DrawStateScriptNode( const StateScriptNodeRenderable &node, const assets::StateScriptProgram& program );
+    void BringNodeToFront( const assets::StateScriptNodeId node, StateScriptProgramRecord &program );
+    void SendNodeToBack( const assets::StateScriptNodeId node, StateScriptProgramRecord& program );
 
 public:
     bool ShowWindow();

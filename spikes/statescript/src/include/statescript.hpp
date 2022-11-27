@@ -71,9 +71,15 @@ public:
     static bool LoadProgram( const std::string filename, StateScriptProgram &program );
 
     static StateScriptNodeId AddNodeToProgram( const StateScriptNodeName the_type, StateScriptProgram& program );
-    StateScriptNodeRecord & GetNodeById( const StateScriptNodeId id, StateScriptProgram& program );
-    static StateScriptPlugRecord & GetPlugById( const StateScriptPlugId id, StateScriptProgram &program );
+    static StateScriptNodeRecord & GetNodeById( const StateScriptNodeId id, const StateScriptProgram &program );
+    static StateScriptPlugRecord & GetPlugById( const StateScriptPlugId id, const StateScriptProgram &program );
     static void GetPlugsForNode( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId> &out );
+    
+    static inline bool IsInputPlug( const StateScriptPlugName plug ) { return( plug >= StateScriptPlugName::STATESCRIPT_PLUG_NAME_IN_FIRST
+                                                                            && plug <= StateScriptPlugName::STATESCRIPT_PLUG_NAME_IN_LAST ); }
+    
+    static inline bool IsOutputPlug( const StateScriptPlugName plug ) { return( plug >= StateScriptPlugName::STATESCRIPT_PLUG_NAME_OUT_FIRST
+                                                                             && plug <= StateScriptPlugName::STATESCRIPT_PLUG_NAME_OUT_LAST ); }
 
     static const std::array<std::string, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> NodeDisplayNames;
     static const std::array<Vec4, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> NodeDisplayColors;

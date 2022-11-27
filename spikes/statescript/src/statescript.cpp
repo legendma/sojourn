@@ -11,8 +11,8 @@ const std::array<std::string, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME
 
 const std::array<Vec4, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> StateScriptFactory::NodeDisplayColors =
     {
-    Vec4( 0.0f, 0.0f, 0.0f, 0.0f ),
-    Vec4( 1.0f, 0.5f, 0.5f, 1.0f )
+    Vec4( 0.0f,  0.0f,  0.0f,  0.0f ),
+    Vec4( 0.38f, 0.17f, 0.12f, 1.0f )
     };
 
 const std::array<std::string, (size_t)StateScriptPlugName::STATESCRIPT_PLUG_NAME_CNT> StateScriptFactory::NodePlugDisplayNames =
@@ -32,14 +32,14 @@ bool assets::StateScriptFactory::LoadProgram( const std::string filename, StateS
     return false;
 }
 
-StateScriptNodeRecord & assets::StateScriptFactory::GetNodeById( const StateScriptNodeId id, StateScriptProgram &program )
+StateScriptNodeRecord & assets::StateScriptFactory::GetNodeById( const StateScriptNodeId id, const StateScriptProgram &program )
 {
-return *std::find_if( program.nodes.begin(), program.nodes.end(), [id]( const StateScriptNodeRecord &record ) { return record.node_id == id; } );
+return const_cast<StateScriptNodeRecord&>( *std::find_if( program.nodes.begin(), program.nodes.end(), [id]( const StateScriptNodeRecord &record ) { return record.node_id == id; } ) );
 }
 
-StateScriptPlugRecord& assets::StateScriptFactory::GetPlugById( const StateScriptPlugId id, StateScriptProgram &program )
+StateScriptPlugRecord& assets::StateScriptFactory::GetPlugById( const StateScriptPlugId id, const StateScriptProgram &program )
 {
-return *std::find_if( program.plugs.begin(), program.plugs.end(), [id]( const StateScriptPlugRecord& record ) { return record.plug_id == id; } );
+return const_cast<StateScriptPlugRecord&>( *std::find_if( program.plugs.begin(), program.plugs.end(), [id]( const StateScriptPlugRecord& record ) { return record.plug_id == id; } ) );
 }
 
 void assets::StateScriptFactory::GetPlugsForNode( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId>& out )
