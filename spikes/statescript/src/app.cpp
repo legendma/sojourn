@@ -2,7 +2,12 @@
 
 #include "app.hpp"
 
+using namespace math;
+
 auto const SAVE_PROGRAM_POPUP = "save_program_popup";
+
+static const ImVec2 ToImVec2( const Vec2 &vec ) { return ImVec2( vec.v.x, vec.v.y ); }
+static const Vec2 FromImVec2( const ImVec2& vec ) { return Vec2( vec.x, vec.y ); }
 
 void App::AddNewStateScriptProgram()
 {
@@ -208,9 +213,53 @@ for( auto &it : open_programs )
     gui::SameLine();
 
     gui::BeginChild( "Build View", ImVec2( 0, 0 ), true );
+
+
+    const ImVec2 view_top_left = gui::GetCursorScreenPos();
+    ImVec2 view_extent = gui::GetContentRegionAvail();
+    if( view_extent.x < 50.0f ) view_extent.x = 50.0f;
+    if( view_extent.y < 50.0f ) view_extent.y = 50.0f;
+    const ImVec2 canvas_bottom_right = ImVec2( view_top_left.x + view_extent.x, view_top_left.y + view_extent.y );
+
+    gui::InvisibleButton( "view_interactions", view_extent, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight );
+    const bool view_hovered = gui::IsItemHovered();
+    const bool view_pressed = gui::IsItemActive();
+    const Vec2 view_origin = Sub( FromImVec2( view_top_left ), program.view_scroll );
+    const Vec2 mouse_in_view_space = Vec2( gui::GetMousePos().x - view_origin.v.x, gui::GetMousePos().y - view_origin.v.y );
+    
+    StateScriptRenderNodes::iterator clicked_node;
+    if( view_hovered
+     && gui::IsMouseClicked( ImGuiMouseButton_Left ) )
+        {
+        program.selected_node = -1;
+        if( GetClickedNode( mouse_in_view_space, program, clicked_node ) )
+            {
+            program.selected_node = clicked_node->asset;
+            BringNodeToFront( program.selected_node, program );
+            }
+        }
+
+    if( view_pressed
+     && gui::IsMouseDragging( ImGuiMouseButton_Left )
+     && GetClickedNode( mouse_in_view_space, program, clicked_node ) )
+        {
+        auto drag_delta = gui::GetMouseDragDelta();
+        auto this_drag_delta = Sub( FromImVec2( drag_delta ), program.last_drag_delta );
+        clicked_node->position = Add( clicked_node->position, this_drag_delta );
+        }
+    
+    if( view_hovered )
+        {
+        program.last_drag_delta = Vec2( 0.0f, 0.0f );
+        if( gui::IsMouseDragging( ImGuiMouseButton_Left ) )
+            {
+            program.last_drag_delta = FromImVec2( gui::GetMouseDragDelta() );
+            }
+        }
+
     for( auto node_render : program.nodes )
         {
-        DrawStateScriptNode( node_render, program.asset );
+        DrawStateScriptNode( view_origin, node_render.asset == program.selected_node, node_render, program.asset );
         }
 
     gui::EndChild();
@@ -277,20 +326,22 @@ if( gui::BeginMainMenuBar() )
 }
 
 
-void App::DrawStateScriptNode( const StateScriptNodeRenderable &node, const assets::StateScriptProgram &program )
+void App::DrawStateScriptNode( const Vec2 origin, const bool selected, const StateScriptNodeRenderable &node, const assets::StateScriptProgram &program )
 {
 auto draw_list = gui::GetWindowDrawList();
-auto p = gui::GetCursorScreenPos();
-p.x += node.position.v.x;
-p.y += node.position.v.y;
+auto p = Add( node.position, origin );
 auto node_color = ImColor( node.color.v.x, node.color.v.y, node.color.v.z, node.color.v.w );
 
 /* background */
-draw_list->AddRectFilled( ImVec2( p.x, p.y ), ImVec2( p.x + node.extent.v.x, p.y + node.extent.v.y ), node_color );
+draw_list->AddRectFilled( ToImVec2( p ), ImVec2( p.v.x + node.extent.v.x, p.v.y + node.extent.v.y ), node_color );
+if( selected )
+    {
+    draw_list->AddRect( ToImVec2( p ), ImVec2( p.v.x + node.extent.v.x, p.v.y + node.extent.v.y ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ) );
+    }
 
 /* name */
 auto text_extent = gui::CalcTextSize( node.display_name.c_str() );
-draw_list->AddText( ImVec2( p.x + 0.5f * node.extent.v.x - 0.5f * text_extent.x, p.y + 0.5f * text_extent.y ),
+draw_list->AddText( ImVec2( p.v.x + 0.5f * node.extent.v.x - 0.5f * text_extent.x, p.v.y + 0.5f * text_extent.y ),
                     ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), node.display_name.c_str() );
 
 /* plugs */
@@ -320,20 +371,20 @@ for( auto plug_id : plugs )
     auto plug_name_size = gui::CalcTextSize( plug_name );
     if( assets::StateScriptFactory::IsInputPlug( plug.name ) )
         {
-        plug_pos.y += between_in_plugs * (float)++in_count;
+        plug_pos.v.y += between_in_plugs * (float)++in_count;
         text_h_just = gui::CalcTextSize( "WW" ).x;
         }
 
     if( assets::StateScriptFactory::IsOutputPlug( plug.name ) )
         {
-        plug_pos.x += node.extent.v.x;
-        plug_pos.y += between_out_plugs * (float)++out_count;
+        plug_pos.v.x += node.extent.v.x;
+        plug_pos.v.y += between_out_plugs * (float)++out_count;
         text_h_just = -gui::CalcTextSize( "WW" ).x - plug_name_size.x;
         }
 
-    draw_list->AddCircleFilled( plug_pos, PLUG_RADIUS, node_color );
-    draw_list->AddCircle( plug_pos, PLUG_RADIUS, ImColor( 1.0f, 1.0f, 1.0f, 0.8f ) );
-    draw_list->AddText( ImVec2( plug_pos.x + text_h_just, plug_pos.y - 0.5f * plug_name_size.y ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), plug_name );
+    draw_list->AddCircleFilled( ToImVec2( plug_pos ), PLUG_RADIUS, node_color );
+    draw_list->AddCircle( ToImVec2( plug_pos ), PLUG_RADIUS, ImColor( 1.0f, 1.0f, 1.0f, 0.8f ) );
+    draw_list->AddText( ImVec2( plug_pos.v.x + text_h_just, plug_pos.v.y - 0.5f * plug_name_size.y ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), plug_name );
     }
 
 }
@@ -353,5 +404,25 @@ auto found = std::find_if( program.node_draw_order.begin(), program.node_draw_or
 if( found == program.node_draw_order.end() ) return;
 
 program.node_draw_order.erase( found );
-program.node_draw_order.insert( program.node_draw_order.begin(), 1, node );
+program.node_draw_order.push_front( node );
 }
+
+bool App::GetClickedNode( const Vec2 view_click, const StateScriptProgramRecord &program, StateScriptRenderNodes::iterator &out_node )
+{
+auto &non_const = const_cast<StateScriptRenderNodes&>( program.nodes );
+for( out_node = non_const.begin(); out_node != non_const.end(); out_node++ ) 
+    {
+    auto &node = *out_node;
+    Vec2 bottom_right = Vec2( node.position.v.x + node.extent.v.x, node.position.v.y + node.extent.v.y );
+    if( view_click.v.x <  node.position.v.x
+     || view_click.v.y <  node.position.v.y
+     || view_click.v.x >= bottom_right.v.x
+     || view_click.v.y >= bottom_right.v.y ) continue;
+
+    return true;
+    }
+
+return false;
+
+}
+

@@ -82,7 +82,7 @@ public:
                                                                              && plug <= StateScriptPlugName::STATESCRIPT_PLUG_NAME_OUT_LAST ); }
 
     static const std::array<std::string, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> NodeDisplayNames;
-    static const std::array<Vec4, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> NodeDisplayColors;
+    static const std::array<math::Vec4, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> NodeDisplayColors;
 
     static const std::array<std::string, (size_t)StateScriptPlugName::STATESCRIPT_PLUG_NAME_CNT> NodePlugDisplayNames;
 

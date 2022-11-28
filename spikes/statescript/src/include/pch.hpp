@@ -5,6 +5,7 @@
 #include <tchar.h>
 
 #include <array>
+#include <deque>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -28,10 +29,13 @@ namespace gui = ImGui;
 #define ARE_BUILDING_WIN32
 #endif
 
+namespace math
+{
 union Vec2
 {
     Vec2() { this->v.x = 0.0f; this->v.y = 0.0f; }
     Vec2( float x, float y ) { this->v.x = x; this->v.y = y; }
+
     struct
     {
         float x;
@@ -69,3 +73,8 @@ union Vec4
     float p[4];
 };
 using Pos4 = Vec4;
+
+inline Vec2 Add( const Vec2 &a, const Vec2 &b ) { return Vec2( a.v.x + b.v.x, a.v.y + b.v.y ); }
+inline Vec2 Sub( const Vec2& a, const Vec2& b ) { return Vec2( a.v.x - b.v.x, a.v.y - b.v.y ); }
+
+}; /* namespace math */

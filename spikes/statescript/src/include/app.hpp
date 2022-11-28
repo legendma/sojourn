@@ -13,14 +13,15 @@ class App
     {
         assets::StateScriptNodeId
                         asset;
-        Pos2            position;
-        Vec2            extent;
-        Vec4            color;
+        math::Pos2      position;
+        math::Vec2      extent;
+        math::Vec4      color;
         std::string     display_name;
     };
 
     using StateScriptProgramId = uint32_t;
     using StateScriptProgramIds = std::vector<StateScriptProgramId>;
+    using StateScriptRenderNodes = std::vector<StateScriptNodeRenderable>;
 
     struct StateScriptProgramRecord
         {
@@ -28,11 +29,12 @@ class App
         std::string                 name = {};
         bool                        is_dirty = false;
         assets::StateScriptProgram  asset;
-        std::vector<StateScriptNodeRenderable>
-                                    nodes;
-        std::vector<assets::StateScriptNodeId>
+        StateScriptRenderNodes      nodes;
+        std::deque<assets::StateScriptNodeId>
                                     node_draw_order; /* front() == back-most */
-        //Vec2                        canvas_scroll;
+        assets::StateScriptNodeId   selected_node = -1;
+        math::Vec2                  view_scroll = {0, 0};
+        math::Vec2                  last_drag_delta = {0, 0 };
         };
     using StateScriptProgramMap = std::unordered_map< StateScriptProgramId, StateScriptProgramRecord >;
 
@@ -48,9 +50,10 @@ class App
     void CloseProgram( StateScriptProgramId program_id, StateScriptProgramIds &pending );
     bool AskUserToSaveProgram( StateScriptProgramId program_id );
     void SaveProgram( StateScriptProgramId program_id );
-    void DrawStateScriptNode( const StateScriptNodeRenderable &node, const assets::StateScriptProgram& program );
+    void DrawStateScriptNode( const math::Vec2 origin, const bool selected, const StateScriptNodeRenderable &node, const assets::StateScriptProgram& program );
     void BringNodeToFront( const assets::StateScriptNodeId node, StateScriptProgramRecord &program );
     void SendNodeToBack( const assets::StateScriptNodeId node, StateScriptProgramRecord& program );
+    bool GetClickedNode( const math::Vec2 view_click, const StateScriptProgramRecord &program, StateScriptRenderNodes::iterator& out_node );
 
 public:
     bool ShowWindow();

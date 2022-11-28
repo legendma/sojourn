@@ -9,10 +9,10 @@ const std::array<std::string, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME
     "EntryPoint"
     };
 
-const std::array<Vec4, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> StateScriptFactory::NodeDisplayColors =
+const std::array<math::Vec4, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> StateScriptFactory::NodeDisplayColors =
     {
-    Vec4( 0.0f,  0.0f,  0.0f,  0.0f ),
-    Vec4( 0.38f, 0.17f, 0.12f, 1.0f )
+    math::Vec4( 0.0f,  0.0f,  0.0f,  0.0f ),
+    math::Vec4( 0.38f, 0.17f, 0.12f, 1.0f )
     };
 
 const std::array<std::string, (size_t)StateScriptPlugName::STATESCRIPT_PLUG_NAME_CNT> StateScriptFactory::NodePlugDisplayNames =
