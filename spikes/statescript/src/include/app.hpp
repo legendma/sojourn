@@ -33,8 +33,14 @@ class App
         std::deque<assets::StateScriptNodeId>
                                     node_draw_order; /* front() == back-most */
         assets::StateScriptNodeId   selected_node = -1;
-        math::Vec2                  view_scroll = {0, 0};
-        math::Vec2                  last_drag_delta = {0, 0 };
+        math::Vec2                  view_scroll = { 0, 0 };
+        math::Vec2                  last_drag_delta = { 0, 0 };
+
+        struct NewNodeSelection 
+            {
+            int         filter_select_idx = 0;
+            int         node_id_select_idx = 0;
+            } new_node_selection;
         };
     using StateScriptProgramMap = std::unordered_map< StateScriptProgramId, StateScriptProgramRecord >;
 

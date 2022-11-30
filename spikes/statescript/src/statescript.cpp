@@ -3,24 +3,40 @@
 
 using namespace assets;
 
-const std::array<std::string, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> StateScriptFactory::NodeDisplayNames =
+const std::array<std::string, (size_t)StateScriptNodeName::CNT> StateScriptFactory::NodeDisplayNames =
     {
     "Invalid",
-    "EntryPoint"
+    "EntryPoint",
+    "Dummy",
+    "Wait",
     };
 
-const std::array<math::Vec4, (size_t)StateScriptNodeName::STATESCRIPT_NODE_NAME_CNT> StateScriptFactory::NodeDisplayColors =
+#define SPECIAL_COLOR     math::Vec4( 0.38f, 0.17f, 0.12f, 1.0f )
+#define CONDITIONAL_COLOR math::Vec4( 0.14f, 0.41f, 0.17f, 1.0f )
+#define STATE_COLOR       math::Vec4( 0.15f, 0.29f, 0.28f, 1.0f )
+ 
+const std::array<math::Vec4, (size_t)StateScriptNodeName::CNT> StateScriptFactory::NodeDisplayColors =
     {
     math::Vec4( 0.0f,  0.0f,  0.0f,  0.0f ),
-    math::Vec4( 0.38f, 0.17f, 0.12f, 1.0f )
+    SPECIAL_COLOR,
+    CONDITIONAL_COLOR,
+    STATE_COLOR
     };
 
-const std::array<std::string, (size_t)StateScriptPlugName::STATESCRIPT_PLUG_NAME_CNT> StateScriptFactory::NodePlugDisplayNames =
+const std::array<std::string, (size_t)StateScriptPlugName::CNT> StateScriptFactory::NodePlugDisplayNames =
     {
     "Invalid",
     "In",
-    "IActivate",
-    "Out"
+    "IDummy",
+    "Out",
+    "SubGraph"
+    };
+
+const std::array<std::string, (size_t)StateScriptNodeFilterId::CNT> StateScriptFactory::NodeFilterDisplayNames =
+    {
+    "Special",
+    "Conditional",
+    "State"
     };
 
 void assets::StateScriptFactory::SaveProgram( const StateScriptProgram& program, const std::string filename )
@@ -60,9 +76,9 @@ node.name = the_type;
 
 switch( the_type )
     {
-    case StateScriptNodeName::STATESCRIPT_NODE_NAME_ENTRY_POINT:
+    case StateScriptNodeName::ENTRY_POINT:
         {
-        AddPlugToNode( node.node_id, StateScriptPlugName::STATESCRIPT_PLUG_NAME_OUT_DEFAULT, program );
+        AddPlugToNode( node.node_id, StateScriptPlugName::OUT_DEFAULT, program );
         }
         break;
     }

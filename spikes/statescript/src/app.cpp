@@ -19,7 +19,7 @@ os << next_statescript_program_id;
 new_program.name = os.str();
 new_program.is_dirty = true;
 
-AddNewNodeToProgram( assets::StateScriptNodeName::STATESCRIPT_NODE_NAME_ENTRY_POINT, new_program );
+AddNewNodeToProgram( assets::StateScriptNodeName::ENTRY_POINT, new_program );
 
 ++next_statescript_program_id;
 selected_program_id = new_program.id;
@@ -145,11 +145,88 @@ for( auto &it : open_programs )
 
     CloseProgram( program.id, pending_close );
 
-    int new_node_classify = 0;
-
     gui::BeginChild( "Details Pane", ImVec2( 250, 0 ), true );
 
-    gui::Combo( "##", &new_node_classify, "New Conditional\0" );
+    gui::PushID( (void*)&program.new_node_selection.filter_select_idx );
+    auto label = assets::StateScriptFactory::NodeFilterDisplayNames[ program.new_node_selection.filter_select_idx ].c_str();
+    if( gui::BeginCombo( "##", label ) )
+        {
+        for( auto filter = 0; filter < (int)assets::StateScriptNodeFilterId::CNT; filter++ )
+            {
+            auto is_selected = filter == program.new_node_selection.filter_select_idx;
+            if( gui::Selectable( assets::StateScriptFactory::NodeFilterDisplayNames[ filter ].c_str(), is_selected ) )
+                {
+                program.new_node_selection.filter_select_idx = filter;
+                program.new_node_selection.node_id_select_idx = 0;
+                }
+
+            if( is_selected )
+                {
+                gui::SetItemDefaultFocus();
+                }
+            }
+
+        gui::EndCombo();
+        }
+    gui::PopID();
+
+    std::vector<assets::StateScriptNodeName> selection_node_names;
+    switch( program.new_node_selection.filter_select_idx )
+        {
+        case (int)assets::StateScriptNodeFilterId::SPECIAL:
+            for( auto name : assets::SPECIAL_NODES_FILTER )
+                {
+                selection_node_names.push_back( name );
+                }
+            break;
+
+        case (int)assets::StateScriptNodeFilterId::CONDITIONAL:
+            for( auto name : assets::CONDITIONAL_NODES_FILTER )
+                {
+                selection_node_names.push_back( name );
+                }
+            break;
+
+        case (int)assets::StateScriptNodeFilterId::STATE:
+            for( auto name : assets::STATE_NODES_FILTER )
+                {
+                selection_node_names.push_back( name );
+                }
+            break;
+        }
+
+    auto prev_node_name = selection_node_names[ program.new_node_selection.node_id_select_idx ];
+    gui::PushID( (void*)&program.new_node_selection.node_id_select_idx );
+    label = assets::StateScriptFactory::NodeDisplayNames[ (int)prev_node_name].c_str();
+    if( gui::BeginCombo( "##", label ) )
+        {
+        for( auto name_idx = 0; name_idx < selection_node_names.size(); name_idx++ )
+            {
+            auto this_node_name = selection_node_names[ name_idx ];
+            label = assets::StateScriptFactory::NodeDisplayNames[ (int)this_node_name ].c_str();
+            auto is_selected = program.new_node_selection.node_id_select_idx == name_idx;
+            if( gui::Selectable( label, is_selected ) )
+                {
+                program.new_node_selection.node_id_select_idx = name_idx;
+                }
+
+            if( is_selected )
+                {
+                gui::SetItemDefaultFocus();
+                }
+            }
+
+        gui::EndCombo();
+        }
+    gui::PopID();
+
+    gui::SameLine();
+    if( gui::Button( "Add" ) )
+        {
+        auto new_node_to_add = selection_node_names[ program.new_node_selection.node_id_select_idx ];
+        AddNewNodeToProgram( new_node_to_add, program );
+        }
+
     gui::Separator();
     gui::NewLine();
 
@@ -214,7 +291,6 @@ for( auto &it : open_programs )
 
     gui::BeginChild( "Build View", ImVec2( 0, 0 ), true );
 
-
     const ImVec2 view_top_left = gui::GetCursorScreenPos();
     ImVec2 view_extent = gui::GetContentRegionAvail();
     if( view_extent.x < 50.0f ) view_extent.x = 50.0f;
@@ -257,9 +333,10 @@ for( auto &it : open_programs )
             }
         }
 
-    for( auto node_render : program.nodes )
+    for( auto node_draw : program.node_draw_order )
         {
-        DrawStateScriptNode( view_origin, node_render.asset == program.selected_node, node_render, program.asset );
+        auto &node_record = std::find_if( program.nodes.begin(), program.nodes.end(), [node_draw]( const StateScriptNodeRenderable &r ){ return r.asset == node_draw; } );
+        DrawStateScriptNode( view_origin, node_record->asset == program.selected_node, *node_record, program.asset );
         }
 
     gui::EndChild();
@@ -410,8 +487,9 @@ program.node_draw_order.push_front( node );
 bool App::GetClickedNode( const Vec2 view_click, const StateScriptProgramRecord &program, StateScriptRenderNodes::iterator &out_node )
 {
 auto &non_const = const_cast<StateScriptRenderNodes&>( program.nodes );
-for( out_node = non_const.begin(); out_node != non_const.end(); out_node++ ) 
+for( auto index = program.node_draw_order.rbegin(); index != program.node_draw_order.rend(); index++ ) 
     {
+    out_node = std::find_if( non_const.begin(), non_const.end(), [index]( const StateScriptNodeRenderable&r ){ return r.asset == *index; } );
     auto &node = *out_node;
     Vec2 bottom_right = Vec2( node.position.v.x + node.extent.v.x, node.position.v.y + node.extent.v.y );
     if( view_click.v.x <  node.position.v.x
