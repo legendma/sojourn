@@ -2,10 +2,12 @@
 
 namespace assets
 {
+using StateScriptUID = uint32_t;
+using StateScriptNodeId = StateScriptUID;
+using StateScriptPlugId = StateScriptUID;
+using StateScriptWireId = StateScriptUID;
 
-using StateScriptNodeId = uint32_t;
-using StateScriptPlugId = uint32_t;
-using StateScriptWireId = uint32_t;
+static const StateScriptUID INVALID_ASSET_ID = std::numeric_limits<StateScriptUID>::max();
 
 enum class StateScriptNodeName
 {
@@ -29,7 +31,9 @@ enum class StateScriptNodeName
 enum class StateScriptNodeFilterId
     {
     SPECIAL,
-    CONDITIONAL,
+    FIRST_NON_SPECIAL,
+
+    CONDITIONAL = FIRST_NON_SPECIAL,
     STATE,
     /* Count */
     CNT
@@ -113,9 +117,12 @@ public:
     static bool LoadProgram( const std::string filename, StateScriptProgram &program );
 
     static StateScriptNodeId AddNodeToProgram( const StateScriptNodeName the_type, StateScriptProgram& program );
+    static StateScriptWireId AddConnectionToProgram( const StateScriptPlugId from, const StateScriptPlugId to, StateScriptProgram &program );
     static StateScriptNodeRecord & GetNodeById( const StateScriptNodeId id, const StateScriptProgram &program );
     static StateScriptPlugRecord & GetPlugById( const StateScriptPlugId id, const StateScriptProgram &program );
+    static StateScriptPlugWireRecord & GetWireById( const StateScriptWireId id, const StateScriptProgram &program );
     static void EnumerateNodePlugs( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId> &out );
+    static void EnumeratePlugConnections( const StateScriptPlugId plug, const StateScriptProgram &program, std::vector<StateScriptWireId> &out );
     
     static inline bool IsInputPlug( const StateScriptPlugName plug ) { return( plug >= StateScriptPlugName::FIRST_IN
                                                                             && plug <= StateScriptPlugName::LAST_IN ); }

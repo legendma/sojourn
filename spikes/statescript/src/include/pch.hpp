@@ -43,6 +43,7 @@ union Vec2
     static inline Vec2 Sub( const Vec2 &a, const Vec2 &b ) { return Vec2( a.v.x - b.v.x, a.v.y - b.v.y ); }
     static inline Vec2 Scale( const float scalar, const Vec2 &vec ) { return Vec2( scalar * vec.v.x, scalar * vec.v.y ); }
     static inline Vec2 Scale( const float x, const float y, const Vec2& vec ) { return Vec2( x * vec.v.x, y * vec.v.y ); }
+    static inline float Magnitude( const Vec2 &vec ) { return std::sqrtf( vec.v.x * vec.v.x + vec.v.y * vec.v.y ); }
 
     struct
     {

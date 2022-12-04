@@ -236,6 +236,9 @@ for( auto &it : open_programs )
         {
         for( auto filter = 0; filter < (int)assets::StateScriptNodeFilterId::CNT; filter++ )
             {
+            if( filter == (int)assets::StateScriptNodeFilterId::SPECIAL )
+                continue;
+
             auto is_selected = filter == program.new_node_selection.filter_select_idx;
             if( gui::Selectable( assets::StateScriptFactory::NodeFilterDisplayNames[ filter ].c_str(), is_selected ) )
                 {
@@ -344,8 +347,31 @@ for( auto &it : open_programs )
 
                         gui::TableNextRow();
                         gui::TableSetColumnIndex( 0 );
-                        gui::TreeNodeEx( "plug_connections", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Connections:" );
+                        gui::TreeNodeEx( "plug_connections", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Connected:" );
                         gui::TableSetColumnIndex( 1 );
+                        std::vector<assets::StateScriptWireId> connections;
+                        assets::StateScriptFactory::EnumeratePlugConnections( plug.plug_id, program.asset, connections );
+                        std::ostringstream os;
+                        for( auto connection : connections )
+                            {
+                            auto &wire = assets::StateScriptFactory::GetWireById( connection, program.asset );
+                            auto other_plug_id = wire.to;
+                            if( wire.to == plug_id )
+                                {
+                                other_plug_id = wire.from;
+                                }
+
+                            if( !os.str().empty() )
+                                {
+                                os << ", ";
+                                }
+
+                            auto &other_plug = assets::StateScriptFactory::GetPlugById( other_plug_id, program.asset );
+                            os << assets::StateScriptFactory::NodePlugDisplayNames[ (int)other_plug.name ] + "_";
+                            os << other_plug_id;
+                            }
+
+                        gui::TreeNodeEx( "plug_connections", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, os.str().c_str() );
 
                         gui::NextColumn();
                         }
@@ -361,14 +387,7 @@ for( auto &it : open_programs )
 
         gui::EndTable();
         }
-    //for( int i = 0; i < 100; i++ )
-    //{
-    //    // FIXME: Good candidate to use ImGuiSelectableFlags_SelectOnNav
-    //    char label[128];
-    //    sprintf( label, "MyObject %d", i );
-    //    if( ImGui::Selectable( label, selected == i ) )
-    //        selected = i;
-    //}
+
     gui::EndChild();
     gui::SameLine();
 
@@ -385,22 +404,64 @@ for( auto &it : open_programs )
     const bool view_pressed = gui::IsItemActive();
     const Vec2 view_origin = Vec2::Sub( FromImVec2( view_top_left ), program.view_scroll );
     const Vec2 mouse_in_view_space = Vec2( gui::GetMousePos().x - view_origin.v.x, gui::GetMousePos().y - view_origin.v.y );
-    
-    StateScriptRenderNodes::iterator clicked_node;
+
+    const auto last_selected_node = program.selected_node;
+
     if( view_hovered
      && gui::IsMouseClicked( ImGuiMouseButton_Left ) )
         {
-        program.selected_node = -1;
-        if( GetClickedNode( mouse_in_view_space, program, clicked_node ) )
+        program.selected_node = assets::INVALID_ASSET_ID;
+        StateScriptRenderNodesIterator clicked_node;
+        StateScriptNodeRenderable::PlugsIterator clicked_plug;
+        if( CollidePointWithTopMostNodePlug( mouse_in_view_space, program, clicked_plug, clicked_node ) )
+            {
+            auto &create_state = program.create_node_connections;
+            if( !create_state.is_active )
+                {
+                std::vector<assets::StateScriptPlugId> connections;
+                if( last_selected_node == clicked_node->asset )
+                    {
+                    const bool has_connections = !connections.empty();
+                    if( !has_connections )
+                        {
+                        create_state.is_active = true;
+                        create_state.originating_plug = clicked_plug->asset;
+                        }
+                    }
+                }
+            else if( create_state.originating_plug == clicked_plug->asset )
+                {
+                create_state.is_active = false;
+                create_state.originating_plug = assets::INVALID_ASSET_ID;
+                }
+            else
+                {
+                auto &from = assets::StateScriptFactory::GetPlugById( create_state.originating_plug, program.asset );
+                auto &to = assets::StateScriptFactory::GetPlugById( clicked_plug->asset, program.asset );
+
+                if( assets::StateScriptFactory::IsInputPlug( from.name ) != assets::StateScriptFactory::IsInputPlug( to.name ) )
+                    {
+                    assets::StateScriptFactory::AddConnectionToProgram( from.plug_id, to.plug_id, program.asset );
+                    }
+
+                create_state.is_active = false;
+                create_state.originating_plug = assets::INVALID_ASSET_ID;
+                }
+
+            program.selected_node = clicked_node->asset;
+            }
+
+        if( CollidePointWithTopMostNode( mouse_in_view_space, program, clicked_node ) )
             {
             program.selected_node = clicked_node->asset;
             BringNodeToFront( program.selected_node, program );
             }
         }
 
+    StateScriptRenderNodes::iterator clicked_node;
     if( view_pressed
      && gui::IsMouseDragging( ImGuiMouseButton_Left )
-     && GetClickedNode( mouse_in_view_space, program, clicked_node ) )
+     && CollidePointWithTopMostNode( mouse_in_view_space, program, clicked_node ) )
         {
         auto drag_delta = gui::GetMouseDragDelta();
         auto this_drag_delta = Vec2::Sub( FromImVec2( drag_delta ), program.last_drag_delta );
@@ -419,7 +480,7 @@ for( auto &it : open_programs )
     for( auto node_draw : program.node_draw_order )
         {
         auto &node_record = std::find_if( program.nodes.begin(), program.nodes.end(), [node_draw]( const StateScriptNodeRenderable &r ){ return r.asset == node_draw; } );
-        DrawStateScriptNode( view_origin, node_record->asset == program.selected_node, *node_record, program.asset );
+        DrawStateScriptNode( view_origin, node_record->asset == program.selected_node, *node_record, program );
         }
 
     gui::EndChild();
@@ -437,6 +498,18 @@ for( auto program_id : pending_close )
 
 bool App::ShowWindow()
 {
+if( show_imgui_demo )
+    {
+    gui::ShowDemoWindow();
+    }
+
+if( !is_init )
+    {
+    is_init = true;
+
+    AddNewStateScriptProgram();
+    }
+
 bool done = false;
 
 if( current_workflow == WorkflowId::WORKFLOW_ID_STATESCRIPT )
@@ -452,6 +525,11 @@ if( gui::BeginMainMenuBar() )
         if( current_workflow == WorkflowId::WORKFLOW_ID_STATESCRIPT )
             {
             needs_separator = true;
+            if( gui::MenuItem( "New Program" ) )
+                {
+                AddNewStateScriptProgram();
+                }
+
             if( gui::MenuItem( "Load Program" ) )
                 {
             
@@ -474,6 +552,12 @@ if( gui::BeginMainMenuBar() )
         gui::EndMenu();
         }
 
+    if( gui::BeginMenu( "ImGui" ) )
+        {
+        show_imgui_demo = true;
+        gui::EndMenu();
+        }
+
     if( current_workflow == WorkflowId::WORKFLOW_ID_STATESCRIPT )
     {
         ShowMainMenuStateScript();
@@ -486,8 +570,10 @@ if( gui::BeginMainMenuBar() )
 }
 
 
-void App::DrawStateScriptNode( const Vec2 origin, const bool selected, const StateScriptNodeRenderable &node, const assets::StateScriptProgram &program )
+void App::DrawStateScriptNode( const Vec2 origin, const bool selected, const StateScriptNodeRenderable &node, const StateScriptProgramRecord &program )
 {
+static const float WIRE_THICKNESS = 2.0f;
+
 auto draw_list = gui::GetWindowDrawList();
 auto abb_world = node.abb;
 abb_world.position = Vec2::Add( node.abb.position, origin );
@@ -524,6 +610,43 @@ auto draw_plugs = [draw_list, node_color, rect_upper_left]( const std::vector<St
 draw_plugs( node.in_plugs );
 draw_plugs( node.out_plugs );
 
+/* connections */
+for( auto &connection : program.asset.connections )
+    {
+    auto find_render_node = [program]( const assets::StateScriptPlugId plug_id )
+        {
+        auto plug_asset = assets::StateScriptFactory::GetPlugById( plug_id, program.asset );
+        auto node_asset = assets::StateScriptFactory::GetNodeById( plug_asset.owner_node_id, program.asset );
+        
+        return std::find_if( program.nodes.begin(), program.nodes.end(), [node_asset]( const StateScriptNodeRenderable &node ) { return node.asset == node_asset.node_id; } );
+        };
+
+    auto from_node = find_render_node( connection.from );
+    auto to_node = find_render_node( connection.to );
+
+
+    auto find_render_plug = [connection]( const assets::StateScriptPlugId plug_id, const StateScriptNodeRenderable &node )
+        {
+        auto find_plug = [plug_id]( const StateScriptNodeRenderable::Plug &plug ) { return plug.asset == plug_id; };
+        auto ret = std::find_if( node.in_plugs.begin(), node.in_plugs.end(), find_plug );
+        if( ret == node.in_plugs.end() )
+            {
+            ret = std::find_if( node.out_plugs.begin(), node.out_plugs.end(), find_plug );
+            }
+
+        return ret;
+        };
+    
+    auto from_plug = find_render_plug( connection.from, *from_node );
+    auto to_plug = find_render_plug( connection.to, *to_node );
+
+
+    auto start_point = Vec2::Add( origin, Vec2::Add( from_node->abb.position, from_plug->jack_position ) );
+    auto end_point   = Vec2::Add( origin, Vec2::Add( to_node->abb.position, to_plug->jack_position ) );
+    
+    draw_list->AddLine( ToImVec2( start_point ), ToImVec2( end_point ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), WIRE_THICKNESS );
+    }
+
 }
 
 void App::BringNodeToFront( const assets::StateScriptNodeId node, StateScriptProgramRecord &program )
@@ -544,7 +667,7 @@ program.node_draw_order.erase( found );
 program.node_draw_order.push_front( node );
 }
 
-bool App::GetClickedNode( const Vec2 view_click, const StateScriptProgramRecord &program, StateScriptRenderNodes::iterator &out_node )
+bool App::CollidePointWithTopMostNode( const Vec2 view_click, const StateScriptProgramRecord &program, StateScriptRenderNodesIterator &out_node )
 {
 auto &non_const = const_cast<StateScriptRenderNodes&>( program.nodes );
 for( auto index = program.node_draw_order.rbegin(); index != program.node_draw_order.rend(); index++ ) 
@@ -564,4 +687,35 @@ for( auto index = program.node_draw_order.rbegin(); index != program.node_draw_o
 return false;
 
 }
+
+bool App::CollidePointWithTopMostNodePlug( const Vec2 view_click, const StateScriptProgramRecord &program, StateScriptNodeRenderable::PlugsIterator &out_plug, StateScriptRenderNodesIterator &out_node )
+{
+auto &non_const = const_cast<StateScriptRenderNodes&>( program.nodes );
+for( auto index = program.node_draw_order.rbegin(); index != program.node_draw_order.rend(); index++ ) 
+    {
+    out_node = std::find_if( non_const.begin(), non_const.end(), [index]( const StateScriptNodeRenderable&r ){ return r.asset == *index; } );
+    auto &node = *out_node;
+    auto click_in_node_space = Vec2::Sub( view_click, node.abb.position );
+
+    auto collide_plugs = [click_in_node_space]( StateScriptNodeRenderable::Plugs &plugs, StateScriptNodeRenderable::PlugsIterator &out_plug )
+        {
+        for( out_plug = plugs.begin(); out_plug != plugs.end(); out_plug++ )
+            {
+            if( Vec2::Magnitude( Vec2::Sub( out_plug->jack_position, click_in_node_space ) ) < out_plug->jack_radius )
+                {
+                return true;
+                }
+            }
+
+        return false;
+        };
+
+    if( collide_plugs( node.in_plugs, out_plug )
+     || collide_plugs( node.out_plugs, out_plug ) )
+        return true;
+    }
+
+return false;
+}
+
 

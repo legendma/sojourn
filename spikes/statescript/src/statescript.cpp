@@ -60,12 +60,43 @@ StateScriptPlugRecord& assets::StateScriptFactory::GetPlugById( const StateScrip
 return const_cast<StateScriptPlugRecord&>( *std::find_if( program.plugs.begin(), program.plugs.end(), [id]( const StateScriptPlugRecord& record ) { return record.plug_id == id; } ) );
 }
 
-void assets::StateScriptFactory::EnumerateNodePlugs( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId>& out )
+StateScriptPlugWireRecord &assets::StateScriptFactory::GetWireById( const StateScriptWireId id, const StateScriptProgram &program )
+{
+return const_cast<StateScriptPlugWireRecord&>( *std::find_if( program.connections.begin(), program.connections.end(), [id]( const StateScriptPlugWireRecord & record ) { return record.wire_id == id; } ) );
+}
+
+StateScriptWireId assets::StateScriptFactory::AddConnectionToProgram( const StateScriptPlugId from, const StateScriptPlugId to, StateScriptProgram &program )
+{
+assert( IsInputPlug( GetPlugById( from, program ).name ) != IsInputPlug( GetPlugById( to, program ).name ) );
+program.connections.emplace_back();
+auto &connect = program.connections.back();
+
+connect.wire_id = GenerateNewUid();
+connect.from = from;
+connect.to = to;
+
+return connect.wire_id;
+}
+
+void assets::StateScriptFactory::EnumerateNodePlugs( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId> &out )
 {
 out.clear();
-for( auto i = 0; i < program.plugs.size(); i++ )
+for( auto &plug : program.plugs )
     {
-    if( program.plugs[ i ].owner_node_id == node ) out.push_back( program.plugs[ i ].plug_id );
+    if( plug.owner_node_id == node ) out.push_back( plug.plug_id );
+    }
+}
+
+void assets::StateScriptFactory::EnumeratePlugConnections( const StateScriptPlugId plug, const StateScriptProgram &program, std::vector<StateScriptWireId> &out )
+{
+out.clear();
+for( auto &wire : program.connections )
+    {
+    if( wire.from == plug
+     || wire.to == plug )
+        {
+        out.push_back( wire.wire_id );
+        }
     }
 }
 
