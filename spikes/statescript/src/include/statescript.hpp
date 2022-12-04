@@ -63,12 +63,14 @@ enum class StateScriptPlugName
     /* In plugs */
     FIRST_IN,
     IN_DEFAULT = FIRST_IN,
-    IN_DUMMY,
-    LAST_IN    = IN_DUMMY,
+    IN_BEGIN_STATE,
+    LAST_IN    = IN_BEGIN_STATE,
 
     /* Out plugs */
     FIRST_OUT,
     OUT_DEFAULT = FIRST_OUT,
+    OUT_ON_ABORT,
+    OUT_ON_COMPLETE,
     OUT_SUBGRAPH,
     LAST_OUT    = OUT_SUBGRAPH,
 
@@ -113,7 +115,7 @@ public:
     static StateScriptNodeId AddNodeToProgram( const StateScriptNodeName the_type, StateScriptProgram& program );
     static StateScriptNodeRecord & GetNodeById( const StateScriptNodeId id, const StateScriptProgram &program );
     static StateScriptPlugRecord & GetPlugById( const StateScriptPlugId id, const StateScriptProgram &program );
-    static void GetPlugsForNode( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId> &out );
+    static void EnumerateNodePlugs( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId> &out );
     
     static inline bool IsInputPlug( const StateScriptPlugName plug ) { return( plug >= StateScriptPlugName::FIRST_IN
                                                                             && plug <= StateScriptPlugName::LAST_IN ); }

@@ -25,19 +25,102 @@ AddNewNodeToProgram( assets::StateScriptNodeName::ENTRY_POINT, new_program );
 selected_program_id = new_program.id;
 }
 
+void App::BuildNodeRenderable( StateScriptNodeRenderable &node, assets::StateScriptNodeId asset, std::string &name, Vec2 &position, Vec4 &color, const assets::StateScriptProgram &program )
+{
+static const auto DISPLAY_NAME_MARGINS = Vec2( 5.0f, 3.0f );
+static const auto PLUG_LABEL_MARGINS = Vec2( 4.0f, 3.0f );
+const auto PLUG_RADIUS = gui::CalcTextSize( "O" ).x;
+const auto BETWEEN_IN_AND_OUT_LABELS_H_MARGIN = 20.0f;
 
-void App::AddNewNodeToProgram( const assets::StateScriptNodeName the_type, StateScriptProgramRecord& program )
+node.asset = asset;
+node.color = color;
+node.name = name;
+node.abb.position = position;
+
+std::vector<assets::StateScriptPlugId> plug_ids;
+assets::StateScriptFactory::EnumerateNodePlugs( node.asset, program, plug_ids );
+for( auto plug_id : plug_ids )
+{
+    auto &plug = assets::StateScriptFactory::GetPlugById( plug_id, program );
+    auto render_plugs = std::ref( node.in_plugs );
+
+    if( assets::StateScriptFactory::IsOutputPlug( plug.name ) )
+        {
+        render_plugs = std::ref( node.out_plugs );
+        }
+
+    render_plugs.get().emplace_back();
+    auto &render_plug = render_plugs.get().back();
+    render_plug.asset = plug_id;
+    render_plug.label = assets::StateScriptFactory::NodePlugDisplayNames[ (int)plug.name ];
+    render_plug.jack_radius = PLUG_RADIUS;
+}
+
+auto name_abb = ABB2( Pos2(), Vec2::Scale( 2.0f, DISPLAY_NAME_MARGINS ) );
+auto name_size = FromImVec2( gui::CalcTextSize( node.name.c_str() ) );
+name_abb.extent = Vec2::Add( name_abb.extent, name_size );
+
+auto grow_plug_abb = []( std::vector<App::StateScriptNodeRenderable::Plug> &plugs, ABB2 &abb )
+    {
+    for( auto &plug_render : plugs )
+        {
+        auto text_size = gui::CalcTextSize( plug_render.label.c_str() );
+        abb.extent.v.x = std::max( abb.extent.v.x, 2.0f * PLUG_LABEL_MARGINS.v.x + text_size.x );
+        abb.extent.v.y += 2.0f * PLUG_LABEL_MARGINS.v.y + text_size.y;
+        }
+    };
+
+auto ins_abb = ABB2( Pos2( 0.0f, name_abb.extent.v.y), Vec2() );
+auto outs_abb = ins_abb;
+grow_plug_abb( node.in_plugs, ins_abb );
+grow_plug_abb( node.out_plugs, outs_abb );
+outs_abb.position.v.x = ins_abb.position.v.x + ins_abb.extent.v.x;
+
+auto plugs_abb = ABB2::Union( ins_abb, outs_abb );
+plugs_abb.extent.v.x += BETWEEN_IN_AND_OUT_LABELS_H_MARGIN;
+
+node.abb.extent = ABB2::Union( name_abb, plugs_abb ).extent;
+node.name_position = Pos2::Add( node.abb.position, Vec2::Scale( 0.5f, Vec2( node.abb.extent.v.x - name_size.v.x, 0.0f ) ) );
+node.name_position.v.y += DISPLAY_NAME_MARGINS.v.y;
+
+int i = 0;
+for( auto it = node.in_plugs.rbegin(); it != node.in_plugs.rend(); it++, i++ )
+    {
+    auto text_size = FromImVec2( gui::CalcTextSize( it->label.c_str() ) );
+    auto text_size_and_margins = Vec2::Add( text_size, PLUG_LABEL_MARGINS );
+    auto y = node.abb.extent.v.y - ( (float)i + 0.5f ) * text_size_and_margins.v.y;
+    auto x = 0.0f;
+    it->jack_position = Pos2( x, y );
+    it->label_position = Pos2( x + it->jack_radius + PLUG_LABEL_MARGINS.v.x, y - 0.5f * text_size.v.y );
+    }
+
+i = 0;
+for( auto it = node.out_plugs.rbegin(); it != node.out_plugs.rend(); it++, i++ )
+    {
+    auto text_size = FromImVec2( gui::CalcTextSize( it->label.c_str() ) );
+    auto text_size_and_margins = Vec2::Add( text_size, PLUG_LABEL_MARGINS );
+    auto y = node.abb.extent.v.y - ((float)i + 0.5f) * text_size_and_margins.v.y;
+    auto x = node.abb.extent.v.x;
+    it->jack_position = Pos2( x, y );
+    it->label_position = Pos2( x - it->jack_radius - PLUG_LABEL_MARGINS.v.x - text_size.v.x, y - 0.5f * text_size.v.y );
+    }
+
+}
+
+
+void App::AddNewNodeToProgram( const assets::StateScriptNodeName the_type, StateScriptProgramRecord &program )
 {
 program.nodes.emplace_back();
-auto &node_render = program.nodes.back();
+auto &render = program.nodes.back();
 
-node_render.asset = assets::StateScriptFactory::AddNodeToProgram( the_type, program.asset );
-node_render.color = assets::StateScriptFactory::NodeDisplayColors[ (int)the_type ];
-node_render.display_name = assets::StateScriptFactory::NodeDisplayNames[ (int)the_type ];
-node_render.position = Pos2( 0.0f, 0.0f );
-node_render.extent   = Vec2( 100.0f, 200.0f );
+auto asset = assets::StateScriptFactory::AddNodeToProgram( the_type, program.asset );
+auto color = assets::StateScriptFactory::NodeDisplayColors[ (int)the_type ];
+auto display_name = assets::StateScriptFactory::NodeDisplayNames[(int)the_type];
+auto position = Pos2( 0.0f, 0.0f );
 
-program.node_draw_order.push_back( node_render.asset );
+BuildNodeRenderable( render, asset, display_name, position, color, program.asset );
+
+program.node_draw_order.push_back( render.asset );
 }
 
 void App::CloseProgram( StateScriptProgramId program_id, StateScriptProgramIds &pending )
@@ -248,7 +331,7 @@ for( auto &it : open_programs )
                     {
                     auto &plugs = program.asset.plugs;
                     std::vector<assets::StateScriptPlugId> plug_ids;
-                    assets::StateScriptFactory::GetPlugsForNode( node.node_id, program.asset, plug_ids );
+                    assets::StateScriptFactory::EnumerateNodePlugs( node.node_id, program.asset, plug_ids );
                     for( auto plug_id : plug_ids )
                         {
                         auto &plug = assets::StateScriptFactory::GetPlugById( plug_id, program.asset );
@@ -300,7 +383,7 @@ for( auto &it : open_programs )
     gui::InvisibleButton( "view_interactions", view_extent, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight );
     const bool view_hovered = gui::IsItemHovered();
     const bool view_pressed = gui::IsItemActive();
-    const Vec2 view_origin = Sub( FromImVec2( view_top_left ), program.view_scroll );
+    const Vec2 view_origin = Vec2::Sub( FromImVec2( view_top_left ), program.view_scroll );
     const Vec2 mouse_in_view_space = Vec2( gui::GetMousePos().x - view_origin.v.x, gui::GetMousePos().y - view_origin.v.y );
     
     StateScriptRenderNodes::iterator clicked_node;
@@ -320,8 +403,8 @@ for( auto &it : open_programs )
      && GetClickedNode( mouse_in_view_space, program, clicked_node ) )
         {
         auto drag_delta = gui::GetMouseDragDelta();
-        auto this_drag_delta = Sub( FromImVec2( drag_delta ), program.last_drag_delta );
-        clicked_node->position = Add( clicked_node->position, this_drag_delta );
+        auto this_drag_delta = Vec2::Sub( FromImVec2( drag_delta ), program.last_drag_delta );
+        clicked_node->abb.position = Vec2::Add( clicked_node->abb.position, this_drag_delta );
         }
     
     if( view_hovered )
@@ -387,7 +470,7 @@ if( gui::BeginMainMenuBar() )
 
     if( gui::BeginMenu( "Workflow" ) )
         {
-        gui::MenuItem( "StateScript", NULL, current_workflow == WorkflowId::WORKFLOW_ID_STATESCRIPT );
+        gui::MenuItem( "Script Edit", NULL, current_workflow == WorkflowId::WORKFLOW_ID_STATESCRIPT );
         gui::EndMenu();
         }
 
@@ -406,63 +489,40 @@ if( gui::BeginMainMenuBar() )
 void App::DrawStateScriptNode( const Vec2 origin, const bool selected, const StateScriptNodeRenderable &node, const assets::StateScriptProgram &program )
 {
 auto draw_list = gui::GetWindowDrawList();
-auto p = Add( node.position, origin );
+auto abb_world = node.abb;
+abb_world.position = Vec2::Add( node.abb.position, origin );
 auto node_color = ImColor( node.color.v.x, node.color.v.y, node.color.v.z, node.color.v.w );
 
 /* background */
-draw_list->AddRectFilled( ToImVec2( p ), ImVec2( p.v.x + node.extent.v.x, p.v.y + node.extent.v.y ), node_color );
+auto rect_upper_left = Pos2::Add( node.abb.position, origin );
+auto rect_lower_right = Pos2::Add( rect_upper_left, node.abb.extent );
+draw_list->AddRectFilled( ToImVec2( rect_upper_left ), ToImVec2( rect_lower_right ), node_color );
 if( selected )
     {
-    draw_list->AddRect( ToImVec2( p ), ImVec2( p.v.x + node.extent.v.x, p.v.y + node.extent.v.y ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ) );
+    draw_list->AddRect( ToImVec2( rect_upper_left ), ToImVec2( rect_lower_right ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ) );
     }
 
 /* name */
-auto text_extent = gui::CalcTextSize( node.display_name.c_str() );
-draw_list->AddText( ImVec2( p.v.x + 0.5f * node.extent.v.x - 0.5f * text_extent.x, p.v.y + 0.5f * text_extent.y ),
-                    ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), node.display_name.c_str() );
+auto name_extent = FromImVec2( gui::CalcTextSize( node.name.c_str() ) );
+auto name_upper_left = Vec2::Add( rect_upper_left, node.name_position );
+draw_list->AddText( ToImVec2( name_upper_left ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), node.name.c_str() );
 
 /* plugs */
-auto &asset = assets::StateScriptFactory::GetNodeById( node.asset, program );
-std::vector<assets::StateScriptPlugId> plugs;
-assets::StateScriptFactory::GetPlugsForNode( asset.node_id, program, plugs );
-int in_count = 0, out_count = 0;
-for( auto plug_id : plugs )
+auto draw_plugs = [draw_list, node_color, rect_upper_left]( const std::vector<StateScriptNodeRenderable::Plug> &plugs )
     {
-    auto &plug = assets::StateScriptFactory::GetPlugById( plug_id, program );
-    if( assets::StateScriptFactory::IsInputPlug(  plug.name ) ) { in_count++;  }
-    if( assets::StateScriptFactory::IsOutputPlug( plug.name ) ) { out_count++; }
-    }
-
-auto between_in_plugs  = node.extent.v.x / ( in_count  + 1 );
-auto between_out_plugs = node.extent.v.y / ( out_count + 1 );
-const float PLUG_RADIUS = gui::CalcTextSize( "O" ).x;
-
-in_count = out_count = 0;
-for( auto plug_id : plugs )
-    {
-    auto plug_pos = p;
-    auto &plug = assets::StateScriptFactory::GetPlugById( plug_id, program );
-    float text_h_just = 0.0f;
-
-    auto plug_name = assets::StateScriptFactory::NodePlugDisplayNames[(int)plug.name].c_str();
-    auto plug_name_size = gui::CalcTextSize( plug_name );
-    if( assets::StateScriptFactory::IsInputPlug( plug.name ) )
+    for( auto &in_plug : plugs )
         {
-        plug_pos.v.y += between_in_plugs * (float)++in_count;
-        text_h_just = gui::CalcTextSize( "WW" ).x;
-        }
+        auto jack_position = Pos2::Add( in_plug.jack_position, rect_upper_left );
+        draw_list->AddCircleFilled( ToImVec2( jack_position ), in_plug.jack_radius, node_color );
+        draw_list->AddCircle( ToImVec2( jack_position ), in_plug.jack_radius, ImColor( 1.0f, 1.0f, 1.0f, 0.8f ) );
 
-    if( assets::StateScriptFactory::IsOutputPlug( plug.name ) )
-        {
-        plug_pos.v.x += node.extent.v.x;
-        plug_pos.v.y += between_out_plugs * (float)++out_count;
-        text_h_just = -gui::CalcTextSize( "WW" ).x - plug_name_size.x;
+        auto text_position = Pos2::Add( in_plug.label_position, rect_upper_left );
+        draw_list->AddText( ToImVec2( text_position ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), in_plug.label.c_str() );
         }
+    };
 
-    draw_list->AddCircleFilled( ToImVec2( plug_pos ), PLUG_RADIUS, node_color );
-    draw_list->AddCircle( ToImVec2( plug_pos ), PLUG_RADIUS, ImColor( 1.0f, 1.0f, 1.0f, 0.8f ) );
-    draw_list->AddText( ImVec2( plug_pos.v.x + text_h_just, plug_pos.v.y - 0.5f * plug_name_size.y ), ImColor( 1.0f, 1.0f, 1.0f, 1.0f ), plug_name );
-    }
+draw_plugs( node.in_plugs );
+draw_plugs( node.out_plugs );
 
 }
 
@@ -491,9 +551,10 @@ for( auto index = program.node_draw_order.rbegin(); index != program.node_draw_o
     {
     out_node = std::find_if( non_const.begin(), non_const.end(), [index]( const StateScriptNodeRenderable&r ){ return r.asset == *index; } );
     auto &node = *out_node;
-    Vec2 bottom_right = Vec2( node.position.v.x + node.extent.v.x, node.position.v.y + node.extent.v.y );
-    if( view_click.v.x <  node.position.v.x
-     || view_click.v.y <  node.position.v.y
+    Vec2 top_left = node.abb.position;
+    Vec2 bottom_right = ABB2::BottomRight( node.abb );
+    if( view_click.v.x <  top_left.v.x
+     || view_click.v.y <  top_left.v.y
      || view_click.v.x >= bottom_right.v.x
      || view_click.v.y >= bottom_right.v.y ) continue;
 

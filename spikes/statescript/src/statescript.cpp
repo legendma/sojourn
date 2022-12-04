@@ -27,8 +27,10 @@ const std::array<std::string, (size_t)StateScriptPlugName::CNT> StateScriptFacto
     {
     "Invalid",
     "In",
-    "IDummy",
+    "Begin",
     "Out",
+    "OnAbort",
+    "OnComplete",
     "SubGraph"
     };
 
@@ -58,7 +60,7 @@ StateScriptPlugRecord& assets::StateScriptFactory::GetPlugById( const StateScrip
 return const_cast<StateScriptPlugRecord&>( *std::find_if( program.plugs.begin(), program.plugs.end(), [id]( const StateScriptPlugRecord& record ) { return record.plug_id == id; } ) );
 }
 
-void assets::StateScriptFactory::GetPlugsForNode( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId>& out )
+void assets::StateScriptFactory::EnumerateNodePlugs( const StateScriptNodeId node, const StateScriptProgram &program, std::vector<StateScriptPlugId>& out )
 {
 out.clear();
 for( auto i = 0; i < program.plugs.size(); i++ )
@@ -77,9 +79,13 @@ node.name = the_type;
 switch( the_type )
     {
     case StateScriptNodeName::ENTRY_POINT:
-        {
         AddPlugToNode( node.node_id, StateScriptPlugName::OUT_DEFAULT, program );
-        }
+        break;
+
+    case StateScriptNodeName::WAIT_FOR_DURATION:
+        AddPlugToNode( node.node_id, StateScriptPlugName::IN_BEGIN_STATE, program );
+        AddPlugToNode( node.node_id, StateScriptPlugName::OUT_ON_ABORT, program );
+        AddPlugToNode( node.node_id, StateScriptPlugName::OUT_ON_COMPLETE, program );
         break;
     }
 

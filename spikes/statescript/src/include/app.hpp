@@ -11,12 +11,26 @@ class App
 
     struct StateScriptNodeRenderable
     {
+        struct Plug
+        {
+            assets::StateScriptPlugId
+                        asset = 0;
+            math::Pos2  jack_position = { 0.0f, 0.0f };
+            float       jack_radius = {};
+            math::Pos2  label_position = { 0.0f, 0.0f };
+            std::string label = {};
+        };
+
         assets::StateScriptNodeId
-                        asset;
-        math::Pos2      position;
-        math::Vec2      extent;
-        math::Vec4      color;
-        std::string     display_name;
+                        asset = 0;
+        math::ABB2      abb = { { 0.0f, 0.0f }, { 0.0f, 0.0f } };
+        math::Vec4      color = { 0.0f, 0.0f, 0.0f, 0.0f };
+        std::string     name = {};
+        math::Pos2      name_position;
+        std::vector<Plug>
+                        in_plugs;
+        std::vector<Plug>
+                        out_plugs;
     };
 
     using StateScriptProgramId = uint32_t;
@@ -52,6 +66,7 @@ class App
     void ShowMainMenuStateScript();
     void ShowStateScriptPrograms();
     void AddNewStateScriptProgram();
+    void BuildNodeRenderable( StateScriptNodeRenderable &node, assets::StateScriptNodeId asset, std::string &name, math::Vec2 &position, math::Vec4 &color, const assets::StateScriptProgram &program );
     void AddNewNodeToProgram( const assets::StateScriptNodeName the_type, StateScriptProgramRecord &program );
     void CloseProgram( StateScriptProgramId program_id, StateScriptProgramIds &pending );
     bool AskUserToSaveProgram( StateScriptProgramId program_id );
